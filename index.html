@@ -4,6 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Sato's creator</title>
+<link rel="icon" type="image/png" href="logo.png">
+<link rel="apple-touch-icon" href="logo.png">
 <meta name="description" content="Sato's creator — 小さなアプリを、ひとつずつ。iPhoneアプリとWebサイトの制作。">
 <style>
   :root{
@@ -37,7 +39,8 @@
     box-shadow:inset 0 1px 0 rgba(255,255,255,.18),0 12px 40px rgba(0,0,0,.45);
     z-index:100;
   }
-  nav .brand{font-size:15px;font-weight:600;letter-spacing:.02em}
+  nav .brand{font-size:15px;font-weight:600;letter-spacing:.02em;display:flex;align-items:center;gap:10px}
+  nav .brand img{width:26px;height:26px;display:block}
   nav .links{display:flex;gap:26px}
   nav a{color:var(--text);text-decoration:none;font-size:13px;opacity:.85}
   nav a:hover{opacity:1}
@@ -56,6 +59,11 @@
       radial-gradient(60% 45% at 50% 0%,rgba(255,255,255,.07),transparent 70%),
       #000;
   }
+  header .mark{
+    width:clamp(92px,13vw,140px);height:auto;margin-bottom:38px;
+    animation:markIn 1.1s ease both;
+  }
+  @keyframes markIn{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
   header h1{
     font-size:clamp(52px,11vw,124px);
     font-weight:700;letter-spacing:-.03em;line-height:1.04;
@@ -116,7 +124,7 @@
 <body>
 
 <nav>
-  <div class="brand">Sato's creator</div>
+  <div class="brand"><img src="logo.png" alt="">Sato's creator</div>
   <div class="links">
     <a href="#efficiency">効率化アプリケーション</a>
     <a href="efficiency.html#pricing">料金プラン</a>
@@ -126,6 +134,7 @@
 </nav>
 
 <header>
+  <img class="mark" src="logo.png" alt="Sato's creator ロゴ">
   <h1>Sato's creator</h1>
   <p>小さなアプリを、ひとつずつ。</p>
   <div class="scroll">SCROLL</div>
