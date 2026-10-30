@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="ja" data-theme="custom">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HAIR ATELIER calme（カルム）｜藤沢駅南口の美容室</title>
+<meta name="description" content="Sato's creator のウェブサイト制作サンプル。藤沢駅南口の架空の美容室を題材に、メニュー・スタイル・スタッフ・予約導線など、美容室サイトに必要な要素を実装した見本ページです。">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+--ink:#1d1d1f; --sub:#6e6e73; --line:rgba(0,0,0,.09);
+--bg:#fbfbfd; --card:#fff; --accent:#8a6d4b; --accent-ink:#fff;
+--line-g:#06c755;
+}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans","Hiragino Kaku Gothic ProN","Yu Gothic",sans-serif;-webkit-font-smoothing:antialiased;line-height:1.7;padding-bottom:76px}
+a{color:inherit;text-decoration:none}
+.sample-bar{background:#1d1d1f;color:#f5f5f7;text-align:center;font-size:12px;letter-spacing:.06em;padding:8px 16px}
+.sample-bar b{color:#ffb340}
+header.site{position:sticky;top:0;z-index:50;background:rgba(251,251,253,.82);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);border-bottom:1px solid var(--line)}
+.header-in{max-width:1020px;margin:0 auto;padding:14px 24px;display:flex;align-items:center;justify-content:space-between;gap:16px}
+.logo{font-size:19px;font-weight:700;letter-spacing:.04em}
+.logo small{display:block;font-size:10px;font-weight:500;color:var(--sub);letter-spacing:.28em}
+nav.main{display:flex;gap:26px;font-size:13.5px;color:var(--sub)}
+nav.main a:hover{color:var(--ink)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border-radius:999px;font-weight:600;transition:opacity.2s}
+.btn:hover{opacity:.85}
+.btn-accent{background:var(--accent);color:var(--accent-ink);padding:10px 22px;font-size:14px}
+.btn-line{background:var(--line-g);color:#fff;padding:12px 26px;font-size:15px}
+.btn-ghost{border:1px solid rgba(0,0,0,.25);padding:11px 26px;font-size:15px;background:#fff}
+.hero{max-width:1020px;margin:0 auto;padding:72px 24px 30px;text-align:center}
+.hero.eyebrow{font-size:12px;letter-spacing:.34em;color:var(--accent);font-weight:700}
+.hero h1{margin-top:18px;font-size:clamp(34px,6vw,58px);font-weight:700;line-height:1.3;letter-spacing:.02em}
+.hero p{margin:22px auto 0;max-width:560px;color:var(--sub);font-size:16px}
+.hero-visual{max-width:1020px;margin:44px auto 0;padding:0 24px}
+.visual{border-radius:28px;height:380px;overflow:hidden;position:relative}
+.visual img{width:100%;height:100%;object-fit:cover;display:block;transition:filter .4s}
+.visual span{position:absolute;left:30px;bottom:24px;color:#fff;font-size:13px;letter-spacing:.22em;text-shadow:0 1px 8px rgba(0,0,0,.45)}
+.theme-strip{background:var(--card);border-bottom:1px solid var(--line)}
+.theme-in{max-width:1020px;margin:0 auto;padding:12px 24px;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.theme-in .tlabel{font-size:12.5px;color:var(--sub);letter-spacing:.08em}
+.theme-btn{border:1px solid rgba(128,128,128,.45);background:transparent;color:var(--ink);border-radius:999px;padding:7px 18px;font-size:13.5px;font-weight:600;cursor:pointer}
+.theme-btn.active{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+html[data-theme="casual"]{--ink:#33302b;--sub:#8a7f72;--bg:#fffaf2;--card:#ffffff;--accent:#e07a4f;--line:rgba(120,80,40,.14)}
+html[data-theme="casual"] .visual img{filter:saturate(1.12) brightness(1.04)}
+html[data-theme="casual"] .style-card,html[data-theme="casual"] .menu-card,html[data-theme="casual"] .staff-card,html[data-theme="casual"] .voice,html[data-theme="casual"] .news{border-radius:26px}
+html[data-theme="mode"]{--ink:#f5f5f7;--sub:#a1a1a6;--bg:#0b0b0d;--card:#17171a;--accent:#d8d8de;--line:rgba(255,255,255,.14)}
+html[data-theme="mode"] .visual img{filter:grayscale(.4) contrast(1.07) brightness(.9)}
+html[data-theme="mode"] header.site{background:rgba(11,11,13,.85)}
+html[data-theme="mode"] .btn-ghost{background:transparent;color:var(--ink);border-color:rgba(255,255,255,.4)}
+html[data-theme="mode"] .fixed-reserve{background:rgba(11,11,13,.92)}
+html[data-theme="mode"] .fixed-reserve .tel{background:transparent;color:var(--ink);border-color:rgba(255,255,255,.4)}
+html[data-theme="mode"] .map-dummy{color:#a1a1a6}
+.wrap{max-width:1020px;margin:0 auto;padding:0 24px}
+section.blk{padding:74px 0 6px}
+.kicker{font-size:11.5px;letter-spacing:.3em;color:var(--accent);font-weight:700;text-align:center}
+h2.title{margin-top:10px;text-align:center;font-size:clamp(26px,4vw,36px);font-weight:700}
+.lead{margin:14px auto 0;max-width:600px;text-align:center;color:var(--sub);font-size:15px}
+.news{max-width:760px;margin:34px auto 0;background:var(--card);border:1px solid var(--line);border-radius:18px;padding:8px 26px}
+.news li{list-style:none;display:flex;gap:18px;padding:14px 0;border-bottom:1px solid var(--line);font-size:14.5px}
+.news li:last-child{border-bottom:none}
+.news time{color:var(--sub);font-size:13px;white-space:nowrap;padding-top:2px}
+.news.tag{font-size:11px;color:var(--accent);border:1px solid currentColor;border-radius:999px;padding:1px 9px;margin-left:8px;white-space:nowrap}
+.styles{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-top:36px}
+.style-card{border-radius:18px;overflow:hidden;background:var(--card);border:1px solid var(--line)}
+.ph{height:170px;display:flex;align-items:flex-end;padding:12px;color:#fff;font-size:11px;letter-spacing:.18em}
+.ph1{background:linear-gradient(150deg,#d9c6a5,#a98f66)}.ph2{background:linear-gradient(150deg,#b7a58c,#77644a)}
+.ph3{background:linear-gradient(150deg,#e3d5bd,#b39668)}.ph4{background:linear-gradient(150deg,#9c8465,#5f4c33)}
+.ph5{background:linear-gradient(150deg,#c8b28c,#8a6d4b)}.ph6{background:linear-gradient(150deg,#dfd0b4,#a08256)}
+.ph7{background:linear-gradient(150deg,#ac9678,#6b5638)}.ph8{background:linear-gradient(150deg,#d3bf9c,#967950)}
+.style-meta{padding:13px 15px 15px}
+.style-meta.name{font-size:14.5px;font-weight:600}
+.style-meta.by{margin-top:2px;font-size:12.5px;color:var(--sub)}
+.menu-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:36px}
+.menu-card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:24px 26px}
+.menu-card h3{font-size:16px;font-weight:700;padding-bottom:10px;border-bottom:1px solid var(--line)}
+.menu-card table{width:100%;border-collapse:collapse;margin-top:8px}
+.menu-card td{padding:9px 0;font-size:14.5px;vertical-align:top}
+.menu-card td.p{text-align:right;font-weight:600;white-space:nowrap}
+.menu-card td.time{display:block;font-size:12px;color:var(--sub);font-weight:400}
+.menu-note{margin-top:14px;text-align:center;color:var(--sub);font-size:13px}
+.staff-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:36px}
+.staff-card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:28px;display:flex;gap:22px;align-items:flex-start}
+.avatar{flex:none;width:88px;height:88px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-size:26px;font-weight:700}
+.av1{background:linear-gradient(140deg,#b39668,#7d6543)}.av2{background:linear-gradient(140deg,#8f9aa6,#5d6873)}
+.staff-card.sname{font-size:17px;font-weight:700}
+.staff-card.srole{font-size:12.5px;color:var(--accent);font-weight:600;letter-spacing:.08em}
+.staff-card p{margin-top:8px;font-size:13.5px;color:var(--sub)}
+.staff-card.btn{margin-top:14px;padding:8px 18px;font-size:13px}
+.voices{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:36px}
+.voice{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:24px}
+.voice.stars{color:#e8a33d;font-size:14px;letter-spacing:2px}
+.voice p{margin-top:10px;font-size:14px}
+.voice.who{margin-top:12px;font-size:12.5px;color:var(--sub)}
+.access-grid{display:grid;grid-template-columns:1.1fr 1fr;gap:14px;margin-top:36px}
+.map-dummy{border-radius:18px;min-height:280px;background:
+linear-gradient(rgba(255,255,255,.55),rgba(255,255,255,.55)),
+repeating-linear-gradient(0deg,#dfe5ea 0 1px,transparent 1px 44px),
+repeating-linear-gradient(90deg,#dfe5ea 0 1px,transparent 1px 44px),
+linear-gradient(140deg,#eef1f4,#dfe5ea);
+display:flex;align-items:center;justify-content:center;color:var(--sub);font-size:13px;letter-spacing:.14em;border:1px solid var(--line)}
+.info-card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:26px 28px}
+.info-card table{width:100%;border-collapse:collapse}
+.info-card th,.info-card td{padding:10px 0;font-size:14.5px;text-align:left;vertical-align:top;border-bottom:1px solid var(--line)}
+.info-card tr:last-child th,.info-card tr:last-child td{border-bottom:none}
+.info-card th{width:96px;color:var(--sub);font-weight:500;white-space:nowrap}
+.reserve{margin-top:36px;background:#1d1d1f;color:#f5f5f7;border-radius:24px;padding:44px 30px;text-align:center}
+.reserve h3{font-size:24px;font-weight:700}
+.reserve p{margin-top:10px;color:#a1a1a6;font-size:14.5px}
+.reserve.row{margin-top:26px;display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
+.reserve.btn-ghost{background:transparent;color:#f5f5f7;border-color:rgba(255,255,255,.4)}
+footer{margin-top:84px;border-top:1px solid var(--line);padding:34px 24px 10px;text-align:center;color:var(--sub);font-size:12.5px;line-height:2}
+.fixed-reserve{position:fixed;left:0;right:0;bottom:0;z-index:60;background:rgba(251,251,253,.9);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border-top:1px solid var(--line);padding:10px 14px calc(10px + env(safe-area-inset-bottom));display:flex;gap:10px}
+.fixed-reserve a{flex:1;padding:13px 0;font-size:15px;border-radius:14px}
+.fixed-reserve.tel{flex:.62;background:#fff;border:1px solid rgba(0,0,0,.25);color:var(--ink)}
+@media (max-width:760px){
+nav.main{display:none}
+.styles{grid-template-columns:repeat(2,1fr)}
+.menu-grid,.staff-grid,.access-grid,.voices{grid-template-columns:1fr}
+.visual{height:300px}
+.hero{padding-top:52px}
+}
+/* ===== テーマ別デザイン（色だけでなく設計ごと切り替える） ===== */
+/* --- モノトーン：黒基調・直線・余白とタイポグラフィで見せる --- */
+html[data-theme="mono"]{--ink:#f5f5f7;--sub:#a1a1a6;--bg:#0a0a0c;--card:#141416;--accent:#f5f5f7;--line:rgba(255,255,255,.16)}
+html[data-theme="mono"] body{letter-spacing:.02em}
+html[data-theme="mono"] header.site{background:rgba(10,10,12,.88)}
+html[data-theme="mono"] .hero{text-align:left;padding-top:96px}
+html[data-theme="mono"] .hero p{margin-left:0}
+html[data-theme="mono"] .hero h1{font-size:clamp(40px,7.4vw,72px);font-weight:600;line-height:1.16;letter-spacing:.04em}
+html[data-theme="mono"] .kicker,html[data-theme="mono"] h2.title,html[data-theme="mono"] .lead{text-align:left}
+html[data-theme="mono"] .lead{margin-left:0}
+html[data-theme="mono"] .visual,html[data-theme="mono"] .style-card,html[data-theme="mono"] .menu-card,html[data-theme="mono"] .staff-card,html[data-theme="mono"] .voice,html[data-theme="mono"] .news,html[data-theme="mono"] .info-card,html[data-theme="mono"] .map-dummy,html[data-theme="mono"] .reserve{border-radius:0}
+html[data-theme="mono"] .visual img{filter:contrast(1.03)}
+html[data-theme="mono"] .btn{border-radius:0}
+html[data-theme="mono"] .btn-accent{background:#f5f5f7;color:#0a0a0c}
+html[data-theme="mono"] .btn-line{background:#f5f5f7;color:#0a0a0c}
+html[data-theme="mono"] .reserve{background:#f5f5f7;color:#0a0a0c}
+html[data-theme="mono"] .reserve p{color:#55555a}
+html[data-theme="mono"] .reserve .btn-ghost{background:transparent;color:#0a0a0c;border-color:rgba(0,0,0,.45)}
+html[data-theme="mono"] .btn-ghost{background:transparent;color:var(--ink);border-color:rgba(255,255,255,.4)}
+html[data-theme="mono"] .fixed-reserve{background:rgba(10,10,12,.94)}
+html[data-theme="mono"] .fixed-reserve .tel{background:transparent;color:var(--ink);border-color:rgba(255,255,255,.4)}
+html[data-theme="mono"] section.blk{padding-top:96px}
+html[data-theme="mono"] .menu-note{text-align:left}
+/* --- カジュアル：明るい色・大きな丸み・影で元気に見せる --- */
+html[data-theme="casual"]{--ink:#3a332a;--sub:#97836c;--bg:#fff7ea;--card:#ffffff;--accent:#ef7d43;--line:rgba(160,110,50,.16)}
+html[data-theme="casual"] .visual img{filter:saturate(1.18) brightness(1.05)}
+html[data-theme="casual"] .hero h1{font-weight:800;letter-spacing:.05em}
+html[data-theme="casual"] h2.title{font-weight:800}
+html[data-theme="casual"] h2.title::after{content:"";display:block;width:64px;height:6px;border-radius:3px;background:var(--accent);margin:14px auto 0}
+html[data-theme="casual"] .visual{border-radius:36px}
+html[data-theme="casual"] .style-card,html[data-theme="casual"] .menu-card,html[data-theme="casual"] .staff-card,html[data-theme="casual"] .voice,html[data-theme="casual"] .news,html[data-theme="casual"] .info-card{border-radius:28px;border:none;box-shadow:0 10px 30px rgba(190,120,50,.13)}
+html[data-theme="casual"] .reserve{border-radius:36px;background:linear-gradient(130deg,#f59a56,#ef7d43 55%,#e56a2e)}
+html[data-theme="casual"] .reserve p{color:rgba(255,255,255,.85)}
+html[data-theme="casual"] .reserve .btn-accent{background:#fff;color:#e56a2e}
+html[data-theme="casual"] .reserve .btn-ghost{background:transparent;color:#fff;border-color:rgba(255,255,255,.65)}
+html[data-theme="casual"] .ph{filter:saturate(1.3) brightness(1.05)}
+html[data-theme="casual"] .btn{box-shadow:0 6px 16px rgba(190,120,50,.18)}
+html[data-theme="casual"] .map-dummy{border-radius:28px}
+html[data-theme="casual"] section.blk:nth-of-type(even){background:rgba(255,255,255,.55);border-radius:36px;padding-left:22px;padding-right:22px}
+/* --- カスタム：世界観に合わせて作る例（ナチュラル・明朝・生成り） --- */
+html[data-theme="custom"]{--ink:#33362e;--sub:#7d8072;--bg:#f6f3ea;--card:#fffdf6;--accent:#5d7350;--line:rgba(90,100,70,.18)}
+html[data-theme="custom"] .hero h1,html[data-theme="custom"] h2.title,html[data-theme="custom"] .logo{font-family:"Hiragino Mincho ProN","Yu Mincho","YuMincho",serif;font-weight:600;letter-spacing:.1em}
+html[data-theme="custom"] .visual img{filter:sepia(.22) brightness(1.03) saturate(.92)}
+html[data-theme="custom"] .visual{border-radius:6px}
+html[data-theme="custom"] .style-card,html[data-theme="custom"] .menu-card,html[data-theme="custom"] .staff-card,html[data-theme="custom"] .voice,html[data-theme="custom"] .news,html[data-theme="custom"] .info-card,html[data-theme="custom"] .map-dummy{border-radius:6px}
+html[data-theme="custom"] .ph{filter:sepia(.3) saturate(.9)}
+html[data-theme="custom"] .avatar{filter:sepia(.25)}
+html[data-theme="custom"] .reserve{background:#44543c;border-radius:6px}
+html[data-theme="custom"] .reserve p{color:#cfd6c6}
+html[data-theme="custom"] .reserve .btn-ghost{background:transparent;color:#f5f5f7;border-color:rgba(255,255,255,.45)}
+html[data-theme="custom"] section.blk{padding-top:100px}
+html[data-theme="custom"] .kicker{letter-spacing:.5em}
+</style>
+</head>
+<body>
+
+<div class="sample-bar">これは <b>Sato's creator</b> の制作サンプルです。店舗・人物・口コミはすべて架空のものです。</div>
+
+<header class="site">
+<div class="header-in">
+<a class="logo" href="#">HAIR ATELIER calme<small>ヘアアトリエ カルム</small></a>
+<nav class="main">
+<a href="#style">スタイル</a><a href="#menu">メニュー</a><a href="#staff">スタッフ</a><a href="#voice">口コミ</a><a href="#access">アクセス</a>
+</nav>
+<a class="btn btn-accent" href="#reserve">予約する</a>
+</div>
+</header>
+
+<div class="hero">
+<div class="eyebrow">FUJISAWA — HAIR SALON</div>
+<h1>大人のための、<br>静かな美容室。</h1>
+<p>席は4つだけ。マンツーマンに近い距離感で、髪の悩みをゆっくり聞くところから始めます。藤沢駅南口から徒歩5分。</p>
+</div>
+
+<div class="theme-strip">
+  <div class="theme-in">
+    <span class="tlabel">デザインの雰囲気サンプル（同じ店舗でも、ここまで変えられます）</span>
+    <button class="theme-btn" data-set-theme="mono">モノトーン</button>
+    <button class="theme-btn" data-set-theme="casual">カジュアル</button>
+    <button class="theme-btn active" data-set-theme="custom">カスタム</button>
+  </div>
+</div>
+
+<div class="hero-visual"><div class="visual"><img src="sample-salon-interior.jpg" alt="サロンの内観（サンプル画像）"><span>SALON — INTERIOR</span></div></div>
+
+<div class="wrap">
+
+<section class="blk" id="news">
+<div class="kicker">NEWS</div>
+<h2 class="title">お知らせ</h2>
+<ul class="news">
+<li><time>2026.10.28</time><div>11月の営業日と、年末年始のお休みについて<span class="tag">営業日</span></div></li>
+<li><time>2026.10.15</time><div>秋のヘアケアキャンペーン（トリートメント20％OFF）のお知らせ<span class="tag">キャンペーン</span></div></li>
+<li><time>2026.10.01</time><div>新しいスタッフが加わりました<span class="tag">スタッフ</span></div></li>
+</ul>
+<p class="menu-note">※ お知らせは「更新プラン」で、写真や文章を送るだけで反映される想定の欄です。</p>
+</section>
+
+<section class="blk" id="style">
+<div class="kicker">STYLE</div>
+<h2 class="title">スタイル</h2>
+<p class="lead">長さと施術で絞り込めるギャラリー。各スタイルに担当者名を添えて、指名予約につなげます。</p>
+<div class="styles">
+<div class="style-card"><div class="ph ph1">SHORT</div><div class="style-meta"><div class="name">大人ボブ</div><div class="by">担当：佐伯 ／ カット</div></div></div>
+<div class="style-card"><div class="ph ph2">MEDIUM</div><div class="style-meta"><div class="name">くびれミディ</div><div class="by">担当：佐伯 ／ カット＋カラー</div></div></div>
+<div class="style-card"><div class="ph ph3">LONG</div><div class="style-meta"><div class="name">柔らかレイヤー</div><div class="by">担当：三浦 ／ カット</div></div></div>
+<div class="style-card"><div class="ph ph4">COLOR</div><div class="style-meta"><div class="name">透明感グレージュ</div><div class="by">担当：三浦 ／ カラー</div></div></div>
+<div class="style-card"><div class="ph ph5">SHORT</div><div class="style-meta"><div class="name">耳かけショート</div><div class="by">担当：佐伯 ／ カット</div></div></div>
+<div class="style-card"><div class="ph ph6">PERM</div><div class="style-meta"><div class="name">ゆるふわパーマ</div><div class="by">担当：三浦 ／ パーマ</div></div></div>
+<div class="style-card"><div class="ph ph7">COLOR</div><div class="style-meta"><div class="name">白髪ぼかしハイライト</div><div class="by">担当：佐伯 ／ カラー</div></div></div>
+<div class="style-card"><div class="ph ph8">MEDIUM</div><div class="style-meta"><div class="name">顔まわりレイヤー</div><div class="by">担当：三浦 ／ カット＋カラー</div></div></div>
+</div>
+</section>
+
+<section class="blk" id="menu">
+<div class="kicker">MENU</div>
+<h2 class="title">メニュー・料金</h2>
+<p class="lead">税込の総額表示です。組み合わせの合計も先に分かります。</p>
+<div class="menu-grid">
+<div class="menu-card">
+<h3>カット</h3>
+<table>
+<tr><td>カット<span class="time">約60分／シャンプー・ブロー込み</span></td><td class="p">¥5,500</td></tr>
+<tr><td>カット＋カラー<span class="time">約120分</span></td><td class="p">¥13,200</td></tr>
+<tr><td>カット＋パーマ<span class="time">約150分</span></td><td class="p">¥14,300</td></tr>
+</table>
+</div>
+<div class="menu-card">
+<h3>カラー・ケア</h3>
+<table>
+<tr><td>カラー（リタッチ）<span class="time">約90分</span></td><td class="p">¥7,700</td></tr>
+<tr><td>白髪ぼかしハイライト<span class="time">約150分</span></td><td class="p">¥15,400</td></tr>
+<tr><td>集中トリートメント<span class="time">約30分</span></td><td class="p">¥4,400</td></tr>
+</table>
+</div>
+</div>
+<p class="menu-note">指名料はいただきません。長さによる追加料金はカラーのみ（ロング＋¥1,100）。</p>
+</section>
+
+<section class="blk" id="staff">
+<div class="kicker">STAFF</div>
+<h2 class="title">スタッフ</h2>
+<div class="staff-grid">
+<div class="staff-card">
+<div class="avatar av1">S</div>
+<div>
+<div class="srole">OWNER / STYLIST</div>
+<div class="sname">佐伯 ゆかり</div>
+<p>美容師歴16年。ボブと白髪ぼかしが得意です。「朝のセットが楽になること」を一番に考えます。</p>
+<a class="btn btn-accent" href="#reserve">佐伯を指名して予約</a>
+</div>
+</div>
+<div class="staff-card">
+<div class="avatar av2">M</div>
+<div>
+<div class="srole">STYLIST</div>
+<div class="sname">三浦 かな</div>
+<p>美容師歴8年。透明感カラーとレイヤーカットが得意です。初めての方のカウンセリングを丁寧に。</p>
+<a class="btn btn-accent" href="#reserve">三浦を指名して予約</a>
+</div>
+</div>
+</div>
+</section>
+
+<section class="blk" id="voice">
+<div class="kicker">VOICE</div>
+<h2 class="title">お客様の声</h2>
+<div class="voices">
+<div class="voice"><div class="stars">★★★★★</div><p>白髪の悩みを初めてちゃんと聞いてもらえました。仕上がりも自然で、職場で褒められました。</p><div class="who">50代・女性（白髪ぼかしハイライト）</div></div>
+<div class="voice"><div class="stars">★★★★★</div><p>席が少なくて落ち着くのが良いです。子どもが一緒でも気を使わずに済みました。</p><div class="who">30代・女性（カット）</div></div>
+<div class="voice"><div class="stars">★★★★☆</div><p>料金が最初から全部分かるので安心でした。朝のセットが本当に楽になりました。</p><div class="who">40代・女性（大人ボブ）</div></div>
+</div>
+<p class="menu-note">※ 口コミは表示例です（架空の店舗のため実在の声ではありません）。</p>
+</section>
+
+<section class="blk" id="access">
+<div class="kicker">ACCESS</div>
+<h2 class="title">アクセス・営業時間</h2>
+<div class="access-grid">
+<div class="map-dummy">GOOGLE MAP — 埋め込み位置</div>
+<div class="info-card">
+<table>
+<tr><th>住所</th><td>神奈川県藤沢市南藤沢○-○（サンプル住所）</td></tr>
+<tr><th>アクセス</th><td>藤沢駅南口から徒歩5分</td></tr>
+<tr><th>営業時間</th><td>9:00 – 19:00（カット最終受付 18:00／カラー最終受付 17:00）</td></tr>
+<tr><th>定休日</th><td>火曜日・第3水曜日</td></tr>
+<tr><th>駐車場</th><td>なし（近隣にコインパーキングあり）</td></tr>
+<tr><th>電話</th><td>0466-00-0000（サンプル番号）</td></tr>
+</table>
+</div>
+</div>
+</section>
+
+<section class="blk" id="reserve">
+<div class="reserve">
+<h3>ご予約はこちらから</h3>
+<p>24時間受け付けています。方法は3つから選べます。</p>
+<div class="row">
+<a class="btn btn-accent" href="#">Web予約</a>
+<a class="btn btn-line" href="#">LINEで予約</a>
+<a class="btn btn-ghost" href="#">電話する</a>
+</div>
+</div>
+</section>
+
+</div>
+
+<div class="wrap">
+<section class="blk" style="padding-top:64px">
+<div style="border:1.5px dashed var(--accent);border-radius:18px;padding:34px 30px;text-align:center">
+<div class="kicker">FOR OWNERS</div>
+<h2 class="title" style="font-size:clamp(22px,3.4vw,30px)">このようなサイトを、あなたの店でも。</h2>
+<p class="lead">このページは、Sato's creator のウェブサイト制作サンプルです。デザインの雰囲気は、モノトーン／カジュアル／カスタムから選べます。</p>
+<p style="margin-top:18px;font-size:15px">制作費 <b>¥50,000〜</b>（買い切り）／ 公開後の更新プラン <b>月 ¥10,000〜</b>（任意）</p>
+<p style="margin-top:8px;color:var(--sub);font-size:13.5px">更新プランは「写真を送るだけ」で、お知らせやスタイル写真をこちらで反映します。</p>
+<p style="margin-top:24px"><a class="btn btn-accent" href="efficiency.html#pricing" style="padding:13px 30px;font-size:15px">料金プランと制作の流れを見る</a></p>
+</div>
+</section>
+</div>
+
+<footer>
+HAIR ATELIER calme（架空の店舗）<br>
+このページは Sato's creator のウェブサイト制作サンプルです。店舗情報・人物・口コミはすべて架空のものです。<br>
+制作：<a href="index.html" style="text-decoration:underline">Sato's creator</a>
+</footer>
+
+<div class="fixed-reserve">
+<a class="btn tel" href="#">電話予約</a>
+<a class="btn btn-line" href="#reserve">LINE・Webで予約</a>
+</div>
+
+<script>
+document.querySelectorAll('[data-set-theme]').forEach(function(btn){
+  btn.addEventListener('click', function(){
+    var t = btn.getAttribute('data-set-theme');
+    document.documentElement.setAttribute('data-theme', t);
+    document.querySelectorAll('[data-set-theme]').forEach(function(b){ b.classList.toggle('active', b === btn); });
+  });
+});
+</script>
+
+</body>
+</html>
