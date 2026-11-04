@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ことのは行政書士事務所｜相続・遺言のご相談</title>
+<meta name="description" content="Sato's creator のウェブサイト制作サンプル。架空の行政書士事務所を題材に、取扱業務・報酬の目安・相談窓口など、士業のサイトに必要な要素を実装した見本ページです。">
+<meta name="robots" content="noindex">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@600;700&family=Zen+Kaku+Gothic+New:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{--ink:#1f2a37;--soft:#5a6675;--bg:#f8f8f5;--panel:#eef1f4;--card:#fff;--line:#d9dee4;--main:#1f3a5f;--on:#fff;--accent:#9a6b1f}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth;scroll-padding-top:72px}
+body{margin:0;background:var(--bg);color:var(--ink);font:400 16px/1.85 "Zen Kaku Gothic New","Hiragino Sans","Noto Sans CJK JP",sans-serif}
+h1,h2,h3{margin:0;line-height:1.4;font-family:"Shippori Mincho","Hiragino Mincho ProN","Noto Serif CJK JP",serif;font-weight:700}
+a{color:inherit}
+.notice{background:#16181d;color:#fff;text-align:center;font-size:13px;padding:8px 16px;line-height:1.6}
+.wrap{max-width:1040px;margin:0 auto;padding:0 20px}
+header{position:sticky;top:0;z-index:5;background:var(--bg);border-bottom:1px solid var(--line)}
+.bar{display:flex;align-items:center;justify-content:space-between;height:62px}
+.logo{font:700 18px "Shippori Mincho","Hiragino Mincho ProN","Noto Serif CJK JP",serif;text-decoration:none}
+nav{display:flex;gap:22px;font-size:14px}nav a{text-decoration:none}
+.btn{display:inline-block;background:var(--main);color:var(--on);font-weight:700;text-decoration:none;padding:14px 26px;border-radius:6px;border:0;font-size:16px;font-family:inherit;cursor:pointer}
+.hero{padding:76px 20px 64px}
+.tag{color:var(--accent);font-weight:700;font-size:13px;letter-spacing:.1em;margin:0 0 14px}
+h1{font-size:clamp(34px,5.6vw,56px)}
+.lead{color:var(--soft);margin:22px 0 28px;max-width:36em}
+.tel{display:block;margin-top:14px;font-size:14px;color:var(--soft)}
+section{padding:72px 0}
+.alt{background:var(--panel);border-block:1px solid var(--line)}
+h2{font-size:clamp(26px,3.6vw,34px);margin-bottom:10px}
+.sub{color:var(--soft);margin:0 0 30px}
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:24px}
+.card h3{font-size:19px;margin-bottom:8px}.card p{margin:0;font-size:15px;color:var(--soft)}
+table{width:100%;border-collapse:collapse;background:var(--card)}
+th,td{padding:14px 12px;border-bottom:1px solid var(--line);text-align:left;font-weight:500}
+td{text-align:right;font-weight:700;white-space:nowrap}
+.small{font-size:13px;color:var(--soft);margin-top:12px}
+.flow{list-style:none;counter-reset:s;padding:0;margin:0;display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
+.flow li{counter-increment:s;padding-top:6px}
+.flow li:before{content:counter(s);display:grid;place-items:center;width:32px;height:32px;border-radius:50%;background:var(--main);color:var(--on);font-weight:700;margin-bottom:10px}
+.flow b{display:block}.flow span{font-size:14px;color:var(--soft)}
+.gallery{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.gallery figure{margin:0}.gallery svg{display:block;width:100%;height:auto;border-radius:8px}
+figcaption{font-size:14px;margin-top:8px}figcaption span{display:block;color:var(--soft);font-size:13px}
+.voices{display:grid;grid-template-columns:repeat(2,1fr);gap:20px}
+blockquote{margin:0;background:var(--card);border:1px solid var(--line);border-radius:10px;padding:22px}
+cite{display:block;margin-top:8px;font-style:normal;font-size:13px;color:var(--soft)}
+details{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:13px 18px;margin-bottom:10px}
+summary{font-weight:700;cursor:pointer}details p{margin:8px 0 0;color:var(--soft);font-size:15px}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:48px}
+dl{display:grid;grid-template-columns:auto 1fr;margin:0}dt,dd{margin:0;padding:8px 14px 8px 0;border-bottom:1px solid var(--line)}dt{color:var(--soft)}
+form{display:grid;gap:14px}label{display:grid;gap:4px;font-size:14px;font-weight:700}
+input,select,textarea{font:400 16px inherit;font-family:inherit;padding:11px;border:1px solid var(--line);border-radius:6px;background:var(--card);color:var(--ink);width:100%}
+#msg{margin:0;font-size:14px;font-weight:700;min-height:1.6em;color:var(--accent)}
+.owner{background:#16181d;color:#fff;text-align:center}.owner .tag{color:#fff;opacity:.75}
+.owner p{margin:12px auto 24px;max-width:620px;opacity:.9}.owner .btn{background:#fff;color:#16181d}.owner .link{display:block;margin-top:14px;font-size:14px}
+footer{padding:28px 0;text-align:center;font-size:13px;color:var(--soft)}
+@media(max-width:780px){nav{display:none}.grid,.voices,.two,.gallery{grid-template-columns:1fr}.flow{grid-template-columns:1fr 1fr}.hero{padding:48px 20px}section{padding:52px 0}.two{gap:30px}}
+</style>
+</head>
+<body>
+<div class="notice">これは <b>Sato's creator</b> の制作サンプルです。事務所・人物・事例・口コミはすべて架空のものです。</div>
+<header><div class="wrap bar"><a class="logo" href="#top">ことのは行政書士事務所</a><nav><a href="#work">取扱業務</a><a href="#fee">報酬の目安</a><a href="#flow">ご相談の流れ</a><a href="#faq">よくある質問</a><a href="#contact">お問い合わせ</a></nav></div></header>
+<main id="top">
+<div class="wrap hero">
+<p class="tag">相続・遺言の行政書士</p>
+<h1>相続の手続きを、<br>ひとつずつ一緒に。</h1>
+<p class="lead">何から始めればいいか分からない段階で大丈夫です。必要な書類と順番を整理して、費用は事前にお伝えします。</p>
+<a class="btn" href="#contact">初回相談を申し込む</a>
+<span class="tel">お電話：03-0000-0000（サンプル番号）／平日 9:30〜18:00</span>
+</div>
+<section id="work"><div class="wrap"><h2>取扱業務</h2><p class="sub">相続・遺言を中心に、ご家族の手続きをお手伝いします。</p><div class="grid"><article class="card"><h3>相続手続き</h3><p>戸籍の収集、相続人の確認、遺産分割協議書の作成を行います。</p></article><article class="card"><h3>遺言書の作成</h3><p>ご希望を伺い、公正証書遺言の原案作りから公証役場との調整まで行います。</p></article><article class="card"><h3>見守り・任意後見</h3><p>将来に備える契約について、内容を分かりやすくご説明します。</p></article></div></div></section>
+<section id="fee" class="alt"><div class="wrap"><h2>報酬の目安</h2><p class="sub">正式な金額は、内容を伺ってからお見積もりします。</p><table><tr><th>初回相談（60分）</th><td>無料</td></tr><tr><th>相続人の調査</th><td>¥33,000〜</td></tr><tr><th>遺産分割協議書の作成</th><td>¥55,000〜</td></tr><tr><th>公正証書遺言の原案作成</th><td>¥88,000〜</td></tr></table><p class="small">※ 金額は架空の事務所の表示例です。戸籍の取得費用などの実費は別途の想定です。</p></div></section>
+<section id="flow"><div class="wrap"><h2>ご相談の流れ</h2><ol class="flow"><li><b>お問い合わせ</b><span>電話かフォームからご連絡ください</span></li><li><b>初回相談</b><span>状況を伺い、必要な手続きを整理します</span></li><li><b>お見積もり</b><span>ご納得いただいてからご依頼ください</span></li><li><b>手続き・完了</b><span>進み具合は都度ご報告します</span></li></ol></div></section>
+<section id="voice" class="alt"><div class="wrap"><h2>ご依頼者の声</h2><div class="voices"><blockquote>手続きの順番を紙にまとめてくれたので、家族で話し合いやすくなりました。<cite>60代のご依頼者（表示例）</cite></blockquote><blockquote>費用を先に教えてもらえて、安心してお願いできました。<cite>50代のご依頼者（表示例）</cite></blockquote></div><p class="small">※ 口コミは表示例です（架空の事務所のため実在の声ではありません）。</p></div></section>
+<section id="faq"><div class="wrap"><h2>よくある質問</h2><details open><summary>相談だけでも大丈夫ですか？</summary><p>はい。初回相談のあとにご依頼いただかなくても、費用はかかりません。</p></details><details><summary>家族が遠方に住んでいても手続きできますか？</summary><p>郵送やオンラインでのやり取りで進められます。</p></details><details><summary>税金や争いごとの相談もできますか？</summary><p>行政書士が対応できない内容は、提携する専門家をご案内します。</p></details></div></section>
+
+<section id="contact"><div class="wrap two">
+<div><h2>お問い合わせ</h2><p class="sub">2営業日以内にお返事します。</p><dl><dt>事務所名</dt><dd>ことのは行政書士事務所（架空の事務所）</dd><dt>代表</dt><dd>白石 奏（架空の人物）</dd><dt>所在地</dt><dd>東京都○○区○○ ○-○（サンプル住所）</dd><dt>登録番号</dt><dd>第00000000号（サンプル）</dd></dl></div>
+<form onsubmit="return false">
+<label>お名前<input type="text" autocomplete="off"></label>
+<label>ご相談の種類<select><option>相続手続き</option><option>遺言書の作成</option><option>見守り・任意後見</option><option>その他</option></select></label>
+<label>ご相談内容<textarea rows="4"></textarea></label>
+<button class="btn" type="button" id="send">送信する</button>
+<p id="msg" role="status"></p>
+</form>
+</div></section>
+<section class="owner"><div class="wrap">
+<p class="tag">FOR OWNERS</p>
+<h2>このようなサイトを、あなたの事務所でも。</h2>
+<p>このページは Sato's creator のウェブサイト制作サンプルです。取扱業務と報酬の目安があれば、形にできます。</p>
+<a class="btn" href="mailto:satoscreator@outlook.jp?subject=%E3%82%B5%E3%82%A4%E3%83%88%E5%88%B6%E4%BD%9C%E3%81%AE%E7%9B%B8%E8%AB%87">制作を相談する</a>
+<a class="link" href="https://kentaikan0325-alt.github.io/satos-creator-site/web.html#pricing">料金プランと制作の流れを見る</a>
+</div></section>
+</main>
+<footer>ことのは行政書士事務所（架空の事務所）<br>このページは Sato's creator のウェブサイト制作サンプルです。事務所・人物・事例・口コミはすべて架空のものです。<br>制作：<a href="https://kentaikan0325-alt.github.io/satos-creator-site/index.html">Sato's creator</a></footer>
+<script>document.getElementById('send').addEventListener('click',function(){document.getElementById('msg').textContent='サンプルのため、送信はされません。';});</script>
+</body>
+</html>

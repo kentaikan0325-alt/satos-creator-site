@@ -1,0 +1,229 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>木もれ日リフォーム｜藤沢市・茅ヶ崎市の住まいの工事</title>
+<meta name="description" content="Sato's creator のウェブサイト制作サンプル。架空のリフォーム会社を題材に、施工事例・料金の目安・見積もり依頼など、リフォーム会社のサイトに必要な要素を実装した見本ページです。">
+<meta name="robots" content="noindex">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@600;700&family=Zen+Kaku+Gothic+New:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{--ink:#26302b;--soft:#5d6a63;--paper:#f7f3ea;--card:#fffdf8;--line:#ded6c6;--green:#2f5d4a;--green-d:#234738;--wood:#b9793f;--sun:#efc66b}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth;scroll-padding-top:76px}
+body{margin:0;background:var(--paper);color:var(--ink);font:400 16px/1.85 "Zen Kaku Gothic New","Hiragino Sans","Noto Sans CJK JP",sans-serif;padding-bottom:64px}
+h1,h2,h3{font-family:"Shippori Mincho","Hiragino Mincho ProN","Noto Serif CJK JP",serif;line-height:1.4;margin:0}
+a{color:inherit}
+.notice{background:var(--ink);color:#fff;text-align:center;font-size:13px;padding:8px 16px;line-height:1.6}
+.wrap{max-width:1040px;margin:0 auto;padding:0 20px}
+header{position:sticky;top:0;z-index:5;background:rgba(247,243,234,.95);border-bottom:1px solid var(--line)}
+.bar{display:flex;align-items:center;justify-content:space-between;height:64px;gap:16px}
+.logo{font:700 19px "Shippori Mincho","Noto Serif CJK JP",serif;text-decoration:none}
+nav{display:flex;gap:22px;font-size:14px}nav a{text-decoration:none}
+.hero{display:grid;grid-template-columns:1.1fr 1fr;gap:48px;align-items:center;padding:64px 0 56px}
+.eyebrow{color:var(--wood);font-weight:700;font-size:13px;letter-spacing:.14em;margin:0 0 12px}
+h1{font-size:clamp(34px,5.4vw,54px)}
+.lead{color:var(--soft);margin:20px 0 28px}
+.btn{display:inline-block;background:var(--green);color:#fff;text-decoration:none;font-weight:700;padding:14px 26px;border-radius:6px;border:0;font-size:16px;font-family:inherit;cursor:pointer}
+.btn:hover{background:var(--green-d)}
+.tel{display:block;margin-top:14px;font-size:14px;color:var(--soft)}
+.hero svg{width:100%;height:auto;display:block;border-radius:10px}
+.points{background:var(--green);color:#fff}
+.points ul{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(3,1fr)}
+.points li{padding:28px 24px;border-left:1px solid rgba(255,255,255,.2)}
+.points li:first-child{border-left:0}
+.points b{display:block;font:700 19px "Shippori Mincho","Noto Serif CJK JP",serif;margin-bottom:4px}
+.points span{font-size:14px;opacity:.88}
+section{padding:72px 0}
+.head{margin-bottom:32px}.head p{margin:8px 0 0;color:var(--soft)}
+h2{font-size:clamp(26px,3.6vw,34px)}
+.cases{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
+.case{background:var(--card);border:1px solid var(--line);border-radius:10px;overflow:hidden;display:flex;flex-direction:column}
+.case svg{display:block;width:100%;height:auto}
+.case .after{display:none}.case.on .after{display:block}.case.on .before{display:none}
+.toggle{display:grid;grid-template-columns:1fr 1fr;border-bottom:1px solid var(--line)}
+.toggle button{border:0;background:transparent;font:700 14px inherit;font-family:inherit;padding:10px;cursor:pointer;color:var(--soft)}
+.case:not(.on) .b,.case.on .a{background:var(--green);color:#fff}
+.body{padding:18px 20px 20px}.body h3{font-size:19px;margin-bottom:6px}.body p{margin:0 0 12px;font-size:14.5px;color:var(--soft)}
+dl{display:grid;grid-template-columns:auto 1fr;gap:2px 14px;margin:0;font-size:14px}dt{color:var(--soft)}dd{margin:0;font-weight:700}
+.alt{background:var(--card);border-block:1px solid var(--line)}
+table{width:100%;border-collapse:collapse;background:var(--card)}
+th,td{padding:14px 12px;border-bottom:1px solid var(--line);text-align:left}
+td:last-child{text-align:right;font-weight:700;white-space:nowrap}
+th{font-weight:500}
+.small{font-size:13px;color:var(--soft);margin-top:12px}
+.flow{list-style:none;counter-reset:s;padding:0;margin:0;display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
+.flow li{counter-increment:s;background:var(--paper);border-radius:10px;padding:20px}
+.flow li:before{content:counter(s);display:grid;place-items:center;width:32px;height:32px;border-radius:50%;background:var(--wood);color:#fff;font-weight:700;margin-bottom:10px}
+.flow b{display:block}.flow span{font-size:14px;color:var(--soft)}
+.voices{display:grid;grid-template-columns:repeat(2,1fr);gap:20px}
+blockquote{margin:0;background:var(--card);border-left:4px solid var(--sun);padding:20px 22px;font-size:15px}
+cite{display:block;margin-top:8px;font-style:normal;font-size:13px;color:var(--soft)}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:48px}
+.info{margin-top:0}.info dt,.info dd{padding:7px 0;border-bottom:1px solid var(--line)}.info dd{font-weight:500}
+.info{gap:0 14px}
+form{display:grid;gap:14px}
+label{display:grid;gap:4px;font-size:14px;font-weight:700}
+input,select,textarea{font:400 16px inherit;font-family:inherit;padding:11px;border:1px solid var(--line);border-radius:6px;background:#fff;width:100%}
+#msg{margin:0;font-size:14px;color:var(--green);font-weight:700;min-height:1.6em}
+.owner{background:var(--green-d);color:#fff;text-align:center}
+.owner p{margin:12px auto 22px;max-width:620px;opacity:.92}
+.owner .btn{background:var(--sun);color:var(--ink)}.owner .btn:hover{background:#f6d68d}
+.owner .link{display:block;margin-top:14px;font-size:14px}
+footer{padding:28px 0;text-align:center;font-size:13px;color:var(--soft)}
+.call{position:fixed;left:0;right:0;bottom:0;z-index:6;display:none;background:var(--green);padding:10px 16px}
+.call a{display:block;text-align:center;color:#fff;font-weight:700;text-decoration:none}
+@media(max-width:780px){
+ nav{display:none}.hero{grid-template-columns:1fr;padding:40px 0;gap:28px}
+ .points ul,.cases,.voices,.two{grid-template-columns:1fr}.points li{border-left:0;border-top:1px solid rgba(255,255,255,.2);padding:18px 0}.points li:first-child{border-top:0}
+ .flow{grid-template-columns:1fr 1fr}section{padding:52px 0}.call{display:block}
+}
+</style>
+</head>
+<body>
+<div class="notice">これは <b>Sato's creator</b> の制作サンプルです。会社・人物・施工事例・口コミはすべて架空のものです。</div>
+<header><div class="wrap bar">
+<a class="logo" href="#top">木もれ日リフォーム</a>
+<nav><a href="#works">施工事例</a><a href="#price">料金の目安</a><a href="#flow">工事の流れ</a><a href="#company">会社案内</a><a href="#estimate">無料見積もり</a></nav>
+</div></header>
+
+<main id="top">
+<div class="wrap hero">
+<div>
+<p class="eyebrow">藤沢市・茅ヶ崎市のリフォーム</p>
+<h1>小さな工事こそ、<br>ていねいに。</h1>
+<p class="lead">蛇口の交換からキッチンの入れ替えまで。社長が自分で現地を見て、工事の内容と金額を、わかる言葉でご説明します。</p>
+<a class="btn" href="#estimate">無料で見積もりを頼む</a>
+<span class="tel">お電話：0466-00-0000（サンプル番号）／ 9:00〜18:00</span>
+</div>
+<svg viewBox="0 0 480 360" role="img" aria-label="明るいリビングのイラスト（サンプル画像）">
+<rect width="480" height="360" fill="#f3e3c3"/><rect y="280" width="480" height="80" fill="#c99862"/>
+<g stroke="#b5824f" stroke-width="2"><path d="M0 300h480M0 325h480M90 280v20M250 280v20M390 280v20M170 300v25M330 300v25"/></g>
+<rect x="60" y="50" width="170" height="170" fill="#cfe7ee" stroke="#fff" stroke-width="10"/><path d="M145 50v170M60 135h170" stroke="#fff" stroke-width="6"/>
+<path d="M60 220 118 110l40 70 25-34 47 74z" fill="#7fb08d" opacity=".65"/>
+<rect x="280" y="205" width="150" height="62" rx="12" fill="#2f5d4a"/><rect x="292" y="170" width="126" height="50" rx="12" fill="#3e7560"/>
+<rect x="295" y="267" width="10" height="16" fill="#7a5230"/><rect x="405" y="267" width="10" height="16" fill="#7a5230"/>
+<path d="M240 280c0-30 8-50 16-62 8 12 16 32 16 62z" fill="#5f9270"/><rect x="238" y="262" width="36" height="24" rx="3" fill="#b9793f"/>
+<circle cx="405" cy="70" r="32" fill="#efc66b"/>
+</svg>
+</div>
+
+<div class="points"><div class="wrap"><ul>
+<li><b>見積もりは無料</b><span>現地調査のうえ、内訳つきで出します</span></li>
+<li><b>追加費用は事前に相談</b><span>工事中に必要が出ても、勝手に進めません</span></li>
+<li><b>工事後も1年保証</b><span>不具合があれば、まずお電話ください</span></li>
+</ul></div></div>
+
+<section id="works"><div class="wrap">
+<div class="head"><h2>施工事例</h2><p>工事の前と後を切り替えて見られます。費用と工期も載せています。</p></div>
+<div class="cases">
+
+<article class="case">
+<div class="toggle"><button class="b" type="button">工事前</button><button class="a" type="button">工事後</button></div>
+<svg class="before" viewBox="0 0 320 200" role="img" aria-label="工事前の壁付けキッチン（サンプル画像）"><rect width="320" height="200" fill="#b8aa92"/><rect y="150" width="320" height="50" fill="#8b7a62"/><rect x="40" y="30" width="240" height="50" fill="#8d7b5e"/><rect x="40" y="100" width="240" height="60" fill="#9b8a6d"/><rect x="40" y="94" width="240" height="8" fill="#6f6250"/><path d="M100 30v50M160 30v50M220 30v50M100 102v58M160 102v58M220 102v58" stroke="#6f6250" stroke-width="2"/></svg>
+<svg class="after" viewBox="0 0 320 200" role="img" aria-label="工事後の対面キッチン（サンプル画像）"><rect width="320" height="200" fill="#f6efe2"/><rect y="150" width="320" height="50" fill="#c99862"/><rect x="50" y="24" width="220" height="42" fill="#fff" stroke="#ded6c6"/><rect x="30" y="100" width="260" height="62" fill="#2f5d4a"/><rect x="24" y="92" width="272" height="10" fill="#fffdf8"/><circle cx="90" cy="38" r="0" /><path d="M150 92V72a12 12 0 0 1 24 0" fill="none" stroke="#8c8c8c" stroke-width="4"/></svg>
+<div class="body"><h3>キッチンを対面式に</h3><p>藤沢市・戸建て。暗かった壁付けキッチンを、家族の顔が見える形に。</p>
+<dl><dt>費用</dt><dd>148万円</dd><dt>工期</dt><dd>6日</dd></dl></div>
+</article>
+
+<article class="case">
+<div class="toggle"><button class="b" type="button">工事前</button><button class="a" type="button">工事後</button></div>
+<svg class="before" viewBox="0 0 320 200" role="img" aria-label="工事前のタイル張りの浴室（サンプル画像）"><rect width="320" height="200" fill="#a9b4b0"/><path d="M0 40h320M0 80h320M0 120h320M0 160h320M53 0v200M106 0v200M159 0v200M212 0v200M265 0v200" stroke="#8d9a95" stroke-width="2"/><rect x="60" y="110" width="200" height="70" fill="#c9c2ae"/><rect x="60" y="102" width="200" height="10" fill="#b1a993"/></svg>
+<svg class="after" viewBox="0 0 320 200" role="img" aria-label="工事後のユニットバス（サンプル画像）"><rect width="320" height="200" fill="#eef3f2"/><rect y="168" width="320" height="32" fill="#cfd8d6"/><rect x="50" y="104" width="220" height="72" rx="14" fill="#fff" stroke="#cfd8d6" stroke-width="2"/><rect x="66" y="120" width="188" height="44" rx="10" fill="#bfe0e6"/><rect x="238" y="20" width="44" height="66" fill="#d8e8e6"/><path d="M78 92V36h26" fill="none" stroke="#9aa5a3" stroke-width="4"/></svg>
+<div class="body"><h3>寒い浴室をユニットバスに</h3><p>茅ヶ崎市・戸建て。冬の冷え込みが気になるとのご相談でした。</p>
+<dl><dt>費用</dt><dd>112万円</dd><dt>工期</dt><dd>5日</dd></dl></div>
+</article>
+
+<article class="case">
+<div class="toggle"><button class="b" type="button">工事前</button><button class="a" type="button">工事後</button></div>
+<svg class="before" viewBox="0 0 320 200" role="img" aria-label="工事前の色あせた外壁（サンプル画像）"><rect width="320" height="200" fill="#cfd9df"/><path d="M50 90 160 24l110 66z" fill="#6e6a64"/><rect x="66" y="90" width="188" height="110" fill="#b5ad9d"/><path d="M90 110l10 30-8 20M210 120l-6 26 10 20" stroke="#8e8675" stroke-width="2" fill="none"/><rect x="118" y="112" width="48" height="40" fill="#d7e4ea" stroke="#fff" stroke-width="3"/></svg>
+<svg class="after" viewBox="0 0 320 200" role="img" aria-label="工事後の塗り替えた外壁（サンプル画像）"><rect width="320" height="200" fill="#bfe0ee"/><path d="M50 90 160 24l110 66z" fill="#2f5d4a"/><rect x="66" y="90" width="188" height="110" fill="#f6efe2"/><rect x="118" y="112" width="48" height="40" fill="#d7e4ea" stroke="#fff" stroke-width="3"/><rect x="190" y="130" width="34" height="70" fill="#b9793f"/></svg>
+<div class="body"><h3>外壁と屋根の塗り替え</h3><p>藤沢市・築25年。ひび割れを補修してから塗り直しました。</p>
+<dl><dt>費用</dt><dd>96万円</dd><dt>工期</dt><dd>12日</dd></dl></div>
+</article>
+
+</div>
+<p class="small">※ 施工事例は表示例です（架空の会社のため実在の工事ではありません）。写真は実際の施工写真に差し替える想定です。</p>
+</div></section>
+
+<section id="price" class="alt"><div class="wrap">
+<div class="head"><h2>料金の目安</h2><p>建物の状態で変わるため、正式な金額は現地調査のあとにお伝えします。</p></div>
+<table>
+<tr><th>蛇口・トイレの部品交換</th><td>¥12,000〜</td></tr>
+<tr><th>トイレの入れ替え</th><td>¥180,000〜</td></tr>
+<tr><th>洗面台の入れ替え</th><td>¥150,000〜</td></tr>
+<tr><th>ユニットバスの入れ替え</th><td>¥900,000〜</td></tr>
+<tr><th>キッチンの入れ替え</th><td>¥800,000〜</td></tr>
+<tr><th>外壁・屋根の塗り替え</th><td>¥800,000〜</td></tr>
+</table>
+<p class="small">※ 金額は架空の会社の表示例です。消費税込みの表記を想定しています。</p>
+</div></section>
+
+<section id="flow"><div class="wrap">
+<div class="head"><h2>工事の流れ</h2></div>
+<ol class="flow">
+<li><b>ご相談</b><span>電話かフォームから。写真があれば話が早いです</span></li>
+<li><b>現地調査</b><span>社長がお伺いし、気になる点を一緒に確認します</span></li>
+<li><b>お見積もり</b><span>内訳つきで提出。断っていただいても費用はかかりません</span></li>
+<li><b>工事・お引き渡し</b><span>近隣へのご挨拶から片付けまで行います</span></li>
+</ol>
+</div></section>
+
+<section class="alt"><div class="wrap">
+<div class="head"><h2>お客様の声</h2></div>
+<div class="voices">
+<blockquote>見積もりの項目を一つずつ説明してくれたので、納得して頼めました。<cite>藤沢市 60代のお客様（表示例）</cite></blockquote>
+<blockquote>小さな修理でも嫌な顔をされず、次はお風呂もお願いしました。<cite>茅ヶ崎市 40代のお客様（表示例）</cite></blockquote>
+</div>
+<p class="small">※ 口コミは表示例です（架空の会社のため実在の声ではありません）。</p>
+</div></section>
+
+<section><div class="wrap two">
+<div id="company">
+<h2 style="margin-bottom:20px">会社案内</h2>
+<dl class="info">
+<dt>会社名</dt><dd>木もれ日リフォーム（架空の会社）</dd>
+<dt>代表</dt><dd>河野 誠（架空の人物）</dd>
+<dt>所在地</dt><dd>神奈川県藤沢市○○ ○-○（サンプル住所）</dd>
+<dt>建設業許可</dt><dd>○○県知事許可 第000000号（サンプル）</dd>
+<dt>対応地域</dt><dd>藤沢市・茅ヶ崎市・鎌倉市</dd>
+<dt>定休日</dt><dd>日曜・祝日</dd>
+</dl>
+</div>
+<div id="estimate">
+<h2 style="margin-bottom:20px">無料見積もり</h2>
+<form onsubmit="return false">
+<label>お名前<input type="text" autocomplete="off" placeholder="例：山田 太郎"></label>
+<label>ご希望の工事<select><option>キッチン</option><option>浴室</option><option>トイレ・洗面</option><option>外壁・屋根</option><option>その他</option></select></label>
+<label>ご相談内容<textarea rows="4" placeholder="気になっている場所を教えてください"></textarea></label>
+<button class="btn" type="button" id="send">送信する</button>
+<p id="msg" role="status"></p>
+</form>
+</div>
+</div></section>
+
+<section class="owner"><div class="wrap">
+<p class="eyebrow" style="color:var(--sun)">FOR OWNERS</p>
+<h2>このようなサイトを、あなたの会社でも。</h2>
+<p>このページは Sato's creator のウェブサイト制作サンプルです。施工事例の写真と料金の目安があれば、形にできます。</p>
+<a class="btn" href="mailto:satoscreator@outlook.jp?subject=%E3%82%B5%E3%82%A4%E3%83%88%E5%88%B6%E4%BD%9C%E3%81%AE%E7%9B%B8%E8%AB%87">制作を相談する</a>
+<a class="link" href="https://kentaikan0325-alt.github.io/satos-creator-site/web.html#pricing">料金プランと制作の流れを見る</a>
+</div></section>
+</main>
+
+<footer>木もれ日リフォーム（架空の会社）<br>このページは Sato's creator のウェブサイト制作サンプルです。会社情報・人物・施工事例・口コミはすべて架空のものです。<br>制作：<a href="https://kentaikan0325-alt.github.io/satos-creator-site/index.html">Sato's creator</a></footer>
+<div class="call"><a href="#estimate">無料で見積もりを頼む</a></div>
+
+<script>
+document.querySelectorAll('.case').forEach(function(c){
+  c.querySelector('.b').addEventListener('click',function(){c.classList.remove('on')});
+  c.querySelector('.a').addEventListener('click',function(){c.classList.add('on')});
+});
+document.getElementById('send').addEventListener('click',function(){
+  document.getElementById('msg').textContent='サンプルのため、送信はされません。';
+});
+</script>
+</body>
+</html>

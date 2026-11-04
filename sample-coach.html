@@ -1,0 +1,186 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>水野はるか｜伝え方の研修講師</title>
+<meta name="description" content="Sato's creator のウェブサイト制作サンプル。架空の研修講師を題材に、研修内容・実績・料金の目安・依頼窓口など、講師のサイトに必要な要素を実装した見本ページです。">
+<meta name="robots" content="noindex">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&display=swap" rel="stylesheet">
+<style>
+:root{--ink:#16213e;--soft:#59617a;--bg:#fbfaf7;--card:#fff;--line:#e3e1da;--blue:#2b3ea8;--coral:#ef6a4c;--pale:#e9ecfb}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth;scroll-padding-top:72px}
+body{margin:0;background:var(--bg);color:var(--ink);font:400 16px/1.85 "Noto Sans JP","Hiragino Sans","Noto Sans CJK JP",sans-serif}
+h1,h2,h3{margin:0;line-height:1.35;font-weight:900}
+a{color:inherit}
+.notice{background:var(--ink);color:#fff;text-align:center;font-size:13px;padding:8px 16px;line-height:1.6}
+.wrap{max-width:1040px;margin:0 auto;padding:0 20px}
+header{position:sticky;top:0;z-index:5;background:rgba(251,250,247,.95);border-bottom:1px solid var(--line)}
+.bar{display:flex;align-items:center;justify-content:space-between;height:60px}
+.logo{font-weight:900;text-decoration:none;letter-spacing:.02em}
+nav{display:flex;gap:22px;font-size:14px}nav a{text-decoration:none}
+.btn{display:inline-block;background:var(--coral);color:#fff;font-weight:700;text-decoration:none;padding:14px 26px;border-radius:999px;border:0;font-size:16px;font-family:inherit;cursor:pointer}
+.btn:hover{background:#d9553a}
+.hero{padding:72px 0 64px;display:grid;grid-template-columns:1.35fr .8fr;gap:48px;align-items:center}
+.tag{color:var(--blue);font-weight:700;font-size:14px;margin:0 0 14px}
+h1{font-size:clamp(36px,6vw,64px);letter-spacing:-.01em}
+h1 em{font-style:normal;color:var(--blue)}
+.lead{color:var(--soft);margin:22px 0 28px;max-width:32em}
+.portrait{width:100%;height:auto;display:block}
+.nums{background:var(--blue);color:#fff}
+.nums ul{list-style:none;padding:0;margin:0;display:grid;grid-template-columns:repeat(3,1fr)}
+.nums li{padding:28px 20px;text-align:center}
+.nums b{display:block;font-size:38px;font-weight:900;line-height:1.2}
+.nums span{font-size:14px}
+section{padding:76px 0}
+h2{font-size:clamp(26px,3.8vw,36px);margin-bottom:10px}
+.sub{color:var(--soft);margin:0 0 32px}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:26px}
+.card .no{color:var(--coral);font-weight:900;font-size:14px}
+.card h3{font-size:20px;margin:6px 0 10px}
+.card p{margin:0;font-size:15px;color:var(--soft)}
+.tint{background:var(--pale)}
+.plans{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
+.plan{background:var(--card);border-radius:14px;padding:26px;display:flex;flex-direction:column}
+.plan h3{font-size:19px}
+.plan .price{font-size:26px;font-weight:900;color:var(--blue);margin:10px 0}
+.plan ul{margin:0;padding-left:1.2em;font-size:14.5px;color:var(--soft)}
+.small{font-size:13px;color:var(--soft);margin-top:14px}
+.voices{display:grid;grid-template-columns:repeat(2,1fr);gap:20px}
+blockquote{margin:0;font-size:17px;font-weight:500;background:var(--card);border-radius:14px;padding:24px;border:1px solid var(--line)}
+cite{display:block;margin-top:10px;font-style:normal;font-size:13px;font-weight:400;color:var(--soft)}
+.about{display:grid;grid-template-columns:1fr 1.5fr;gap:48px}
+.about ul{margin:14px 0 0;padding-left:1.2em;color:var(--soft);font-size:15px}
+details{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:14px 18px;margin-bottom:10px}
+summary{font-weight:700;cursor:pointer}
+details p{margin:8px 0 0;color:var(--soft);font-size:15px}
+.contact{display:grid;grid-template-columns:1fr 1fr;gap:48px}
+form{display:grid;gap:14px}
+label{display:grid;gap:4px;font-size:14px;font-weight:700}
+input,select,textarea{font:400 16px inherit;font-family:inherit;padding:11px;border:1px solid var(--line);border-radius:8px;background:#fff;width:100%}
+#msg{margin:0;font-size:14px;color:var(--blue);font-weight:700;min-height:1.6em}
+.owner{background:var(--ink);color:#fff;text-align:center}
+.owner .tag{color:#aab4f3}
+.owner p{margin:12px auto 24px;max-width:620px;opacity:.9}
+.owner .link{display:block;margin-top:14px;font-size:14px}
+footer{padding:28px 0;text-align:center;font-size:13px;color:var(--soft)}
+@media(max-width:780px){
+ nav{display:none}.hero{grid-template-columns:1fr;padding:44px 0;gap:24px}.portrait{max-width:220px}
+ .grid3,.plans,.voices,.about,.contact{grid-template-columns:1fr}.about,.contact{gap:28px}section{padding:54px 0}
+ .nums li{padding:18px 6px}.nums b{font-size:26px}.nums span{font-size:12px}
+}
+</style>
+</head>
+<body>
+<div class="notice">これは <b>Sato's creator</b> の制作サンプルです。人物・実績・口コミはすべて架空のものです。</div>
+<header><div class="wrap bar">
+<a class="logo" href="#top">水野はるか</a>
+<nav><a href="#themes">研修テーマ</a><a href="#plans">プログラム</a><a href="#about">プロフィール</a><a href="#faq">よくある質問</a><a href="#contact">ご依頼</a></nav>
+</div></header>
+
+<main id="top">
+<div class="wrap hero">
+<div>
+<p class="tag">管理職・若手社員向け 伝え方の研修講師</p>
+<h1>「言ったのに」を、<br><em>職場から減らす。</em></h1>
+<p class="lead">報告、指示、面談。仕事の行き違いの多くは、伝え方の型で防げます。明日の会議から使える形にして、お持ち帰りいただく研修です。</p>
+<a class="btn" href="#contact">研修の相談をする</a>
+</div>
+<svg class="portrait" viewBox="0 0 300 320" role="img" aria-label="講師のイラスト（サンプル画像）">
+<circle cx="150" cy="160" r="140" fill="#e9ecfb"/><circle cx="150" cy="120" r="56" fill="#f4c9a8"/>
+<path d="M92 122c0-46 28-68 58-68s58 22 58 68c-10-18-24-30-40-34-22 12-52 16-76 34z" fill="#16213e"/>
+<path d="M60 300c4-72 44-110 90-110s86 38 90 110z" fill="#2b3ea8"/>
+<rect x="222" y="58" width="62" height="42" rx="12" fill="#ef6a4c"/><path d="M236 98l-6 18 22-16z" fill="#ef6a4c"/>
+<path d="M238 74h30M238 85h20" stroke="#fff" stroke-width="4" stroke-linecap="round"/>
+</svg>
+</div>
+
+<div class="nums"><div class="wrap"><ul>
+<li><b>320回</b><span>研修の登壇</span></li>
+<li><b>180社</b><span>導入企業</span></li>
+<li><b>4.7</b><span>受講者満足度（5点満点）</span></li>
+</ul></div></div>
+<div class="wrap"><p class="small">※ 数字は表示例です（架空の人物のため実際の実績ではありません）。</p></div>
+
+<section id="themes"><div class="wrap">
+<h2>研修テーマ</h2>
+<p class="sub">受講者の立場に合わせて、内容を組み立てます。</p>
+<div class="grid3">
+<article class="card"><span class="no">01</span><h3>管理職の伝え方</h3><p>指示の出し方、1on1の聞き方、言いにくいことの伝え方を練習します。</p></article>
+<article class="card"><span class="no">02</span><h3>若手の報連相</h3><p>結論から話す型を身につけ、上司が判断しやすい報告に変えます。</p></article>
+<article class="card"><span class="no">03</span><h3>会議の進め方</h3><p>決まらない会議の原因を見つけ、時間内に結論を出す進行を学びます。</p></article>
+</div>
+</div></section>
+
+<section id="plans" class="tint"><div class="wrap">
+<h2>プログラムと料金の目安</h2>
+<p class="sub">人数や内容に合わせて調整します。オンラインにも対応しています。</p>
+<div class="plans">
+<article class="plan"><h3>講演 90分</h3><div class="price">¥150,000〜</div><ul><li>全社集会、イベントに</li><li>人数の上限なし</li></ul></article>
+<article class="plan"><h3>半日研修</h3><div class="price">¥250,000〜</div><ul><li>ワーク中心、30名まで</li><li>資料つき</li></ul></article>
+<article class="plan"><h3>連続研修 全3回</h3><div class="price">¥600,000〜</div><ul><li>職場での実践と振り返り</li><li>事前ヒアリングつき</li></ul></article>
+</div>
+<p class="small">※ 金額は架空の講師の表示例です。交通費は別途の想定です。</p>
+</div></section>
+
+<section><div class="wrap">
+<h2>受講者の声</h2>
+<p class="sub">ご担当者さまの声を載せる欄です。</p>
+<div class="voices">
+<blockquote>翌週の会議から、報告が結論から始まるようになりました。<cite>製造業 人事ご担当者（表示例）</cite></blockquote>
+<blockquote>管理職から「面談が怖くなくなった」と声が上がりました。<cite>IT企業 研修ご担当者（表示例）</cite></blockquote>
+</div>
+<p class="small">※ 口コミは表示例です（架空の人物のため実在の声ではありません）。</p>
+</div></section>
+
+<section id="about" class="tint"><div class="wrap about">
+<div><h2>プロフィール</h2><p style="margin:0;font-weight:700">水野 はるか（架空の人物）</p></div>
+<div>
+<p style="margin:0">広告会社の営業、人事部門を経て、研修講師として独立。部下との行き違いに悩んだ自身の経験から、「気持ちではなく型で変える」研修を続けています。</p>
+<ul><li>企業研修、自治体の職員研修に登壇</li><li>書籍やWeb媒体での執筆</li><li>キャリアコンサルタント資格（表示例）</li></ul>
+</div>
+</div></section>
+
+<section id="faq"><div class="wrap">
+<h2>よくある質問</h2>
+<p class="sub">ご依頼前によくいただく内容です。</p>
+<details open><summary>どのくらい前に依頼すればいいですか？</summary><p>2か月前までのご相談をおすすめしています。お急ぎの場合もお問い合わせください。</p></details>
+<details><summary>内容のカスタマイズはできますか？</summary><p>事前にお話を伺い、貴社の事例に合わせて調整します。</p></details>
+<details><summary>オンラインでも実施できますか？</summary><p>はい。ZoomやTeamsなどで実施できます。</p></details>
+<details><summary>少人数でも依頼できますか？</summary><p>5名ほどから承っています。</p></details>
+</div></section>
+
+<section id="contact" class="tint"><div class="wrap contact">
+<div><h2>研修のご相談</h2><p style="margin:0;color:var(--soft)">日程が未定でも大丈夫です。2営業日以内にお返事します。企業・自治体のご担当者さま向けの窓口です。</p></div>
+<form onsubmit="return false">
+<label>会社名・団体名<input type="text" autocomplete="off"></label>
+<label>ご担当者名<input type="text" autocomplete="off"></label>
+<label>ご希望の内容<select><option>講演</option><option>半日研修</option><option>連続研修</option><option>その他</option></select></label>
+<label>ご相談内容<textarea rows="4"></textarea></label>
+<button class="btn" type="button" id="send">送信する</button>
+<p id="msg" role="status"></p>
+</form>
+</div></section>
+
+<section class="owner"><div class="wrap">
+<p class="tag">FOR OWNERS</p>
+<h2>このようなサイトを、あなたの活動でも。</h2>
+<p>このページは Sato's creator のウェブサイト制作サンプルです。実績、研修内容、企業向けの窓口を1か所にまとめられます。</p>
+<a class="btn" href="mailto:satoscreator@outlook.jp?subject=%E3%82%B5%E3%82%A4%E3%83%88%E5%88%B6%E4%BD%9C%E3%81%AE%E7%9B%B8%E8%AB%87">制作を相談する</a>
+<a class="link" href="https://kentaikan0325-alt.github.io/satos-creator-site/web.html#pricing">料金プランと制作の流れを見る</a>
+</div></section>
+</main>
+
+<footer>水野はるか（架空の人物）<br>このページは Sato's creator のウェブサイト制作サンプルです。人物・実績・口コミはすべて架空のものです。<br>制作：<a href="https://kentaikan0325-alt.github.io/satos-creator-site/index.html">Sato's creator</a></footer>
+
+<script>
+document.getElementById('send').addEventListener('click',function(){
+  document.getElementById('msg').textContent='サンプルのため、送信はされません。';
+});
+</script>
+</body>
+</html>

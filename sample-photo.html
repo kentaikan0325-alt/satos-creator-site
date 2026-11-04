@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>写真室ひとこま｜出張撮影のカメラマン</title>
+<meta name="description" content="Sato's creator のウェブサイト制作サンプル。架空の写真家を題材に、作品・撮影メニュー・料金など、写真家のサイトに必要な要素を実装した見本ページです。">
+<meta name="robots" content="noindex">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&display=swap" rel="stylesheet">
+<style>
+:root{--ink:#f2efe9;--soft:#b5b0a6;--bg:#17181b;--panel:#202226;--card:#26282d;--line:#3a3d44;--main:#e2b35a;--on:#17181b;--accent:#e2b35a}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth;scroll-padding-top:72px}
+body{margin:0;background:var(--bg);color:var(--ink);font:400 16px/1.85 "Noto Sans JP","Hiragino Sans","Noto Sans CJK JP",sans-serif}
+h1,h2,h3{margin:0;line-height:1.4;font-family:"Noto Sans JP","Hiragino Sans","Noto Sans CJK JP",sans-serif;font-weight:700}
+a{color:inherit}
+.notice{background:#16181d;color:#fff;text-align:center;font-size:13px;padding:8px 16px;line-height:1.6}
+.wrap{max-width:1040px;margin:0 auto;padding:0 20px}
+header{position:sticky;top:0;z-index:5;background:var(--bg);border-bottom:1px solid var(--line)}
+.bar{display:flex;align-items:center;justify-content:space-between;height:62px}
+.logo{font:700 18px "Noto Sans JP","Hiragino Sans","Noto Sans CJK JP",sans-serif;text-decoration:none}
+nav{display:flex;gap:22px;font-size:14px}nav a{text-decoration:none}
+.btn{display:inline-block;background:var(--main);color:var(--on);font-weight:700;text-decoration:none;padding:14px 26px;border-radius:6px;border:0;font-size:16px;font-family:inherit;cursor:pointer}
+.hero{padding:76px 20px 64px}
+.tag{color:var(--accent);font-weight:700;font-size:13px;letter-spacing:.1em;margin:0 0 14px}
+h1{font-size:clamp(34px,5.6vw,56px)}
+.lead{color:var(--soft);margin:22px 0 28px;max-width:36em}
+.tel{display:block;margin-top:14px;font-size:14px;color:var(--soft)}
+section{padding:72px 0}
+.alt{background:var(--panel);border-block:1px solid var(--line)}
+h2{font-size:clamp(26px,3.6vw,34px);margin-bottom:10px}
+.sub{color:var(--soft);margin:0 0 30px}
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:24px}
+.card h3{font-size:19px;margin-bottom:8px}.card p{margin:0;font-size:15px;color:var(--soft)}
+table{width:100%;border-collapse:collapse;background:var(--card)}
+th,td{padding:14px 12px;border-bottom:1px solid var(--line);text-align:left;font-weight:500}
+td{text-align:right;font-weight:700;white-space:nowrap}
+.small{font-size:13px;color:var(--soft);margin-top:12px}
+.flow{list-style:none;counter-reset:s;padding:0;margin:0;display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
+.flow li{counter-increment:s;padding-top:6px}
+.flow li:before{content:counter(s);display:grid;place-items:center;width:32px;height:32px;border-radius:50%;background:var(--main);color:var(--on);font-weight:700;margin-bottom:10px}
+.flow b{display:block}.flow span{font-size:14px;color:var(--soft)}
+.gallery{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.gallery figure{margin:0}.gallery svg{display:block;width:100%;height:auto;border-radius:8px}
+figcaption{font-size:14px;margin-top:8px}figcaption span{display:block;color:var(--soft);font-size:13px}
+.voices{display:grid;grid-template-columns:repeat(2,1fr);gap:20px}
+blockquote{margin:0;background:var(--card);border:1px solid var(--line);border-radius:10px;padding:22px}
+cite{display:block;margin-top:8px;font-style:normal;font-size:13px;color:var(--soft)}
+details{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:13px 18px;margin-bottom:10px}
+summary{font-weight:700;cursor:pointer}details p{margin:8px 0 0;color:var(--soft);font-size:15px}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:48px}
+dl{display:grid;grid-template-columns:auto 1fr;margin:0}dt,dd{margin:0;padding:8px 14px 8px 0;border-bottom:1px solid var(--line)}dt{color:var(--soft)}
+form{display:grid;gap:14px}label{display:grid;gap:4px;font-size:14px;font-weight:700}
+input,select,textarea{font:400 16px inherit;font-family:inherit;padding:11px;border:1px solid var(--line);border-radius:6px;background:var(--card);color:var(--ink);width:100%}
+#msg{margin:0;font-size:14px;font-weight:700;min-height:1.6em;color:var(--accent)}
+.owner{background:#16181d;color:#fff;text-align:center}.owner .tag{color:#fff;opacity:.75}
+.owner p{margin:12px auto 24px;max-width:620px;opacity:.9}.owner .btn{background:#fff;color:#16181d}.owner .link{display:block;margin-top:14px;font-size:14px}
+footer{padding:28px 0;text-align:center;font-size:13px;color:var(--soft)}
+@media(max-width:780px){nav{display:none}.grid,.voices,.two,.gallery{grid-template-columns:1fr}.flow{grid-template-columns:1fr 1fr}.hero{padding:48px 20px}section{padding:52px 0}.two{gap:30px}}
+</style>
+</head>
+<body>
+<div class="notice">これは <b>Sato's creator</b> の制作サンプルです。人物・作品・実績・口コミはすべて架空のものです。</div>
+<header><div class="wrap bar"><a class="logo" href="#top">写真室ひとこま</a><nav><a href="#works">作品</a><a href="#menu">撮影メニュー</a><a href="#flow">撮影の流れ</a><a href="#faq">よくある質問</a><a href="#contact">ご予約</a></nav></div></header>
+<main id="top">
+<div class="wrap hero">
+<p class="tag">東京・神奈川の出張撮影</p>
+<h1>緊張がほどけた、<br>その一枚を。</h1>
+<p class="lead">プロフィール、家族写真、お店の撮影まで。おしゃべりしながら、その人らしい表情を撮ります。</p>
+<a class="btn" href="#contact">撮影を予約する</a>
+<span class="tel">メールでのご相談を受け付けています（サンプル）</span>
+</div>
+<section id="works"><div class="wrap"><h2>作品</h2><div class="gallery"><figure><svg viewBox="0 0 320 220" role="img" aria-label="サンプル画像"><rect width="320" height="220" fill="#3b4252"/><circle cx="160" cy="95" r="52" fill="#7d7468"/><path d="M60 220c10-60 50-85 100-85s90 25 100 85z" fill="#a89b86"/></svg><figcaption>プロフィール</figcaption></figure><figure><svg viewBox="0 0 320 220" role="img" aria-label="サンプル画像"><rect width="320" height="220" fill="#55493f"/><rect y="150" width="320" height="70" fill="#7d7468"/><circle cx="240" cy="70" r="34" fill="#a89b86"/></svg><figcaption>家族写真</figcaption></figure><figure><svg viewBox="0 0 320 220" role="img" aria-label="サンプル画像"><rect width="320" height="220" fill="#39483f"/><rect x="50" y="60" width="90" height="120" fill="#7d7468"/><rect x="170" y="90" width="100" height="90" fill="#a89b86"/></svg><figcaption>店舗撮影</figcaption></figure><figure><svg viewBox="0 0 320 220" role="img" aria-label="サンプル画像"><rect width="320" height="220" fill="#4b3f4f"/><rect y="150" width="320" height="70" fill="#7d7468"/><circle cx="240" cy="70" r="34" fill="#a89b86"/></svg><figcaption>七五三</figcaption></figure><figure><svg viewBox="0 0 320 220" role="img" aria-label="サンプル画像"><rect width="320" height="220" fill="#3f4a52"/><rect x="50" y="60" width="90" height="120" fill="#7d7468"/><rect x="170" y="90" width="100" height="90" fill="#a89b86"/></svg><figcaption>商品撮影</figcaption></figure><figure><svg viewBox="0 0 320 220" role="img" aria-label="サンプル画像"><rect width="320" height="220" fill="#524a3a"/><circle cx="160" cy="95" r="52" fill="#7d7468"/><path d="M60 220c10-60 50-85 100-85s90 25 100 85z" fill="#a89b86"/></svg><figcaption>ポートレート</figcaption></figure></div><p class="small">※ 作品は表示例です。実際の写真に差し替える想定です。</p></div></section>
+<section id="menu" class="alt"><div class="wrap"><h2>撮影メニュー</h2><table><tr><th>プロフィール撮影（30分）</th><td>¥15,000〜</td></tr><tr><th>家族・記念撮影（60分）</th><td>¥25,000〜</td></tr><tr><th>店舗・商品撮影（2時間）</th><td>¥50,000〜</td></tr></table><p class="small">※ 金額は架空の表示例です。遠方の場合は交通費を別途いただく想定です。</p></div></section>
+<section id="flow"><div class="wrap"><h2>撮影の流れ</h2><ol class="flow"><li><b>ご予約</b><span>日時と場所、撮影の目的を伺います</span></li><li><b>打ち合わせ</b><span>服装や構図の希望を確認します</span></li><li><b>撮影</b><span>当日は会話しながら進めます</span></li><li><b>納品</b><span>7日以内にデータをお渡しします</span></li></ol></div></section>
+<section id="voice" class="alt"><div class="wrap"><h2>お客様の声</h2><div class="voices"><blockquote>写真が苦手でしたが、話しているうちに自然に笑えていました。<cite>会社経営のお客様（表示例）</cite></blockquote><blockquote>子どもが飽きないように工夫してくれて助かりました。<cite>ご家族のお客様（表示例）</cite></blockquote></div><p class="small">※ 口コミは表示例です（架空の人物のため実在の声ではありません）。</p></div></section>
+<section id="faq"><div class="wrap"><h2>よくある質問</h2><details open><summary>雨の日はどうなりますか？</summary><p>屋外の撮影は、無料で日程を変更できます。</p></details><details><summary>データは何枚もらえますか？</summary><p>プランごとに30枚以上をお渡しします。</p></details><details><summary>写真の修整はできますか？</summary><p>明るさや色の調整は料金に含まれます。</p></details></div></section>
+
+<section id="contact"><div class="wrap two">
+<div><h2>撮影のご予約</h2><p class="sub">ご希望の日時と場所をお知らせください。</p><dl><dt>屋号</dt><dd>写真室ひとこま（架空）</dd><dt>撮影者</dt><dd>青山 澄（架空の人物）</dd><dt>対応地域</dt><dd>東京都・神奈川県</dd><dt>定休日</dt><dd>不定休</dd></dl></div>
+<form onsubmit="return false">
+<label>お名前<input type="text" autocomplete="off"></label>
+<label>ご相談の種類<select><option>プロフィール</option><option>家族・記念</option><option>店舗・商品</option><option>その他</option></select></label>
+<label>ご相談内容<textarea rows="4"></textarea></label>
+<button class="btn" type="button" id="send">送信する</button>
+<p id="msg" role="status"></p>
+</form>
+</div></section>
+<section class="owner"><div class="wrap">
+<p class="tag">FOR OWNERS</p>
+<h2>このようなサイトを、あなたの活動でも。</h2>
+<p>このページは Sato's creator のウェブサイト制作サンプルです。作品と料金をまとめて、依頼しやすい形にできます。</p>
+<a class="btn" href="mailto:satoscreator@outlook.jp?subject=%E3%82%B5%E3%82%A4%E3%83%88%E5%88%B6%E4%BD%9C%E3%81%AE%E7%9B%B8%E8%AB%87">制作を相談する</a>
+<a class="link" href="https://kentaikan0325-alt.github.io/satos-creator-site/web.html#pricing">料金プランと制作の流れを見る</a>
+</div></section>
+</main>
+<footer>写真室ひとこま（架空）<br>このページは Sato's creator のウェブサイト制作サンプルです。人物・作品・実績・口コミはすべて架空のものです。<br>制作：<a href="https://kentaikan0325-alt.github.io/satos-creator-site/index.html">Sato's creator</a></footer>
+<script>document.getElementById('send').addEventListener('click',function(){document.getElementById('msg').textContent='サンプルのため、送信はされません。';});</script>
+</body>
+</html>
