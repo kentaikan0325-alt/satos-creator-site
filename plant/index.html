@@ -1,0 +1,762 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>デスクプラント試作 v0 — 世界に1株だけのモンステラ</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<style>
+  :root{
+    --ink:#33302a; --sub:#7a7263; --accent:#5c7a4e; --accent2:#c96f4a;
+    --panel:rgba(255,252,246,.82); --line:rgba(60,52,38,.12);
+  }
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{height:100%}
+  body{
+    font-family:"Hiragino Maru Gothic ProN","Hiragino Sans","Noto Sans JP",sans-serif;
+    color:var(--ink); overflow:hidden;
+    background:linear-gradient(180deg,#f3ecdd 0%,#ece3d0 55%,#e2d5bc 100%);
+    transition:background 1s;
+  }
+  #scene{position:fixed;inset:0}
+  #scene canvas{display:block}
+  /* ------- clock header ------- */
+  #clockBox{
+    position:fixed;top:0;left:0;right:0;text-align:center;padding-top:22px;
+    pointer-events:none;z-index:5;transition:transform .6s;
+  }
+  #dateLine{font-size:14px;letter-spacing:.14em;color:var(--sub)}
+  #clock{font-size:64px;font-weight:200;letter-spacing:.06em;line-height:1.05;font-variant-numeric:tabular-nums}
+  #tempLine{font-size:14px;color:var(--sub);letter-spacing:.08em}
+  #tempLine b{color:var(--ink);font-weight:600}
+  body.clockmode #clock{font-size:96px}
+  body.clockmode #clockBox{padding-top:8vh}
+  /* ------- plant info chip ------- */
+  #chip{
+    position:fixed;top:200px;left:50%;transform:translateX(-50%);z-index:5;
+    background:var(--panel);backdrop-filter:blur(8px);border:1px solid var(--line);
+    border-radius:999px;padding:7px 16px;font-size:13px;display:flex;gap:10px;align-items:center;
+    box-shadow:0 4px 18px rgba(80,66,40,.10);white-space:nowrap;max-width:94vw;overflow:hidden;
+  }
+  #chip .rare{color:var(--accent2);font-weight:700}
+  body.clockmode #chip{top:auto;bottom:120px}
+  /* ------- banner ------- */
+  #banner{
+    position:fixed;top:308px;left:50%;transform:translateX(-50%);z-index:6;width:min(92vw,430px);
+    background:#fffdf7;border:1px solid var(--line);border-left:4px solid var(--accent2);
+    border-radius:12px;padding:10px 14px;font-size:13.5px;line-height:1.55;display:none;
+    box-shadow:0 8px 24px rgba(80,66,40,.14);
+  }
+  #banner button{margin-top:6px}
+  body.clockmode #banner{top:auto;bottom:190px}
+  /* ------- status pill ------- */
+  #statusPill{
+    position:fixed;top:246px;left:50%;transform:translateX(-50%);z-index:5;
+    background:var(--panel);backdrop-filter:blur(8px);border:1px solid var(--line);
+    border-radius:14px;padding:7px 14px;box-shadow:0 4px 14px rgba(80,66,40,.08);
+    width:min(94vw,520px);
+  }
+  body.clockmode #statusPill{display:none}
+  #statusRow{display:flex;gap:12px;font-size:12px;color:var(--sub);flex-wrap:wrap;justify-content:center}
+  .bar{display:inline-block;width:64px;height:7px;background:rgba(60,52,38,.12);border-radius:99px;vertical-align:middle;margin-left:5px;overflow:hidden}
+  .bar i{display:block;height:100%;background:var(--accent);border-radius:99px;transition:width .5s}
+  .bar.water i{background:#5b83a6}.bar.health i{background:#7a9a58}.bar.grow i{background:#c9a24a}
+  #statMeta{text-align:center;font-size:11.5px;color:var(--sub);margin-top:4px}
+  /* ------- bottom sheet + tab bar ------- */
+  #sheet{
+    position:fixed;left:0;right:0;bottom:64px;z-index:6;display:flex;justify-content:center;
+    padding:0 12px;pointer-events:none;
+  }
+  #sheetCard{
+    background:var(--panel);backdrop-filter:blur(12px);border:1px solid var(--line);
+    border-radius:18px;padding:13px 14px;width:min(96vw,520px);max-height:42vh;overflow-y:auto;
+    box-shadow:0 10px 30px rgba(80,66,40,.16);pointer-events:auto;
+    transform:translateY(16px);opacity:0;transition:transform .25s,opacity .25s;
+  }
+  #sheet.open #sheetCard{transform:translateY(0);opacity:1}
+  #sheet:not(.open){visibility:hidden}
+  .sheetSec{display:none}
+  .sheetSec.active{display:block}
+  .rowLabel{font-size:11px;color:var(--sub);letter-spacing:.1em;margin-bottom:7px}
+  .btnRow{display:flex;gap:7px;flex-wrap:wrap;justify-content:center}
+  button{
+    font-family:inherit;font-size:13.5px;color:var(--ink);background:#fffdf8;
+    border:1px solid var(--line);border-radius:999px;padding:8px 14px;cursor:pointer;
+    box-shadow:0 2px 6px rgba(80,66,40,.06);
+  }
+  button:active{transform:scale(.96)}
+  button.on{background:var(--accent);color:#fff;border-color:var(--accent)}
+  button.warn{background:#fdf0e6}
+  .swatches{display:flex;gap:9px;justify-content:center;align-items:center;padding:4px 0 2px}
+  .sw{width:28px;height:28px;border-radius:50%;border:2px solid rgba(255,255,255,.9);box-shadow:0 1px 5px rgba(0,0,0,.2);cursor:pointer;padding:0}
+  .sw.on{outline:2px solid var(--accent);outline-offset:2px}
+  #tabbar{
+    position:fixed;left:0;right:0;bottom:0;z-index:7;height:calc(56px + env(safe-area-inset-bottom));
+    padding-bottom:env(safe-area-inset-bottom);
+    background:rgba(255,252,246,.9);backdrop-filter:blur(12px);border-top:1px solid var(--line);
+    display:flex;justify-content:space-around;align-items:stretch;
+  }
+  body.clockmode #tabbar, body.clockmode #sheet{display:none}
+  #tabbar button{
+    flex:1;background:none;border:none;box-shadow:none;border-radius:0;
+    font-size:11px;color:var(--sub);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;padding:4px 0;
+  }
+  #tabbar button .ic{font-size:20px;line-height:1}
+  #tabbar button.on{color:var(--accent);font-weight:700}
+  /* filmstrip */
+  #film{display:flex;gap:6px;overflow-x:auto;padding:2px}
+  #film img{width:52px;height:66px;object-fit:cover;border-radius:8px;border:1px solid var(--line);flex:none}
+  #film .empty{font-size:12px;color:var(--sub);padding:6px 2px}
+  /* hint + corner buttons */
+  #hint{position:fixed;bottom:calc(64px + env(safe-area-inset-bottom));right:12px;font-size:11px;color:var(--sub);z-index:4}
+  body.clockmode #hint{display:none}
+  #modeBtn{position:fixed;top:16px;right:14px;z-index:7}
+  #newSeedBtn{position:fixed;top:16px;left:14px;z-index:7}
+  #infoText{font-size:13px;line-height:1.8;color:var(--ink)}
+  #infoText .k{color:var(--sub)}
+  /* modal */
+  #modalWrap{position:fixed;inset:0;background:rgba(46,40,28,.45);display:none;z-index:20;align-items:center;justify-content:center;padding:18px}
+  #cert{
+    background:linear-gradient(160deg,#fffdf4,#f6efdc);border:1px solid #d9cba6;border-radius:14px;
+    width:min(92vw,380px);padding:26px 24px;box-shadow:0 20px 50px rgba(0,0,0,.3);text-align:center;
+  }
+  #cert h2{font-size:15px;letter-spacing:.3em;color:var(--sub);font-weight:600;margin-bottom:4px}
+  #cert .no{font-size:12px;color:var(--sub);letter-spacing:.12em}
+  #cert .name{font-size:24px;margin:10px 0 2px;font-weight:700}
+  #cert .sp{font-size:13px;color:var(--sub);font-style:italic}
+  #cert table{margin:16px auto 6px;font-size:13.5px;text-align:left;border-collapse:collapse}
+  #cert td{padding:4px 10px}#cert td.k{color:var(--sub);white-space:nowrap}
+  #cert .foot{font-size:11px;color:var(--sub);margin-top:12px;line-height:1.6}
+  #certClose{margin-top:14px}
+  #note{position:fixed;left:12px;bottom:calc(64px + env(safe-area-inset-bottom));font-size:10.5px;color:var(--sub);z-index:4;max-width:46vw}
+  body.clockmode #note{display:none}
+</style>
+</head>
+<body>
+<div id="scene"></div>
+
+<button id="newSeedBtn">🌱 新しい種</button>
+<button id="modeBtn">🕐 時計モード</button>
+
+<div id="clockBox">
+  <div id="dateLine">—</div>
+  <div id="clock">--:--</div>
+  <div id="tempLine">気温を取得中…</div>
+</div>
+
+<div id="chip"><span id="chipName">モンステラ</span><span id="chipVar" class="rare"></span><span id="chipStage"></span></div>
+<div id="banner"></div>
+
+<div id="statusPill">
+  <div id="statusRow">
+    <span>水分<span class="bar water"><i id="barWater"></i></span> <span id="valWater"></span></span>
+    <span>健康<span class="bar health"><i id="barHealth"></i></span> <span id="valHealth"></span></span>
+    <span>成長<span class="bar grow"><i id="barGrow"></i></span></span>
+  </div>
+  <div id="statMeta"></div>
+</div>
+
+<div id="sheet"><div id="sheetCard">
+  <div class="sheetSec" data-sec="care">
+    <div class="rowLabel">お世話</div>
+    <div class="btnRow">
+      <button id="btnWater">💧 水やり</button>
+      <button id="btnMist">🌫 霧吹き</button>
+      <button id="btnPrune">✂️ 剪定</button>
+      <button id="btnBack">🍃 葉裏チェック</button>
+      <button id="btnRescue" class="warn" style="display:none">🆘 救済モード</button>
+    </div>
+  </div>
+  <div class="sheetSec" data-sec="place">
+    <div class="rowLabel">置き場所（育ち方が変わります）</div>
+    <div class="btnRow" id="placeRow">
+      <button data-place="desk" class="on">デスク</button>
+      <button data-place="window">窓際</button>
+      <button data-place="shelf">棚の中</button>
+      <button data-place="balcony">ベランダ</button>
+    </div>
+  </div>
+  <div class="sheetSec" data-sec="bg">
+    <div class="rowLabel">背景</div>
+    <div class="swatches" id="bgRow">
+      <button class="sw on" data-bg="beige" style="background:#ece3d0" aria-label="ベージュ"></button>
+      <button class="sw" data-bg="white" style="background:#f7f5f0" aria-label="白"></button>
+      <button class="sw" data-bg="sage" style="background:#cfd4c2" aria-label="セージ"></button>
+      <button class="sw" data-bg="terra" style="background:#d9a184" aria-label="テラコッタ"></button>
+      <button class="sw" data-bg="charcoal" style="background:#3c3a38" aria-label="チャコール"></button>
+      <button class="sw" data-bg="night" style="background:#232733" aria-label="夜"></button>
+    </div>
+  </div>
+  <div class="sheetSec" data-sec="film">
+    <div class="rowLabel">成長タイムラプス</div>
+    <div class="btnRow" style="margin-bottom:8px">
+      <button id="btnSnap">📸 今の姿を記録する</button>
+      <button id="btnCert">📜 証明書を見る</button>
+    </div>
+    <div id="film"><span class="empty">新しい葉が出た時に自動で残ります</span></div>
+  </div>
+  <div class="sheetSec" data-sec="info">
+    <div id="infoText">
+      <span class="k">品種：</span>モンステラ・デリシオーサ<br>
+      <span class="k">個体：</span><span id="infoId"></span><br>
+      <span class="k">遊び方：</span>ドラッグで360°回転。水やりは土の乾き具合を見て。あげすぎは根腐れのもと。葉の裏に虫が出ることもあるよ。瀕死になったら救済モード（お世話タブ）で助けられる。
+    </div>
+  </div>
+</div></div>
+
+<nav id="tabbar">
+  <button data-tab="care"><span class="ic">💧</span>お世話</button>
+  <button data-tab="place"><span class="ic">🪟</span>置き場所</button>
+  <button data-tab="bg"><span class="ic">🎨</span>背景</button>
+  <button data-tab="film"><span class="ic">📸</span>記録</button>
+  <button data-tab="info"><span class="ic">🌿</span>情報</button>
+</nav>
+
+<div id="note">試作v0：成長は加速表示中（体感チェック用）。データはこの端末に保存されます。</div>
+<div id="hint">ドラッグで360°回転 ／ ピンチ・ホイールで拡大</div>
+
+<div id="modalWrap">
+  <div id="cert">
+    <h2>個 体 証 明 書</h2>
+    <div class="no" id="certNo"></div>
+    <div class="name" id="certName"></div>
+    <div class="sp">Monstera deliciosa</div>
+    <table>
+      <tr><td class="k">タイプ</td><td id="certVar"></td></tr>
+      <tr><td class="k">誕生日</td><td id="certBirth"></td></tr>
+      <tr><td class="k">葉の数</td><td id="certLeaves"></td></tr>
+      <tr><td class="k">高さ</td><td id="certHeight"></td></tr>
+      <tr><td class="k">性格</td><td id="certChara"></td></tr>
+      <tr><td class="k">挿し木</td><td id="certCut"></td></tr>
+    </table>
+    <div class="foot">この株は個体DNAから生成されており、<br>葉の形・切れ込み・斑の出方は世界に1つだけです。</div>
+    <button id="certClose">閉じる</button>
+  </div>
+</div>
+
+<script>
+"use strict";
+/* ================= seeded RNG (個体DNA) ================= */
+function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+const $=id=>document.getElementById(id);
+
+/* ================= state ================= */
+const SAVE_KEY="deskplant-proto-v1";
+const VAR_TYPES=[
+  {id:"normal", name:"通常（緑一色）", rare:"", w:62, col:null},
+  {id:"thai",   name:"タイコンステレーション", rare:"レア ★★", w:20, col:"thai"},
+  {id:"albo",   name:"アルボ（白斑）", rare:"レア ★★★", w:12, col:"albo"},
+  {id:"aurea",  name:"アウレア（黄斑）", rare:"激レア ★★★★", w:4, col:"aurea"},
+  {id:"mint",   name:"ミント斑", rare:"激レア ★★★★★", w:2, col:"mint"},
+];
+const PLACES={
+  desk:   {name:"デスク",   light:1.0, dry:1.0, node:1.0, size:1.0},
+  window: {name:"窓際",     light:1.35,dry:1.15,node:0.92,size:1.08},
+  shelf:  {name:"棚の中",   light:0.6, dry:0.85,node:1.35,size:0.85},
+  balcony:{name:"ベランダ", light:1.6, dry:1.5, node:0.95,size:1.05},
+};
+const BGS={
+  beige:"linear-gradient(180deg,#f3ecdd 0%,#ece3d0 55%,#e2d5bc 100%)",
+  white:"linear-gradient(180deg,#fbfaf7 0%,#f3f1ec 55%,#e7e3da 100%)",
+  sage:"linear-gradient(180deg,#dde1d2 0%,#cfd4c2 55%,#bcc4aa 100%)",
+  terra:"linear-gradient(180deg,#eecdb8 0%,#dfae90 55%,#cf9570 100%)",
+  charcoal:"linear-gradient(180deg,#55524e 0%,#403d3a 55%,#2f2c2a 100%)",
+  night:"linear-gradient(180deg,#2c3040 0%,#232733 55%,#171a23 100%)",
+};
+let S=null;
+function rollVar(rng){
+  let r=rng()*100;
+  for(const v of VAR_TYPES){ if(r<v.w) return v.id; r-=v.w; }
+  return "normal";
+}
+function newPlant(){
+  const seed=(Math.random()*0xffffffff)>>>0;
+  const rng=mulberry32(seed);
+  const varId=rollVar(rng);
+  S={ seed, varId, bornAt:Date.now(), leaves:[], growth:0, moisture:72, health:92,
+      place:"desk", bg:"beige", cuttings:0, snaps:[], pest:-1, dead:false, rescuedAt:0, leafSeq:0 };
+  for(let i=0;i<4;i++) addLeaf(true);
+  save();
+}
+function leafParams(){
+  const rng=mulberry32((S.seed ^ (S.leafSeq*2654435761))>>>0);
+  S.leafSeq++;
+  const p=PLACES[S.place];
+  return {
+    angle: rng()*Math.PI*2,
+    size:(0.62+rng()*0.5)*p.size,
+    stemLen:(0.5+rng()*0.45)*p.node,
+    slits:0, holes:0,
+    varAmt: 0.35+rng()*0.65,
+    hue:(rng()*16-8),
+    droop:0.25+rng()*0.4,
+    roll: rng()*0.6,
+    age:0
+  };
+}
+function addLeaf(initial){
+  const lp=leafParams();
+  if(initial) lp.age=0.4+Math.random()*0.6;
+  // 成熟葉ほど切れ込みと穴が増える（葉ごとに数が違う）
+  const idx=S.leaves.length;
+  if(idx>=3){ lp.slits=Math.min(6, Math.floor((idx-2)*(0.7+Math.random()*0.8))); lp.holes=Math.max(0,Math.floor((idx-4)*Math.random()*0.9)); }
+  S.leaves.push(lp);
+  return lp;
+}
+function save(){ try{ localStorage.setItem(SAVE_KEY, JSON.stringify(S)); }catch(e){} }
+function load(){
+  try{ const raw=localStorage.getItem(SAVE_KEY); if(raw){ S=JSON.parse(raw); return true; } }catch(e){}
+  return false;
+}
+function varOf(){ return VAR_TYPES.find(v=>v.id===S.varId); }
+</script>
+<script>
+"use strict";
+/* ================= three.js scene ================= */
+const container=$("scene");
+const renderer=new THREE.WebGLRenderer({antialias:true,alpha:true,preserveDrawingBuffer:true});
+renderer.setPixelRatio(Math.min(devicePixelRatio,2));
+renderer.setSize(innerWidth,innerHeight);
+renderer.shadowMap.enabled=true;
+container.appendChild(renderer.domElement);
+const scene=new THREE.Scene();
+const camera=new THREE.PerspectiveCamera(38,innerWidth/innerHeight,0.1,100);
+camera.position.set(0,1.55,5.2); camera.lookAt(0,1.05,0);
+scene.add(new THREE.AmbientLight(0xfff4e0,0.75));
+const sun=new THREE.DirectionalLight(0xffeec9,0.95);
+sun.position.set(2.5,4.5,2.8); sun.castShadow=true; scene.add(sun);
+const fill=new THREE.DirectionalLight(0xdfe8ff,0.3); fill.position.set(-3,2,-2); scene.add(fill);
+// 地面（机の天板）
+const desk=new THREE.Mesh(new THREE.CircleGeometry(9,48), new THREE.MeshStandardMaterial({color:0xd8c8ab,roughness:1}));
+desk.rotation.x=-Math.PI/2; desk.position.y=0; desk.receiveShadow=true; scene.add(desk);
+const plantRoot=new THREE.Group(); plantRoot.position.y=0; scene.add(plantRoot);
+const plantSpin=new THREE.Group(); plantRoot.add(plantSpin);
+
+/* ================= leaf texture (斑はノイズ生成＝二度と同じ柄にならない) ================= */
+function leafTexture(lp, tint){
+  const W=512,H=640,c=document.createElement("canvas"); c.width=W;c.height=H;
+  const x=c.getContext("2d");
+  const rng=mulberry32((S.seed ^ (lp.angle*1e5|0) ^ (lp.size*1e4|0) ^ (lp.slits*7919) ^ (lp.holes*104729))>>>0);
+  const leafPath=()=>{ x.beginPath(); x.moveTo(256,18);
+    x.bezierCurveTo(402,58,472,238,428,420); x.bezierCurveTo(398,528,332,588,256,606);
+    x.bezierCurveTo(180,588,114,528,84,420); x.bezierCurveTo(40,238,110,58,256,18); x.closePath(); };
+  leafPath();
+  const g=x.createLinearGradient(0,0,0,H);
+  const L=tint? 25 : 29+lp.hue*0.4;
+  g.addColorStop(0,`hsl(${106+lp.hue},36%,${L+11}%)`);
+  g.addColorStop(0.55,`hsl(${110+lp.hue},37%,${L+4}%)`);
+  g.addColorStop(1,`hsl(${114+lp.hue},38%,${L-2}%)`);
+  x.fillStyle=g; x.fill();
+  // 葉全体の色むら（薄いモヤ）で質感を出す
+  x.save(); leafPath(); x.clip();
+  for(let i=0;i<26;i++){
+    const bx=rng()*W, by=rng()*H, br=30+rng()*90;
+    const rg=x.createRadialGradient(bx,by,1,bx,by,br);
+    const dark=rng()<0.5;
+    rg.addColorStop(0, dark? "rgba(20,50,18,0.10)":"rgba(210,240,180,0.08)");
+    rg.addColorStop(1,"rgba(0,0,0,0)");
+    x.fillStyle=rg; x.beginPath(); x.arc(bx,by,br,0,7); x.fill();
+  }
+  x.restore();
+  // 斑（ノイズ生成）
+  const vt=varOf();
+  if(vt.col){
+    x.save(); leafPath(); x.clip();
+    const blobs = vt.col==="thai"? 520 : 9+Math.floor(rng()*8);
+    for(let i=0;i<blobs;i++){
+      const bx=rng()*W, by=rng()*H, br= vt.col==="thai"? 3+rng()*11 : 34+rng()*110;
+      let colr;
+      if(vt.col==="albo") colr=`rgba(247,243,231,${0.88*lp.varAmt})`;
+      else if(vt.col==="thai") colr=`rgba(240,236,208,${0.8*lp.varAmt})`;
+      else if(vt.col==="aurea") colr=`rgba(240,208,94,${0.82*lp.varAmt})`;
+      else colr=`rgba(198,230,207,${0.6*lp.varAmt})`;
+      const rg=x.createRadialGradient(bx,by,1,bx,by,br);
+      rg.addColorStop(0,colr); rg.addColorStop(1,"rgba(255,255,255,0)");
+      x.fillStyle=rg; x.beginPath(); x.arc(bx,by,br,0,7); x.fill();
+    }
+    if(vt.col==="albo" && rng()<0.3){
+      x.fillStyle=`rgba(247,243,231,${0.92*lp.varAmt})`;
+      x.fillRect(rng()<0.5?0:256,0,256,H);
+    }
+    x.restore();
+  }
+  // 葉脈：太い主脈＋大きく反る側脈＋細かい網目
+  x.strokeStyle="rgba(240,255,225,0.28)"; x.lineWidth=7; x.lineCap="round";
+  x.beginPath(); x.moveTo(256,600); x.quadraticCurveTo(248,320,256,30); x.stroke();
+  x.lineWidth=2.6; x.strokeStyle="rgba(240,255,225,0.20)";
+  for(let i=0;i<9;i++){ const y0=84+i*58;
+    x.beginPath(); x.moveTo(254,y0); x.quadraticCurveTo(168,y0+30,88,y0+84); x.stroke();
+    x.beginPath(); x.moveTo(258,y0); x.quadraticCurveTo(344,y0+30,424,y0+84); x.stroke(); }
+  x.lineWidth=1; x.strokeStyle="rgba(240,255,225,0.07)";
+  for(let i=0;i<34;i++){ const y0=50+rng()*540, x0=60+rng()*380;
+    x.beginPath(); x.moveTo(x0,y0); x.lineTo(x0+(rng()*70-35), y0+rng()*60); x.stroke(); }
+  // 葉の縁にわずかな影
+  leafPath(); x.strokeStyle="rgba(16,40,14,0.35)"; x.lineWidth=5; x.stroke();
+  // 切れ込み（深く、葉ごとに数も深さも違う）と穴
+  x.globalCompositeOperation="destination-out";
+  for(let i=0;i<lp.slits;i++){
+    const side=i%2? 1:-1, y0=120+rng()*330, depth=90+rng()*85, tilt=(rng()*16-8);
+    x.save(); x.translate(side<0?8:504,y0); x.rotate(side<0? (tilt-90)*Math.PI/180 : (90-tilt)*Math.PI/180+Math.PI);
+    x.beginPath(); x.ellipse(0,depth*0.5,10,depth,0,0,7); x.fill(); x.restore();
+  }
+  for(let i=0;i<lp.holes;i++){
+    const hx=196+rng()*120, hy=140+rng()*320;
+    x.beginPath(); x.ellipse(hx,hy,9+rng()*9,22+rng()*20,rng()*0.7,0,7); x.fill();
+  }
+  x.globalCompositeOperation="source-over";
+  const tex=new THREE.CanvasTexture(c); tex.anisotropy=4; return tex;
+}
+
+/* ================= plant build ================= */
+let leafObjs=[], potGroup=null, cuttingGroup=null, pestMeshes=[];
+function clearGroup(g){ while(g.children.length){ const o=g.children.pop(); o.traverse(n=>{ if(n.geometry)n.geometry.dispose(); if(n.material){ (Array.isArray(n.material)?n.material:[n.material]).forEach(m=>{ if(m.map)m.map.dispose(); m.dispose(); }); } }); } }
+function buildPot(scale, potCol){
+  const grp=new THREE.Group();
+  const pot=new THREE.Mesh(new THREE.CylinderGeometry(0.56,0.42,0.72,28), new THREE.MeshStandardMaterial({color:potCol,roughness:0.55}));
+  pot.position.y=0.36; pot.castShadow=true; grp.add(pot);
+  const rim=new THREE.Mesh(new THREE.TorusGeometry(0.55,0.045,10,28), new THREE.MeshStandardMaterial({color:potCol,roughness:0.5}));
+  rim.rotation.x=Math.PI/2; rim.position.y=0.72; grp.add(rim);
+  const soil=new THREE.Mesh(new THREE.CircleGeometry(0.52,28), new THREE.MeshStandardMaterial({color:0x4a3826,roughness:1}));
+  soil.rotation.x=-Math.PI/2; soil.position.y=0.715; soil.name="soil"; grp.add(soil);
+  const saucer=new THREE.Mesh(new THREE.CylinderGeometry(0.66,0.58,0.07,28), new THREE.MeshStandardMaterial({color:potCol,roughness:0.6}));
+  saucer.position.y=0.035; grp.add(saucer);
+  grp.scale.setScalar(scale||1);
+  return grp;
+}
+function bendLeaf(geo, amt){
+  const pos=geo.attributes.position;
+  for(let i=0;i<pos.count;i++){
+    const px=pos.getX(i), py=pos.getY(i);
+    const v=(py+0.625)/1.25;
+    pos.setZ(i, Math.sin(v*Math.PI)*amt - px*px*0.22);
+  }
+  geo.computeVertexNormals(); return geo;
+}
+function buildPlant(){
+  clearGroup(plantSpin); leafObjs=[]; pestMeshes=[];
+  potGroup=buildPot(1, 0xf1ead9); plantSpin.add(potGroup);
+  // 土の上の化粧石
+  const prng=mulberry32(S.seed^0x9e37);
+  const pebMat=new THREE.MeshStandardMaterial({color:0xcfc4ae,roughness:1});
+  for(let k=0;k<14;k++){
+    const a=prng()*Math.PI*2, r=0.16+prng()*0.3;
+    const peb=new THREE.Mesh(new THREE.SphereGeometry(0.028+prng()*0.03,7,6), pebMat);
+    peb.position.set(Math.cos(a)*r,0.725,Math.sin(a)*r); peb.scale.y=0.55; plantSpin.add(peb);
+  }
+  // 支柱（モスポール）：育ってきたら登場
+  if(S.leaves.length>=6){
+    const topY=0.72+S.leaves.length*0.13*PLACES[S.place].node+0.5;
+    const pole=new THREE.Mesh(new THREE.CylinderGeometry(0.045,0.045,topY,10),
+      new THREE.MeshStandardMaterial({color:0x8a6f4d,roughness:1}));
+    pole.position.set(0,topY/2+0.35,-0.17); pole.castShadow=true; plantSpin.add(pole);
+  }
+  const stemMat=new THREE.MeshStandardMaterial({color:0x5d7d43,roughness:0.8});
+  let y=0.72;
+  S.leaves.forEach((lp,i)=>{
+    const nodeY=y + i*0.13*PLACES[S.place].node;
+    const dir=new THREE.Vector3(Math.cos(lp.angle),0,Math.sin(lp.angle));
+    const base=dir.clone().multiplyScalar(lp.stemLen*0.55); base.y=nodeY+lp.stemLen*0.35;
+    // 茎
+    const curve=new THREE.CatmullRomCurve3([
+      new THREE.Vector3(0,0.7,0),
+      new THREE.Vector3(dir.x*0.12, nodeY-0.05, dir.z*0.12),
+      base.clone()
+    ]);
+    const stem=new THREE.Mesh(new THREE.TubeGeometry(curve,8,0.028,6), stemMat);
+    stem.castShadow=true; plantSpin.add(stem);
+    // 葉
+    const tex=leafTexture(lp,false);
+    const mat=new THREE.MeshStandardMaterial({map:tex,transparent:true,alphaTest:0.45,side:THREE.DoubleSide,roughness:0.48});
+    const geo=bendLeaf(new THREE.PlaneGeometry(1,1.25,8,8), 0.13);
+    const mesh=new THREE.Mesh(geo,mat);
+    mesh.castShadow=true;
+    const grp=new THREE.Group(); grp.position.copy(base);
+    const look=base.clone().add(dir.clone().multiplyScalar(1)); look.y=base.y+0.28;
+    grp.lookAt(look);
+    mesh.position.y=0.5; mesh.rotation.x=lp.droop*0.55;
+    grp.add(mesh); plantSpin.add(grp);
+    // 巻いた新葉（若い葉はこっちが見える）
+    const roll=new THREE.Mesh(new THREE.CylinderGeometry(0.028,0.075,0.78,8),
+      new THREE.MeshStandardMaterial({color:0x7fae5c,roughness:0.6}));
+    roll.position.y=0.42; roll.rotation.x=0.25; roll.visible=false; grp.add(roll);
+    leafObjs.push({grp,mesh,roll,lp});
+    // 気根（成株の節から茶色い根が垂れる）
+    if(i>=4){
+      const rrng=mulberry32(S.seed+i*7717);
+      const rootCurve=new THREE.CatmullRomCurve3([
+        new THREE.Vector3(0,nodeY,0),
+        new THREE.Vector3(dir.x*0.1, nodeY-0.3-rrng()*0.2, dir.z*0.1),
+        new THREE.Vector3(dir.x*0.16, Math.max(0.74,nodeY-0.65-rrng()*0.3), dir.z*0.16)
+      ]);
+      const root=new THREE.Mesh(new THREE.TubeGeometry(rootCurve,8,0.014,5),
+        new THREE.MeshStandardMaterial({color:0x9a7d55,roughness:1}));
+      plantSpin.add(root);
+    }
+    // 害虫（葉裏）
+    if(S.pest===i){
+      const pm=new THREE.Group();
+      const pmMat=new THREE.MeshStandardMaterial({color:0x6b4a2a,roughness:1});
+      const prng=mulberry32(S.seed+i*333);
+      for(let k=0;k<9;k++){
+        const d=new THREE.Mesh(new THREE.SphereGeometry(0.02+prng()*0.014,6,6), pmMat);
+        d.position.set((prng()-0.5)*0.6,(prng()-0.5)*0.9+0.1,-0.035);
+        pm.add(d);
+      }
+      pm.position.copy(mesh.position); pm.rotation.copy(mesh.rotation);
+      grp.add(pm); pestMeshes.push(pm);
+    }
+  });
+  // 挿し木ポット
+  if(S.cuttings>0){
+    cuttingGroup=buildPot(0.45, 0xd9a184); cuttingGroup.position.set(1.15,0,0.35);
+    const cm=new THREE.MeshStandardMaterial({color:0x6f9455,roughness:0.8,side:THREE.DoubleSide});
+    for(let k=0;k<Math.min(3,S.cuttings+1);k++){
+      const lf=new THREE.Mesh(bendLeaf(new THREE.PlaneGeometry(0.4,0.5,4,4),0.06), cm);
+      lf.position.set(1.15,0.62+k*0.05,0.35); lf.rotation.set(-0.5,k*2.1,0.2);
+      plantSpin.add(lf);
+    }
+    plantSpin.add(cuttingGroup);
+  }
+  updateChip();
+}
+function leafScale(lp){ // 年齢→サイズと巻きの開き
+  const t=Math.min(1,lp.age);
+  const ease=1-Math.pow(1-t,3);
+  return {s:lp.size*(0.25+0.75*ease), unroll:t};
+}
+
+/* ================= UI helpers ================= */
+let bannerTimer=null;
+function banner(html, ms){
+  const b=$("banner"); b.innerHTML=html; b.style.display="block";
+  clearTimeout(bannerTimer);
+  if(ms!==0) bannerTimer=setTimeout(()=>{ b.style.display="none"; }, ms||6000);
+}
+function updateChip(){
+  const vt=varOf();
+  $("chipVar").textContent = vt.id==="normal"? "通常種" : vt.name+" "+vt.rare;
+  const st = S.dead? "枯死" : S.leaves.length<4? "苗" : S.leaves.length<7? "若株" : S.leaves.some(l=>l.slits>2)? "成株（切れ込み葉）" : "成長期";
+  $("chipStage").textContent="・"+st;
+  $("chipName").textContent="モンステラ No."+(S.seed%100000);
+}
+function updateStatus(){
+  $("barWater").style.width=S.moisture+"%"; $("valWater").textContent=Math.round(S.moisture)+"%";
+  $("barHealth").style.width=S.health+"%"; $("valHealth").textContent=Math.round(S.health)+"%";
+  $("barGrow").style.width=Math.min(100,S.growth*10)+"%";
+  const cm=Math.round(24+S.leaves.length*4.2);
+  $("statMeta").textContent=`葉 ${S.leaves.length}枚 ／ 高さ 約${cm}cm ／ ${PLACES[S.place].name}`;
+  $("btnRescue").style.display = (!S.dead && S.health<=25)? "inline-block":"none";
+  document.querySelectorAll("#placeRow button").forEach(b=>b.classList.toggle("on", b.dataset.place===S.place));
+}
+
+/* ================= interactions: 360 rotate / zoom ================= */
+let rotY=0.6, targetRotY=0.6, camDist=5.7, dragging=false, px=0, idleSec=0;
+const el=renderer.domElement;
+el.addEventListener("pointerdown",e=>{dragging=true;px=e.clientX;idleSec=0;el.setPointerCapture(e.pointerId); if(openTab) closeSheet();});
+el.addEventListener("pointermove",e=>{ if(dragging){ targetRotY+=(e.clientX-px)*0.012; px=e.clientX; }});
+el.addEventListener("pointerup",()=>dragging=false);
+el.addEventListener("wheel",e=>{ e.preventDefault(); camDist=Math.max(3.2,Math.min(8,camDist+e.deltaY*0.005)); },{passive:false});
+let pinchD=0;
+el.addEventListener("touchmove",e=>{ if(e.touches.length===2){ const d=Math.hypot(e.touches[0].clientX-e.touches[1].clientX, e.touches[0].clientY-e.touches[1].clientY); if(pinchD) camDist=Math.max(3.2,Math.min(8,camDist+(pinchD-d)*0.01)); pinchD=d; } },{passive:true});
+el.addEventListener("touchend",()=>pinchD=0);
+
+/* ================= actions ================= */
+$("btnWater").onclick=()=>{
+  if(S.dead) return;
+  if(S.moisture>88){ S.health=Math.max(0,S.health-5); banner("水が多すぎるかも。根腐れに注意してね。"); }
+  else banner("水やり完了。土がゆっくり湿っていくよ。");
+  S.moisture=Math.min(100,S.moisture+30); save(); };
+$("btnMist").onclick=()=>{ if(S.dead)return; S.moisture=Math.min(100,S.moisture+5); S.health=Math.min(100,S.health+2); banner("霧吹きしたよ。葉が少し艶っぽくなった気がする。"); save(); };
+$("btnPrune").onclick=()=>{
+  if(S.dead) return;
+  if(S.leaves.length<=3){ banner("まだ葉が少ないので、剪定はもう少し育ってから。"); return; }
+  let big=0; S.leaves.forEach((l,i)=>{ if(l.size>S.leaves[big].size) big=i; });
+  S.leaves.splice(big,1);
+  if(S.pest>=S.leaves.length) S.pest=-1;
+  S.cuttings++; buildPlant(); save();
+  banner("一番大きな葉を剪定。挿し木ポットに移したよ。親の斑の出方を引き継ぐかは、育ってからのお楽しみ。");
+  snapshot(true);
+};
+$("btnBack").onclick=()=>{
+  targetRotY+=Math.PI; idleSec=0;
+  if(S.pest>=0){ banner("葉の裏に小さな虫が…！ このままにすると健康が下がるよ。",0);
+    const b=document.createElement("button"); b.textContent="🖐 駆除する";
+    b.onclick=()=>{ S.pest=-1; S.health=Math.max(0,S.health-2); buildPlant(); save(); banner("駆除完了。しばらく様子を見よう。"); };
+    $("banner").appendChild(document.createElement("br")); $("banner").appendChild(b);
+  } else banner("葉裏チェック完了。異常なし。この調子。");
+};
+$("btnRescue").onclick=()=>{
+  S.health=48; S.moisture=62; S.rescuedAt=Date.now(); save(); updateStatus();
+  banner("救済モード発動。水と環境を整えたよ。ここからは回復を祈ろう。");
+};
+$("btnSnap").onclick=()=>{ snapshot(false); banner("タイムラプスに記録したよ。下のフィルムに貯まっていく。"); };
+$("newSeedBtn").onclick=()=>{
+  if(!confirm("新しい種を植えますか？（今の株の記録は置き換わります）")) return;
+  localStorage.removeItem(SAVE_KEY); newPlant(); $("infoId").textContent="No."+(S.seed%100000)+" ／ "+varOf().name;
+buildPlant(); renderFilm(); updateStatus(); rotY=targetRotY=0.6;
+  const vt=varOf();
+  banner(vt.id==="normal"? "新しい種を植えたよ。どんな株に育つかは、葉が出てからのお楽しみ。" :
+    `なんと…この種、${vt.name}の遺伝子を持っているみたい。${vt.rare}だよ。大事に育てて。`);
+  snapshot(true);
+};
+$("btnCert").onclick=()=>{
+  const vt=varOf();
+  $("certNo").textContent="個体 No. "+S.seed.toString(16).toUpperCase().padStart(8,"0");
+  $("certName").textContent="モンステラ No."+(S.seed%100000);
+  $("certVar").textContent=vt.name+(vt.rare? "（"+vt.rare+"）":"");
+  $("certBirth").textContent=new Date(S.bornAt).toLocaleDateString("ja-JP");
+  $("certLeaves").textContent=S.leaves.length+" 枚";
+  $("certHeight").textContent="約 "+Math.round(24+S.leaves.length*4.2)+" cm";
+  const charas=["のんびり屋","光が大好き","少し気まぐれ","静かに強い","好奇心旺盛","マイペース"];
+  $("certChara").textContent=charas[S.seed%charas.length];
+  $("certCut").textContent=S.cuttings+" 株";
+  $("modalWrap").style.display="flex";
+};
+$("certClose").onclick=()=>$("modalWrap").style.display="none";
+$("modalWrap").addEventListener("click",e=>{ if(e.target.id==="modalWrap") $("modalWrap").style.display="none"; });
+document.querySelectorAll("#placeRow button").forEach(b=>b.onclick=()=>{
+  S.place=b.dataset.place; save(); updateStatus();
+  const msgs={desk:"デスクに移動。バランスの取れた育ち方をするよ。",
+    window:"窓際に移動。光が強くて成長は早いけど、水切れと葉焼けに注意。",
+    shelf:"棚の中に移動。光が弱めで、茎が間延びする「徒長」気味に育ちやすいよ。",
+    balcony:"ベランダに移動。成長は最速。でも水の乾きも一番早い。"};
+  banner(msgs[S.place]);
+});
+document.querySelectorAll("#bgRow .sw").forEach(b=>b.onclick=()=>{
+  S.bg=b.dataset.bg; document.body.style.background=BGS[S.bg];
+  document.querySelectorAll("#bgRow .sw").forEach(o=>o.classList.toggle("on",o===b));
+  const dark=(S.bg==="charcoal"||S.bg==="night");
+  document.body.style.color= dark? "#f2ede2":"";
+  $("clockBox").style.color= dark? "#f2ede2":"";
+  save();
+});
+$("modeBtn").onclick=()=>{
+  document.body.classList.toggle("clockmode");
+  $("modeBtn").textContent=document.body.classList.contains("clockmode")? "🌿 お世話モード":"🕐 時計モード";
+};
+
+/* ================= tab sheet ================= */
+let openTab=null;
+function closeSheet(){ openTab=null; $("sheet").classList.remove("open");
+  document.querySelectorAll("#tabbar button").forEach(b=>b.classList.remove("on"));
+  document.querySelectorAll(".sheetSec").forEach(x=>x.classList.remove("active")); }
+document.querySelectorAll("#tabbar button").forEach(b=>b.onclick=()=>{
+  if(openTab===b.dataset.tab){ closeSheet(); return; }
+  openTab=b.dataset.tab;
+  $("sheet").classList.add("open");
+  document.querySelectorAll("#tabbar button").forEach(o=>o.classList.toggle("on",o===b));
+  document.querySelectorAll(".sheetSec").forEach(x=>x.classList.toggle("active",x.dataset.sec===openTab));
+});
+
+/* ================= timelapse ================= */
+function snapshot(auto){
+  renderer.render(scene,camera);
+  const src=renderer.domElement, t=document.createElement("canvas");
+  const W=144,H=180; t.width=W;t.height=H;
+  const tc=t.getContext("2d");
+  const sr=Math.min(src.width/W, src.height/H);
+  tc.fillStyle="#ece3d0"; tc.fillRect(0,0,W,H);
+  tc.drawImage(src,(src.width-W*sr)/2,(src.height-H*sr)/2,W*sr,H*sr,0,0,W,H);
+  S.snaps.push(t.toDataURL("image/jpeg",0.72));
+  if(S.snaps.length>10) S.snaps.shift();
+  save(); renderFilm();
+}
+function renderFilm(){
+  const f=$("film");
+  if(!S.snaps.length){ f.innerHTML='<span class="empty">「📸 記録する」や新しい葉が出た時に、ここに残ります</span>'; return; }
+  f.innerHTML=""; S.snaps.forEach(u=>{ const im=new Image(); im.src=u; f.appendChild(im); });
+}
+
+/* ================= clock & weather ================= */
+function tickClock(){
+  const n=new Date();
+  const wd=["日","月","火","水","木","金","土"][n.getDay()];
+  if(document.body.classList.contains("clockmode") && n.getSeconds()===0){
+    $("clockBox").style.transform=`translate(${Math.sin(n.getMinutes())*6}px, ${Math.cos(n.getMinutes()*1.7)*4}px)`;
+  }
+  $("dateLine").textContent=`${n.getFullYear()}年${n.getMonth()+1}月${n.getDate()}日（${wd}）`;
+  $("clock").textContent=String(n.getHours()).padStart(2,"0")+":"+String(n.getMinutes()).padStart(2,"0");
+}
+setInterval(tickClock,1000); tickClock();
+function weatherLabel(code){
+  if(code===0)return"快晴"; if(code<=2)return"晴れ"; if(code===3)return"曇り";
+  if(code<=48)return"霧"; if(code<=57)return"霧雨"; if(code<=67)return"雨";
+  if(code<=77)return"雪"; if(code<=82)return"にわか雨"; return"雷雨";
+}
+function loadWeather(){
+  fetch("https://api.open-meteo.com/v1/forecast?latitude=33.458&longitude=126.942&current=temperature_2m,weather_code")
+    .then(r=>r.json()).then(d=>{
+      const t=d.current.temperature_2m, w=weatherLabel(d.current.weather_code);
+      $("tempLine").innerHTML=`済州・城山　<b>${t}℃</b>　${w}　／　植物の場所：${PLACES[S.place].name}`;
+    }).catch(()=>{ $("tempLine").textContent="気温は取得できませんでした（植物は元気です）"; });
+}
+loadWeather(); setInterval(loadWeather, 30*60*1000);
+
+/* ================= main loop (試作は加速モード) ================= */
+let lastT=performance.now(), saveTick=0;
+function loop(now){
+  requestAnimationFrame(loop);
+  const dt=Math.min(2,(now-lastT)/1000); lastT=now;
+  if(!S.dead){
+    const P=PLACES[S.place];
+    // 水分と健康
+    S.moisture=Math.max(0, S.moisture - dt*0.22*P.dry);
+    if(S.moisture<=0) S.health=Math.max(0,S.health-dt*0.55);
+    else if(S.moisture>96) S.health=Math.max(0,S.health-dt*0.18);
+    else if(S.health<100) S.health=Math.min(100,S.health+dt*0.12);
+    if(S.pest>=0) S.health=Math.max(0,S.health-dt*0.2);
+    if(S.health<=0){ S.dead=true; banner("水切れが続いて、枯れてしまった…。でも記録と証明書は残るよ。新しい種で再開できる。",0); buildPlantTint(); }
+    // 成長
+    const inRange=S.moisture>8&&S.moisture<97;
+    S.growth += dt*0.16*P.light*(S.health/100)*(inRange?1:0.35);
+    S.leaves.forEach(l=>{ l.age=Math.min(1,l.age+dt*0.03*P.light); });
+    if(S.growth>=10){
+      S.growth-=10;
+      const nl=addLeaf(false); buildPlant();
+      banner(nl.slits>0? "新しい葉が出たよ。しかも今回は切れ込み入り！" : "新しい葉が出たよ。巻きが少しずつ開いていく。");
+      snapshot(true);
+    }
+    // 害虫イベント
+    if(S.pest<0 && Math.random()<dt*0.006){ S.pest=Math.floor(Math.random()*S.leaves.length); buildPlant(); banner("なんだか葉の様子が変…？ 360°回して、葉の裏も見てみて。"); }
+    // 土の色（乾湿）
+    if(potGroup){ const soil=potGroup.getObjectByName("soil"); if(soil) soil.material.color.setHSL(0.07,0.42, 0.10+ (1-S.moisture/100)*0.13); }
+    // 葉の見た目（サイズ・垂れ）
+    leafObjs.forEach(o=>{
+      const sc=leafScale(o.lp);
+      const young=o.lp.age<0.35;
+      o.mesh.visible=!young; o.roll.visible=young;
+      if(young){ o.roll.scale.setScalar(0.5+o.lp.age*1.4); o.roll.rotation.z=0.15+o.lp.age*0.5; }
+      o.mesh.scale.set(sc.s*(0.2+0.8*sc.unroll), sc.s, sc.s);
+      const thirsty=S.moisture<18? 0.35:0;
+      o.mesh.rotation.x=o.lp.droop*0.55+thirsty;
+      if(S.dead) o.mesh.material.color.set(0x9a7d55);
+    });
+  }
+  // 回転（自動回転は時計モード＆放置時）
+  idleSec+=dt;
+  if(!dragging && (document.body.classList.contains("clockmode")||idleSec>14)) targetRotY+=dt*0.07;
+  rotY+=(targetRotY-rotY)*0.08;
+  plantSpin.rotation.y=rotY;
+  camera.position.set(0,1.55+Math.sin(now*0.0002)*0.03,camDist); camera.lookAt(0,1.02,0);
+  sun.intensity = S && S.place==="shelf"? 0.55 : S.place==="balcony"? 1.25 : 0.95;
+  saveTick+=dt; if(saveTick>5){ saveTick=0; if(!S.dead) save(); updateStatus(); }
+  renderer.render(scene,camera);
+}
+function buildPlantTint(){ leafObjs.forEach(o=>o.mesh.material.color.set(0x9a7d55)); updateStatus(); }
+
+/* ================= init ================= */
+if(!load()) newPlant();
+else { /* 古いセーブの不足キーを補完 */ S.snaps=S.snaps||[]; S.pest=(S.pest===undefined?-1:S.pest); }
+document.body.style.background=BGS[S.bg]||BGS.beige;
+document.querySelectorAll("#bgRow .sw").forEach(o=>o.classList.toggle("on",o.dataset.bg===S.bg));
+if(S.bg==="charcoal"||S.bg==="night"){ document.body.style.color="#f2ede2"; }
+buildPlant(); renderFilm(); updateStatus();
+if(S.dead) buildPlantTint();
+const vt0=varOf();
+banner(S.dead? "この株は枯れてしまった記録が残っているよ。「新しい種」から再開できる。" :
+  (vt0.id==="normal"? "おかえり。今日も植物は静かに育っているよ。" : `おかえり。あなたの株は ${vt0.name}（${vt0.rare}）。大事に育てて。`));
+requestAnimationFrame(loop);
+addEventListener("resize",()=>{ camera.aspect=innerWidth/innerHeight; camera.updateProjectionMatrix(); renderer.setSize(innerWidth,innerHeight); });
+</script>
+</body>
+</html>
