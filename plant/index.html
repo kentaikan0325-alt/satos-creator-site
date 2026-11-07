@@ -442,6 +442,38 @@ function bendLeaf(geo, amt){
   }
   geo.computeVertexNormals(); return geo;
 }
+function deformLeaf(geo, lp, w, h){
+  w=w||1; h=h||1.25;
+  const pos=geo.attributes.position;
+  const ph=(lp&&lp.angle?lp.angle:0)*2.3, tw=(lp&&lp.twist?lp.twist:0.18);
+  for(let i=0;i<pos.count;i++){
+    const px=pos.getX(i), py=pos.getY(i);
+    const u=px/(w/2), v=(py+h/2)/h;
+    let z=Math.sin(v*Math.PI)*0.055;
+    z-=Math.abs(u)*0.17*(0.35+0.65*v);
+    z+=Math.sin(v*15+ph+u*3.5)*0.016*Math.abs(u);
+    z+=Math.pow(1-v,2)*0.05*(1-Math.abs(u));
+    z-=Math.max(0,(v-0.72)/0.28)*0.11;
+    pos.setZ(i,z);
+    const twA=tw*v;
+    pos.setX(i, px*Math.cos(twA)-z*Math.sin(twA)*0.6);
+  }
+  geo.computeVertexNormals(); return geo;
+}
+function taperTube(curve, r0, r1, mat){
+  const segs=12, rs=8;
+  const geo=new THREE.TubeGeometry(curve,segs,1,rs,false);
+  const pos=geo.attributes.position, ring=rs+1;
+  for(let i=0;i<=segs;i++){
+    const t=i/segs, r=r0+(r1-r0)*t, c=curve.getPoint(t);
+    for(let j=0;j<ring;j++){
+      const idx=i*ring+j;
+      pos.setXYZ(idx, c.x+(pos.getX(idx)-c.x)*r, c.y+(pos.getY(idx)-c.y)*r, c.z+(pos.getZ(idx)-c.z)*r);
+    }
+  }
+  geo.computeVertexNormals();
+  const m=new THREE.Mesh(geo,mat); m.castShadow=true; return m;
+}
 function tubeBetween(a,b,r1,r2,mat,seg){
   const dir=new THREE.Vector3().subVectors(b,a);
   const len=dir.length();
@@ -499,15 +531,15 @@ function buildPlant(){
     const mid=node.clone().addScaledVector(dir,L*0.45); mid.y+=0.16+lp.stemLen*0.1;
     const base=node.clone().addScaledVector(dir,L); base.y+=0.30-lp.droop*0.12;
     const curve=new THREE.CatmullRomCurve3([node,mid,base]);
-    const pet=new THREE.Mesh(new THREE.TubeGeometry(curve,10,0.024,7), petMat);
+    const pet=taperTube(curve,0.032,0.02,petMat);
     pet.castShadow=true; plantSpin.add(pet);
     // 葉
     const tex=leafTexture(lp,false);
     const mat=new THREE.MeshPhysicalMaterial({map:tex,transparent:true,alphaTest:0.45,side:THREE.DoubleSide,
-      roughness:0.38,clearcoat:0.55,clearcoatRoughness:0.5});
-    const geo=bendLeaf(new THREE.PlaneGeometry(1,1.25,10,10), 0.15);
+      roughness:0.38,clearcoat:0.55,clearcoatRoughness:0.5,bumpMap:tex,bumpScale:0.03});
+    const geo=deformLeaf(new THREE.PlaneGeometry(1,1.25,22,26), lp);
     const mesh=new THREE.Mesh(geo,mat);
-    mesh.castShadow=true;
+    mesh.castShadow=true; mesh.receiveShadow=true;
     const grp=new THREE.Group(); grp.position.copy(base);
     const look=base.clone().add(dir.clone().multiplyScalar(1)); look.y=base.y+0.34;
     grp.lookAt(look);
@@ -546,7 +578,7 @@ function buildPlant(){
     cuttingGroup=buildPot(0.45, 0xd9a184); cuttingGroup.position.set(1.15,0,0.35);
     const cm=new THREE.MeshStandardMaterial({color:0x6f9455,roughness:0.8,side:THREE.DoubleSide});
     for(let k=0;k<Math.min(3,S.cuttings+1);k++){
-      const lf=new THREE.Mesh(bendLeaf(new THREE.PlaneGeometry(0.4,0.5,4,4),0.06), cm);
+      const lf=new THREE.Mesh(deformLeaf(new THREE.PlaneGeometry(0.4,0.5,10,12),{angle:k*2.1,twist:0.25},0.4,0.5), cm);
       lf.position.set(1.15,0.62+k*0.05,0.35); lf.rotation.set(-0.5,k*2.1,0.2);
       plantSpin.add(lf);
     }
