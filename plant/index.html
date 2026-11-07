@@ -26,7 +26,7 @@
     pointer-events:none;z-index:5;transition:transform .6s;
   }
   #dateLine{font-size:14px;letter-spacing:.14em;color:var(--sub)}
-  #clock{font-size:64px;font-weight:200;letter-spacing:.06em;line-height:1.05;font-variant-numeric:tabular-nums}
+  #clock{font-size:40px;font-weight:200;letter-spacing:.06em;line-height:1.05;font-variant-numeric:tabular-nums}
   #tempLine{font-size:14px;color:var(--sub);letter-spacing:.08em}
   #tempLine b{color:var(--ink);font-weight:600}
   body.clockmode #clock{font-size:96px}
@@ -320,8 +320,7 @@ renderer.setSize(innerWidth,innerHeight);
 renderer.shadowMap.enabled=true;
 renderer.shadowMap.type=THREE.PCFSoftShadowMap;
 renderer.outputEncoding=THREE.sRGBEncoding;
-renderer.toneMapping=THREE.ACESFilmicToneMapping;
-renderer.toneMappingExposure=1.12;
+
 container.appendChild(renderer.domElement);
 const scene=new THREE.Scene();
 const camera=new THREE.PerspectiveCamera(38,innerWidth/innerHeight,0.1,100);
@@ -338,7 +337,7 @@ const fill=new THREE.DirectionalLight(0xdfe8ff,0.3); fill.position.set(-3,2,-2);
 // 地面（机の天板）
 const desk=new THREE.Mesh(new THREE.CircleGeometry(9,48), new THREE.MeshStandardMaterial({color:0xd8c8ab,roughness:1}));
 desk.rotation.x=-Math.PI/2; desk.position.y=0; desk.receiveShadow=true; scene.add(desk);
-const plantRoot=new THREE.Group(); plantRoot.position.y=0; scene.add(plantRoot);
+const plantRoot=new THREE.Group(); plantRoot.position.y=-0.42; scene.add(plantRoot);
 const plantSpin=new THREE.Group(); plantRoot.add(plantSpin);
 
 /* ================= leaf texture (斑はノイズ生成＝二度と同じ柄にならない) ================= */
@@ -352,9 +351,9 @@ function leafTexture(lp, tint){
   leafPath();
   const g=x.createLinearGradient(0,0,0,H);
   const L=tint? 25 : 29+lp.hue*0.4;
-  g.addColorStop(0,`hsl(${106+lp.hue},36%,${L+11}%)`);
-  g.addColorStop(0.55,`hsl(${110+lp.hue},37%,${L+4}%)`);
-  g.addColorStop(1,`hsl(${114+lp.hue},38%,${L-2}%)`);
+  g.addColorStop(0,`hsl(${106+lp.hue},40%,${L+6}%)`);
+  g.addColorStop(0.55,`hsl(${110+lp.hue},42%,${L}%)`);
+  g.addColorStop(1,`hsl(${114+lp.hue},42%,${L-7}%)`);
   x.fillStyle=g; x.fill();
   // 葉全体の色むら（薄いモヤ）で質感を出す
   x.save(); leafPath(); x.clip();
@@ -390,7 +389,7 @@ function leafTexture(lp, tint){
     x.restore();
   }
   // 葉脈：太い主脈＋大きく反る側脈＋細かい網目
-  x.strokeStyle="rgba(240,255,225,0.28)"; x.lineWidth=7; x.lineCap="round";
+  x.strokeStyle="rgba(240,255,225,0.22)"; x.lineWidth=7; x.lineCap="round";
   x.beginPath(); x.moveTo(256,600); x.quadraticCurveTo(248,320,256,30); x.stroke();
   x.lineWidth=2.6; x.strokeStyle="rgba(240,255,225,0.20)";
   for(let i=0;i<9;i++){ const y0=84+i*58;
@@ -413,7 +412,7 @@ function leafTexture(lp, tint){
     x.beginPath(); x.ellipse(hx,hy,9+rng()*9,22+rng()*20,rng()*0.7,0,7); x.fill();
   }
   x.globalCompositeOperation="source-over";
-  const tex=new THREE.CanvasTexture(c); tex.anisotropy=4; return tex;
+  const tex=new THREE.CanvasTexture(c); tex.anisotropy=4; tex.encoding=THREE.sRGBEncoding; return tex;
 }
 
 /* ================= plant build ================= */
@@ -453,9 +452,9 @@ function tubeBetween(a,b,r1,r2,mat,seg){
 }
 function buildPlant(){
   clearGroup(plantSpin); leafObjs=[]; pestMeshes=[];
-  potGroup=buildPot(1, 0xf1ead9); plantSpin.add(potGroup);
+  potGroup=buildPot(1, 0xb98a68); plantSpin.add(potGroup);
   const prng=mulberry32(S.seed^0x9e37);
-  const pebMat=new THREE.MeshStandardMaterial({color:0xcfc4ae,roughness:1});
+  const pebMat=new THREE.MeshStandardMaterial({color:0xa99a80,roughness:1});
   for(let k=0;k<14;k++){
     const a=prng()*Math.PI*2, r=0.16+prng()*0.3;
     const peb=new THREE.Mesh(new THREE.SphereGeometry(0.028+prng()*0.03,7,6), pebMat);
@@ -484,12 +483,12 @@ function buildPlant(){
     pole.position.set(-0.02,(topY+0.55)/2+0.35,-0.16); pole.castShadow=true; plantSpin.add(pole);
   }
   // 主茎セグメント（根元が太く先が細い）
-  const stemMat=new THREE.MeshStandardMaterial({color:0x66804a,roughness:0.65});
+  const stemMat=new THREE.MeshStandardMaterial({color:0x55703a,roughness:0.65});
   for(let i=0;i<nodes.length-1;i++){
     const r1=0.055*(1-i/nodes.length*0.45), r2=0.055*(1-(i+1)/nodes.length*0.45);
     plantSpin.add(tubeBetween(nodes[i],nodes[i+1],r1,r2,stemMat,9));
   }
-  const petMat=new THREE.MeshStandardMaterial({color:0x74945a,roughness:0.55});
+  const petMat=new THREE.MeshStandardMaterial({color:0x648549,roughness:0.55});
   const rootMat=new THREE.MeshStandardMaterial({color:0x9a7d55,roughness:1});
   S.leaves.forEach((lp,i)=>{
     const node=nodes[i+1].clone(); node.y-=0.03;
@@ -513,7 +512,7 @@ function buildPlant(){
     mesh.position.y=0.52; mesh.rotation.x=lp.droop*0.55;
     grp.add(mesh); plantSpin.add(grp);
     const roll=new THREE.Mesh(new THREE.CylinderGeometry(0.028,0.075,0.78,8),
-      new THREE.MeshStandardMaterial({color:0x86b364,roughness:0.45}));
+      new THREE.MeshStandardMaterial({color:0x749c52,roughness:0.45}));
     roll.position.y=0.42; roll.rotation.x=0.25; roll.visible=false; grp.add(roll);
     leafObjs.push({grp,mesh,roll,lp,baseQuat:grp.quaternion.clone(),phase:lp.angle*3.7});
     // 気根（節から）
@@ -585,6 +584,7 @@ function updateStatus(){
 
 /* ================= interactions: 360 rotate / zoom ================= */
 let rotY=0.6, targetRotY=0.6, camDist=5.7, dragging=false, px=0, idleSec=0;
+if(innerWidth/innerHeight<1) camDist=5.7*Math.min(1.9, 1.12/(innerWidth/innerHeight));
 const el=renderer.domElement;
 el.addEventListener("pointerdown",e=>{dragging=true;px=e.clientX;idleSec=0;el.setPointerCapture(e.pointerId); if(openTab) closeSheet();});
 el.addEventListener("pointermove",e=>{ if(dragging){ targetRotY+=(e.clientX-px)*0.012; px=e.clientX; }});
