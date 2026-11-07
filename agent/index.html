@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>窓口エージェント試作｜Sato's creator</title>
+<style>
+  :root{ --bg:#ece3d0; --panel:#fffdf7; --ink:#33302a; --sub:#7a7264; --line:rgba(60,52,38,.14);
+         --accent:#c96f3f; --blue:#3f5fc9; --green:#5f7d4f; --purple:#7a5fc0; }
+  *{ box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  body{ margin:0; background:var(--bg); color:var(--ink);
+        font-family:"Hiragino Kaku Gothic ProN","Hiragino Sans","Noto Sans JP",system-ui,sans-serif; }
+  .wrap{ max-width:560px; margin:0 auto; padding:18px 14px 40px; }
+  h1{ font-size:20px; margin:4px 0 2px; letter-spacing:.04em; }
+  .lead{ font-size:12.5px; color:var(--sub); line-height:1.6; margin-bottom:14px; }
+  .lead b{ color:var(--accent); }
+  .card{ background:var(--panel); border:1px solid var(--line); border-radius:16px; padding:14px;
+         box-shadow:0 6px 20px rgba(80,66,40,.08); }
+  textarea{ width:100%; border:1px solid var(--line); border-radius:12px; padding:10px 12px;
+            font-size:15px; font-family:inherit; resize:vertical; min-height:64px; background:#fff; }
+  .chips{ display:flex; gap:8px; flex-wrap:wrap; margin:10px 0; }
+  .chip{ border:1px solid var(--line); background:#fff; border-radius:999px; padding:7px 13px;
+         font-size:13px; cursor:pointer; font-family:inherit; }
+  .chip.on{ background:var(--ink); color:#fff; border-color:var(--ink); }
+  #go{ width:100%; padding:13px; border:none; border-radius:12px; background:var(--ink); color:#fff;
+       font-size:15px; font-family:inherit; cursor:pointer; }
+  #go:disabled{ opacity:.45; }
+  #log{ margin-top:16px; display:flex; flex-direction:column; gap:10px; }
+  .msg{ display:flex; gap:9px; align-items:flex-start; animation:pop .25s ease; }
+  @keyframes pop{ from{ opacity:0; transform:translateY(6px);} to{ opacity:1; transform:none;} }
+  .ava{ flex:none; width:34px; height:34px; border-radius:50%; display:flex; align-items:center; justify-content:center;
+        color:#fff; font-size:14px; font-weight:700; }
+  .a-shiro{ background:#33302a; } .a-shi{ background:var(--purple); } .a-ritsu{ background:var(--blue); }
+  .a-ren{ background:var(--green); } .a-user{ background:#b0a58e; }
+  .bubble{ background:var(--panel); border:1px solid var(--line); border-radius:4px 14px 14px 14px;
+           padding:10px 13px; font-size:13.5px; line-height:1.65; max-width:calc(100% - 43px); white-space:pre-wrap; }
+  .bubble .who{ font-size:11px; color:var(--sub); margin-bottom:3px; font-weight:700; letter-spacing:.06em; }
+  .bubble.final{ border-color:var(--accent); border-width:1.5px; }
+  .dots::after{ content:"…"; animation:blink 1s infinite; }
+  @keyframes blink{ 50%{ opacity:.2; } }
+  .foot{ margin-top:18px; font-size:11.5px; color:var(--sub); line-height:1.7; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>窓口エージェント（試作）</h1>
+  <div class="lead">窓口に頼むだけ。裏で <b>詩（企画）→ 廉（実装案）→ 律（検証）</b> が自動で会話して進め、窓口が要約して返す。<br>※これは動きを体験するモック版です。中身の文章はテンプレート生成で、本物のAI連携版はAPI＋常駐マシンで作ります。</div>
+
+  <div class="card">
+    <textarea id="task" placeholder="例：ポケモンカードの価格を記録するアプリが作りたい">ポケモンカードの価格を記録するアプリが作りたい</textarea>
+    <div class="chips" id="chips">
+      <button class="chip on" data-kind="app">アプリ案</button>
+      <button class="chip" data-kind="shindan">診断を作る</button>
+      <button class="chip" data-kind="sns">宣伝文を書く</button>
+    </div>
+    <button id="go">窓口に依頼する</button>
+  </div>
+
+  <div id="log"></div>
+  <div class="foot">Sato's creator 窓口エージェント試作 v0 ／ 実働版ロードマップ：①Agent Teams（律リーダー）→ ②窓口の自動振り分け → ③Mac Studio常駐</div>
+</div>
+
+<script>
+const $=id=>document.getElementById(id);
+let kind="app";
+$("chips").addEventListener("click",e=>{
+  const b=e.target.closest(".chip"); if(!b) return;
+  kind=b.dataset.kind;
+  document.querySelectorAll(".chip").forEach(c=>c.classList.toggle("on",c===b));
+  $("task").value = kind==="app" ? "ポケモンカードの価格を記録するアプリが作りたい"
+    : kind==="shindan" ? "同棲カップル向けの相性診断を作りたい"
+    : "新しい診断アプリの公開をXで宣伝したい";
+});
+const wait=ms=>new Promise(r=>setTimeout(r,ms));
+function kw(t){ const m=t.replace(/が作りたい|を作りたい|したい|アプリ|診断|宣伝|公開/g,"").trim(); return m||t; }
+function msg(who, cls, name, text){
+  const d=document.createElement("div"); d.className="msg";
+  d.innerHTML=`<div class="ava ${cls}">${who}</div><div class="bubble"><div class="who">${name}</div><span></span></div>`;
+  d.querySelector("span").textContent=text;
+  $("log").appendChild(d); d.scrollIntoView({behavior:"smooth",block:"end"});
+  return d.querySelector("span");
+}
+const IDEAS={
+  app:t=>[`「${t}」に特化した単機能アプリ。入力は3タップ以内に絞る`,`「${t}」の記録＋グラフ化。続ける理由はグラフの伸びに置く`,`「${t}」を写真から自動で読み取るアプリ。手入力ゼロを売りにする`],
+  shindan:t=>[`「${t}」：10問×4択、結果6タイプ。シェアカード付き`,`「${t}」：2人の回答を比べる招待型。ズレが大きい項目を結果に出す`,`「${t}」：結果が画像カードになる設計にして拡散を狙う`],
+  sns:t=>[`「${t}」：公開報告＋できること3点＋URLの王道構成`,`「${t}」：開発中の裏話から入るストーリー型。共感で伸ばす`,`「${t}」：結果や画面の画像を先に見せるビジュアル先行型`]
+};
+$("go").addEventListener("click", async ()=>{
+  const t=$("task").value.trim(); if(!t) return;
+  $("go").disabled=true; $("log").innerHTML="";
+  const theme=kw(t);
+  msg("あ","a-user","あなた",t);
+  const s1=msg("窓","a-shiro","窓口","受け付けました。チームに回します"); s1.classList.add("dots");
+  await wait(900); s1.classList.remove("dots");
+  s1.textContent=`受け付けました。企画の詩に「${theme}」で案出しを依頼しました。`;
+  await wait(700);
+  const ideas=IDEAS[kind](theme);
+  msg("詩","a-shi","詩（企画）",`案を3つ出しました。\n1. ${ideas[0]}\n2. ${ideas[1]}\n3. ${ideas[2]}\nおすすめは1です。対象が一番はっきりしています。`);
+  await wait(800);
+  msg("廉","a-ren","廉（実装案）",`1の案なら構成はシンプルに作れます。画面は3つまで、保存は端末内から開始。まず試作を1画面で出すのが最短です。`);
+  await wait(800);
+  const s4=msg("律","a-ritsu","律（検証）","検証中です"); s4.classList.add("dots");
+  await wait(1000); s4.classList.remove("dots");
+  s4.textContent=`検証しました。リスク：似た既存サービスが多いので「${theme}」の一点特化を崩さないこと。収益の置き場：無料で使わせて、詳しい機能だけ有料が無難です。進めて問題ありません。`;
+  await wait(700);
+  const fin=msg("窓","a-shiro","窓口（要約）",""); fin.parentElement.classList.add("final");
+  fin.textContent=`まとめです。\n■ 作るもの：${ideas[0]}\n■ 最短の進め方：試作1画面 → 反応を見て広げる\n■ 注意点：一点特化を崩さない／課金は詳細機能だけ\n\nこの内容で進めますか？（本番版では、ここで「進めて」と言うだけで裏側が実装まで走ります）`;
+  $("go").disabled=false;
+});
+</script>
+</body>
+</html>
