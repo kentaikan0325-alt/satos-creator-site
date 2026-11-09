@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>看板マップ試作 v0.9.1 — 世界の看板を集める</title>
+<title>看板マップ試作 v0.10 — 世界の看板を集める</title>
 <link href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css" rel="stylesheet">
 <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/exifr@7.1.3/dist/full.umd.js"></script>
@@ -41,11 +41,11 @@
   header{position:absolute;top:0;left:0;right:0;z-index:10;padding:14px 16px 8px;display:flex;justify-content:space-between;align-items:flex-start;pointer-events:none}
   header>*{pointer-events:auto}
   .ttl{font-size:19px;font-weight:800;letter-spacing:.14em}
-  .ttl small{display:block;font-size:10px;font-weight:600;letter-spacing:.3em;color:var(--sub);margin-top:3px}
+  .ttl small{display:block;font-size:9.5px;font-weight:600;letter-spacing:.18em;color:var(--sub);margin-top:3px;white-space:nowrap}
   .clockbox{text-align:right}
   .clock{font-size:19px;font-weight:800;font-variant-numeric:tabular-nums;letter-spacing:.06em}
-  .dateline{font-size:10.5px;color:var(--sub);letter-spacing:.12em;margin-top:3px}
-  #quest{position:absolute;top:76px;left:16px;z-index:9;background:var(--panel);border:1px solid var(--line);border-radius:999px;padding:7px 13px;font-size:12px;backdrop-filter:blur(8px);box-shadow:0 4px 14px rgba(0,0,0,.08)}
+  .dateline{font-size:10.5px;color:var(--sub);letter-spacing:.12em;margin-top:3px;white-space:nowrap}
+  #quest{position:absolute;top:196px;left:16px;right:16px;z-index:9;background:var(--panel);border:1px solid var(--line);border-radius:999px;padding:7px 13px;font-size:12px;backdrop-filter:blur(8px);box-shadow:0 4px 14px rgba(0,0,0,.08);text-align:center}
   #quest b{color:var(--accent)}
   #modes{position:absolute;top:76px;right:16px;z-index:9;display:flex;gap:6px}
   .mode{font-size:11px;padding:7px 11px;border-radius:999px;border:1px solid var(--line);background:var(--panel);color:var(--sub);backdrop-filter:blur(8px)}
@@ -105,7 +105,7 @@
   .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:7px}
   .grid img{width:100%;aspect-ratio:1;object-fit:cover;border-radius:3px;cursor:pointer;display:block}
   .empty{padding:38px 22px;text-align:center;color:var(--sub);font-size:13px;line-height:2}
-  #banner{position:absolute;top:118px;left:16px;z-index:11;display:none;background:var(--accent);color:#fff;font-size:12px;padding:9px 13px;border-radius:10px;box-shadow:0 8px 20px rgba(0,0,0,.25);max-width:62vw;line-height:1.6}
+  #banner{position:absolute;top:238px;left:16px;z-index:11;display:none;background:var(--accent);color:#fff;font-size:12px;padding:9px 13px;border-radius:10px;box-shadow:0 8px 20px rgba(0,0,0,.25);max-width:calc(100vw - 32px);line-height:1.6}
   body[data-theme="night"] #banner{color:#111}
   #addSheet{align-items:stretch}
   .cats{display:flex;flex-wrap:wrap;gap:8px;padding:6px 16px}
@@ -125,7 +125,7 @@
   #countryStatus{padding:10px 16px 0;font-size:12px;color:var(--sub);line-height:1.8;min-height:20px}
   #terrainWrap{position:absolute;inset:0;z-index:1;display:none}
   #terrainWrap.open{display:block}
-  #terrainCanvas{width:100%;height:100%;display:block}
+  #terrainCanvas{width:100%;height:100%;display:block;touch-action:none}
   #viewSeg{position:absolute;left:50%;transform:translateX(-50%);bottom:calc(88px + env(safe-area-inset-bottom));z-index:12;display:flex;gap:4px;background:var(--panel);border:1px solid var(--line);border-radius:999px;padding:4px;box-shadow:0 8px 20px rgba(0,0,0,.16)}
   #viewSeg button{border:0;background:transparent;color:var(--sub);font-size:12.5px;padding:8px 18px;border-radius:999px;cursor:pointer;letter-spacing:.08em;font-weight:600}
   #viewSeg button.on{background:var(--ink);color:var(--bg);font-weight:800}
@@ -161,7 +161,7 @@
 <div id="tint"></div>
 <div id="grain"></div>
 <header>
-  <div class="ttl">看板マップ<small>SIGN MAP — PROTOTYPE v0.9.1</small><span id="proBadge" style="display:none">PRO</span></div>
+  <div class="ttl">看板マップ<small>SIGN MAP — PROTOTYPE v0.10</small><span id="proBadge" style="display:none">PRO</span></div>
   <div class="clockbox">
     <div class="clock" id="clock">--:--</div>
     <div class="dateline" id="dateline">—</div>
@@ -562,7 +562,7 @@ function setAppMode(m) {
   $("modePersonal").classList.toggle("on", m === "personal");
   $("modeWorld").classList.toggle("on", m === "world");
   renderMarkers();
-  if (viewMode === "terrain") renderTerrain();
+  if (viewMode === "terrain") { tZoom = 1; tPan = { lng: 0, lat: 0 }; renderTerrain(); }
   const list = activeItems().filter((i) => typeof i.lat === "number");
   if (list.length) {
     const b = new maplibregl.LngLatBounds();
@@ -1019,12 +1019,11 @@ function subdivideSpots(spots, R) {
   return subs;
 }
 function spotCells(subs, W, H, R) {
-  return subs.map((s, i) => {
-    let cell = voronoiCell(subs, i, W, H);
-    cell = convexClip(cell, diskPoly(s.x, s.y, s.k > 1 ? R * 0.7 : R));
-    if (s.k > 1) cell = convexClip(cell, diskPoly(s.cx, s.cy, R * 1.03));
-    return cell;
-  });
+  /* Cells are pure Voronoi regions now (no circular cap): the callers clip
+     them by the land / country shape, so the collage follows the shape of
+     the region instead of ending in a round blob around the photos. R is
+     kept in the signature for the sub-point spread in subdivideSpots. */
+  return subs.map((s, i) => voronoiCell(subs, i, W, H));
 }
 function drawCells(ctx, subs, cells) {
   cells.forEach((cell, i) => {
@@ -1107,10 +1106,10 @@ async function renderCountry() {
       }
     }
   } else {
-    /* Shape-filling layout: each spot (one location) gets one footprint
-       region around its real location, and the photos at that spot subdivide
-       the footprint — more photos at one place, finer mosaic. Regions with
-       no photo nearby keep the white silhouette fill, like the reference. */
+    /* Shape-filling layout: each spot (one location) owns the Voronoi
+       region around its real location, clipped by the country shape, so
+       the photos spread along the region itself; the photos at one spot
+       subdivide its region — more photos at one place, finer mosaic. */
     const entries = inCountry.map((it) => Object.assign({}, it, { img: imgOf.get(it) })).filter((e) => e.img);
     const spots = buildSpots(entries).map((sp) => ({ cx: pr.x(sp.lng), cy: pr.y(sp.lat), entries: sp.entries }));
     spots.forEach((sp, i) => {
@@ -1215,6 +1214,9 @@ $("dlCountryBtn").addEventListener("click", () => {
 let landData = null;
 let viewMode = "map";
 let terrainPts = [];
+let tZoom = 1, tPan = { lng: 0, lat: 0 };
+let lastView = null;
+let terrainLandPx = [];
 async function loadLand() {
   if (landData) return landData;
   await loadScript("https://cdn.jsdelivr.net/npm/topojson-client@3/dist/topojson-client.min.js");
@@ -1270,8 +1272,17 @@ async function renderTerrain() {
   let frame = exp, uni = null;
   polys.forEach((poly) => { const b = bbOfPoly(poly); uni = uni ? bbUnion(uni, b) : b; });
   if (uni && bbArea(uni) <= bbArea(exp) * 7) frame = bbUnion(exp, uni);
-  const pr = projectFactory(frame, W, H, 30);
-  const landPath = countryPath({ polygons: polys }, pr);
+  /* zoom / pan: start from the base frame, shrink (zoom in) or grow (zoom
+     out) it by tZoom around its centre, then shift by tPan */
+  const bcx = (frame.minLng + frame.maxLng) / 2 + tPan.lng;
+  const bcy = (frame.minLat + frame.maxLat) / 2 + tPan.lat;
+  const hw = (frame.maxLng - frame.minLng) / 2 / tZoom, hh = (frame.maxLat - frame.minLat) / 2 / tZoom;
+  const view = { minLng: bcx - hw, maxLng: bcx + hw, minLat: bcy - hh, maxLat: bcy + hh };
+  const drawPolys = feat.polygons.filter((poly) => bbHit(bbOfPoly(poly), bbExpand(view, 0, 0.03)));
+  const usePolys = drawPolys.length ? drawPolys : polys;
+  const pr = projectFactory(view, W, H, 30);
+  lastView = { spanLng: view.maxLng - view.minLng, spanLat: view.maxLat - view.minLat, W: W, H: H };
+  const landPath = countryPath({ polygons: usePolys }, pr);
   ctx.fillStyle = landFill; ctx.fill(landPath);
   /* The generalized ring can cut a few km of real coast; a thick round-joined
      stroke in the fill colour fattens the land back over those spots. */
@@ -1298,24 +1309,88 @@ async function renderTerrain() {
   ctx.lineWidth = 1.5;
   ctx.stroke(landPath);
   terrainPts = subs.map((s) => ({ x: s.x, y: s.y, key: s.key, r: R }));
+  terrainLandPx = usePolys.map((poly) => poly.map((ring) => ring.map((pt) => [pr.x(pt[0]), pr.y(pt[1])])));
 }
 function setView(mode) {
   viewMode = mode;
   $("vsMap").classList.toggle("on", mode === "map");
   $("vsTerrain").classList.toggle("on", mode === "terrain");
   $("terrainWrap").classList.toggle("open", mode === "terrain");
-  if (mode === "terrain") renderTerrain();
+  document.querySelectorAll(".maplibregl-ctrl-group").forEach((el) => { el.style.display = mode === "terrain" ? "none" : ""; });
+  if (mode === "terrain") { tZoom = 1; tPan = { lng: 0, lat: 0 }; renderTerrain(); }
 }
 $("vsMap").addEventListener("click", () => setView("map"));
 $("vsTerrain").addEventListener("click", () => setView("terrain"));
 $("mapBtn").addEventListener("click", () => setView("map"));
-$("terrainCanvas").addEventListener("click", (e) => {
-  const r = $("terrainCanvas").getBoundingClientRect();
-  const x = e.clientX - r.left, y = e.clientY - r.top;
+function pointInRingPx(x, y, ring) {
+  let inside = false;
+  for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
+    const xi = ring[i][0], yi = ring[i][1], xj = ring[j][0], yj = ring[j][1];
+    if (((yi > y) !== (yj > y)) && (x < (xj - xi) * (y - yi) / (yj - yi) + xi)) inside = !inside;
+  }
+  return inside;
+}
+function onTerrainTap(x, y) {
+  const onLand = terrainLandPx.some((poly) => poly.some((ring) => pointInRingPx(x, y, ring)));
+  if (!onLand) return;
+  /* the cells are a Voronoi diagram: the tapped land point belongs to the
+     nearest photo sub-point's cell */
   let best = null, bd = 1e9;
   terrainPts.forEach((p) => { const d = Math.hypot(p.x - x, p.y - y); if (d < bd) { bd = d; best = p; } });
-  if (best && bd < Math.max(best.r * 1.35, 64)) openViewer(best.key);
-});
+  if (best) openViewer(best.key);
+}
+/* terrain gestures: drag = pan, pinch / wheel = zoom, tap = open the spot,
+   double-tap = reset the view */
+(function terrainGestures() {
+  const cv = $("terrainCanvas");
+  const ptrs = new Map();
+  let lastDist = 0, moved = 0, downAt = 0, rafPending = false;
+  const reqRender = () => {
+    if (rafPending) return;
+    rafPending = true;
+    requestAnimationFrame(() => { rafPending = false; if (viewMode === "terrain") renderTerrain(); });
+  };
+  cv.addEventListener("pointerdown", (e) => {
+    ptrs.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    if (ptrs.size === 1) { moved = 0; downAt = Date.now(); }
+    if (ptrs.size === 2) { const a = [...ptrs.values()]; lastDist = Math.hypot(a[0].x - a[1].x, a[0].y - a[1].y); }
+    try { cv.setPointerCapture(e.pointerId); } catch (err) { /* ignore */ }
+  });
+  cv.addEventListener("pointermove", (e) => {
+    if (!ptrs.has(e.pointerId) || !lastView) return;
+    const prev = ptrs.get(e.pointerId);
+    const dx = e.clientX - prev.x, dy = e.clientY - prev.y;
+    ptrs.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    moved += Math.abs(dx) + Math.abs(dy);
+    if (ptrs.size === 2) {
+      const a = [...ptrs.values()];
+      const d = Math.hypot(a[0].x - a[1].x, a[0].y - a[1].y);
+      if (lastDist > 0 && d > 0) tZoom = Math.max(0.5, Math.min(6, tZoom * (d / lastDist)));
+      lastDist = d;
+    }
+    tPan.lng -= dx * (lastView.spanLng / lastView.W);
+    tPan.lat += dy * (lastView.spanLat / lastView.H);
+    reqRender();
+  });
+  const up = (e) => {
+    const wasTap = ptrs.size === 1 && moved < 8 && Date.now() - downAt < 400;
+    ptrs.delete(e.pointerId);
+    if (ptrs.size < 2) lastDist = 0;
+    if (wasTap) {
+      const r = cv.getBoundingClientRect();
+      onTerrainTap(e.clientX - r.left, e.clientY - r.top);
+    }
+  };
+  cv.addEventListener("pointerup", up);
+  cv.addEventListener("pointercancel", up);
+  cv.addEventListener("wheel", (e) => {
+    e.preventDefault();
+    if (!lastView) return;
+    tZoom = Math.max(0.5, Math.min(6, tZoom * Math.exp(-e.deltaY * 0.0015)));
+    reqRender();
+  }, { passive: false });
+  cv.addEventListener("dblclick", () => { tZoom = 1; tPan = { lng: 0, lat: 0 }; reqRender(); });
+})();
 window.addEventListener("resize", () => { if (viewMode === "terrain") renderTerrain(); });
 document.querySelectorAll(".themebtn").forEach((b) => b.addEventListener("click", () => { if (viewMode === "terrain") setTimeout(renderTerrain, 60); }));
 
