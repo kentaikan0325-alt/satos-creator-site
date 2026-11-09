@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>看板マップ試作 v0.5 — 世界の看板を集める</title>
+<title>看板マップ試作 v0.6 — 世界の看板を集める</title>
 <link href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css" rel="stylesheet">
 <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/exifr@7.1.3/dist/full.umd.js"></script>
@@ -113,15 +113,22 @@
   #countryCanvasWrap{padding:0 16px}
   #countryCanvas{width:100%;border-radius:12px;background:#f3efe4;display:block;box-shadow:0 8px 22px rgba(0,0,0,.18)}
   #countryStatus{padding:10px 16px 0;font-size:12px;color:var(--sub);line-height:1.8;min-height:20px}
+  #terrainWrap{position:absolute;inset:0;z-index:1;display:none}
+  #terrainWrap.open{display:block}
+  #terrainCanvas{width:100%;height:100%;display:block}
+  #viewSeg{position:absolute;left:50%;transform:translateX(-50%);bottom:calc(88px + env(safe-area-inset-bottom));z-index:12;display:flex;gap:4px;background:var(--panel);border:1px solid var(--line);border-radius:999px;padding:4px;box-shadow:0 8px 20px rgba(0,0,0,.16)}
+  #viewSeg button{border:0;background:transparent;color:var(--sub);font-size:12.5px;padding:8px 18px;border-radius:999px;cursor:pointer;letter-spacing:.08em;font-weight:600}
+  #viewSeg button.on{background:var(--ink);color:var(--bg);font-weight:800}
   .maplibregl-ctrl-attrib{font-size:9px}
 </style>
 </head>
 <body data-theme="morning">
 <div id="map"></div>
+<div id="terrainWrap"><canvas id="terrainCanvas"></canvas></div>
 <div id="tint"></div>
 <div id="grain"></div>
 <header>
-  <div class="ttl">看板マップ<small>SIGN MAP — PROTOTYPE v0.5</small></div>
+  <div class="ttl">看板マップ<small>SIGN MAP — PROTOTYPE v0.6</small></div>
   <div class="clockbox">
     <div class="clock" id="clock">--:--</div>
     <div class="dateline" id="dateline">—</div>
@@ -140,6 +147,7 @@
   <button class="themebtn on" data-t="auto">自動</button>
 </div>
 <div id="banner"></div>
+<div id="viewSeg"><button id="vsMap" class="on">地図</button><button id="vsTerrain">地形</button></div>
 <nav>
   <button id="mapBtn"><span class="ic">🗺</span>地図</button>
   <button id="addBtn"><span class="ic">＋</span>看板を追加</button>
@@ -315,6 +323,7 @@ map.on("load", () => {
     placed.forEach((i) => b.extend([i.lng, i.lat]));
     map.fitBounds(b, { padding: 70, maxZoom: 15, duration: 0 });
   }
+  if (placed.length && !pending.length) setView("terrain");
 });
 map.on("click", (e) => {
   if (!pending.length) return;
@@ -502,9 +511,32 @@ function pointInCountry(lng, lat, feat) {
     return true;
   });
 }
+/* Generalized coastlines can miss a photo's exact spot by a few km
+   (e.g. Seongsan's tip in the 50m data), so country matching tolerates
+   a small distance to the nearest coastline segment. */
+function distToFeat(lng, lat, feat) {
+  let best = 1e9;
+  const kx = Math.cos(lat * Math.PI / 180) || 1;
+  const px = lng * kx, py = lat;
+  feat.polygons.forEach((poly) => poly.forEach((ring) => {
+    for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
+      const ax = ring[j][0] * kx, ay = ring[j][1], bx = ring[i][0] * kx, by = ring[i][1];
+      const dx = bx - ax, dy = by - ay, L2 = dx * dx + dy * dy || 1e-12;
+      let t = ((px - ax) * dx + (py - ay) * dy) / L2;
+      t = Math.max(0, Math.min(1, t));
+      const d = Math.hypot(ax + t * dx - px, ay + t * dy - py);
+      if (d < best) best = d;
+    }
+  }));
+  return best;
+}
+function inCountryTol(lng, lat, feat, tol) {
+  return pointInCountry(lng, lat, feat) || distToFeat(lng, lat, feat) < (tol || 0.055);
+}
 function countryOf(lng, lat) {
   if (!countryData) return null;
-  return countryData.features.find((f) => pointInCountry(lng, lat, f)) || null;
+  return countryData.features.find((f) => pointInCountry(lng, lat, f)) ||
+    countryData.features.find((f) => distToFeat(lng, lat, f) < 0.055) || null;
 }
 function countryBBox(feat) {
   let minLng = 180, maxLng = -180, minLat = 90, maxLat = -90;
@@ -617,7 +649,7 @@ async function renderCountry() {
     return;
   }
   const placed = items.filter((i) => typeof i.lat === "number");
-  const inCountry = placed.filter((i) => pointInCountry(i.lng, i.lat, feat));
+  const inCountry = placed.filter((i) => inCountryTol(i.lng, i.lat, feat));
   const pool = inCountry.length ? inCountry : placed;
   $("countryStatus").textContent = "描画中…（" + pool.length + "枚の写真を使用）";
   const imgs = [];
@@ -760,19 +792,9 @@ async function openCountry(preferName) {
     $("countryStatus").textContent = "国の形データの読み込みに失敗しました。通信を確認してからもう一度開いてください。";
   }
 }
-/* After a photo is posted, build its country's poster automatically and
-   show it — posting is the only action the user takes. */
-async function autoPoster(item) {
-  try {
-    await loadCountries();
-    const c = item ? countryOf(item.lng, item.lat) : null;
-    if (countryMode !== "pos") {
-      countryMode = "pos";
-      $("modePos").classList.add("on"); $("modeTile").classList.remove("on");
-    }
-    openCountry(c ? c.name : "");
-  } catch (e) { /* the poster is automatic gravy; never block posting */ }
-}
+/* After a photo is posted, show it on the home terrain collage —
+   posting is the only action the user takes. */
+async function autoPoster(item) { setView("terrain"); }
 $("countryBtn").addEventListener("click", () => openCountry(""));
 $("countrySelect").addEventListener("change", (e) => { countryName = e.target.value; renderCountry(); });
 $("modeTile").addEventListener("click", () => { countryMode = "tile"; $("modeTile").classList.add("on"); $("modePos").classList.remove("on"); renderCountry(); });
@@ -783,6 +805,129 @@ $("dlCountryBtn").addEventListener("click", () => {
   a.href = $("countryCanvas").toDataURL("image/png");
   a.click();
 });
+
+/* ---------- home terrain collage ----------
+   The home screen renders the landform itself as the collage: the island /
+   coastline around the posted photos, filled with the photos at their real
+   locations (same region engine as the poster, finer 50m coastline data). */
+let landData = null;
+let viewMode = "map";
+let terrainPts = [];
+async function loadLand() {
+  if (landData) return landData;
+  await loadScript("https://cdn.jsdelivr.net/npm/topojson-client@3/dist/topojson-client.min.js");
+  const topo = await fetch("https://cdn.jsdelivr.net/npm/world-atlas@2/countries-50m.json").then((r) => r.json());
+  const fc = topojson.feature(topo, topo.objects.countries);
+  landData = { features: fc.features.map((f) => ({ name: f.properties.name, polygons: polysOf(f.geometry) })) };
+  return landData;
+}
+function landOf(lng, lat) {
+  if (!landData) return null;
+  return landData.features.find((f) => pointInCountry(lng, lat, f)) ||
+    landData.features.find((f) => distToFeat(lng, lat, f) < 0.055) || null;
+}
+function bbFromPoints(pts) {
+  const b = { minLng: 1e9, maxLng: -1e9, minLat: 1e9, maxLat: -1e9 };
+  pts.forEach((p) => { if (p[0] < b.minLng) b.minLng = p[0]; if (p[0] > b.maxLng) b.maxLng = p[0]; if (p[1] < b.minLat) b.minLat = p[1]; if (p[1] > b.maxLat) b.maxLat = p[1]; });
+  return b;
+}
+function bbOfPoly(poly) { const pts = []; poly.forEach((ring) => ring.forEach((pt) => pts.push(pt))); return bbFromPoints(pts); }
+function bbExpand(b, frac, minPad) {
+  const px = Math.max((b.maxLng - b.minLng) * frac, minPad), py = Math.max((b.maxLat - b.minLat) * frac, minPad);
+  return { minLng: b.minLng - px, maxLng: b.maxLng + px, minLat: b.minLat - py, maxLat: b.maxLat + py };
+}
+function bbUnion(a, b) { return { minLng: Math.min(a.minLng, b.minLng), maxLng: Math.max(a.maxLng, b.maxLng), minLat: Math.min(a.minLat, b.minLat), maxLat: Math.max(a.maxLat, b.maxLat) }; }
+function bbHit(a, b) { return a.minLng <= b.maxLng && a.maxLng >= b.minLng && a.minLat <= b.maxLat && a.maxLat >= b.minLat; }
+function bbArea(b) { return Math.max(0, (b.maxLng - b.minLng)) * Math.max(0, (b.maxLat - b.minLat)); }
+async function renderTerrain() {
+  const wrap = $("terrainWrap"), cv = $("terrainCanvas");
+  const W = wrap.clientWidth, H = wrap.clientHeight;
+  if (!W || !H) return;
+  const dpr = Math.min(window.devicePixelRatio || 1, 2);
+  cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr);
+  const ctx = cv.getContext("2d");
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  const theme = document.body.dataset.theme || "day";
+  const sea = theme === "night" ? "#0d141f" : theme === "morning" ? "#e9efeb" : "#d8e8f1";
+  const landFill = theme === "night" ? "#26262e" : "#fffdf9";
+  ctx.fillStyle = sea; ctx.fillRect(0, 0, W, H);
+  terrainPts = [];
+  const placed = items.filter((i) => typeof i.lat === "number");
+  if (!placed.length) return;
+  try { await loadLand(); } catch (e) { return; }
+  const counts = {};
+  placed.forEach((i) => { const c = landOf(i.lng, i.lat); if (c) counts[c.name] = (counts[c.name] || 0) + 1; });
+  const top = Object.entries(counts).sort((a, b) => b[1] - a[1])[0];
+  if (!top) return;
+  const feat = landData.features.find((f) => f.name === top[0]);
+  const inC = placed.filter((i) => inCountryTol(i.lng, i.lat, feat));
+  const use = inC.length ? inC : placed;
+  const exp = bbExpand(bbFromPoints(use.map((i) => [i.lng, i.lat])), 0.85, 0.22);
+  const polys = feat.polygons.filter((poly) => bbHit(bbOfPoly(poly), exp));
+  if (!polys.length) return;
+  let frame = exp, uni = null;
+  polys.forEach((poly) => { const b = bbOfPoly(poly); uni = uni ? bbUnion(uni, b) : b; });
+  if (uni && bbArea(uni) <= bbArea(exp) * 7) frame = bbUnion(exp, uni);
+  const pr = projectFactory(frame, W, H, 30);
+  const landPath = countryPath({ polygons: polys }, pr);
+  ctx.fillStyle = landFill; ctx.fill(landPath);
+  /* The generalized ring can cut a few km of real coast; a thick round-joined
+     stroke in the fill colour fattens the land back over those spots. */
+  ctx.strokeStyle = landFill; ctx.lineWidth = 15; ctx.lineJoin = "round"; ctx.stroke(landPath);
+  const imgOf = new Map();
+  for (const it of use) { try { imgOf.set(it, await loadImg(it.img)); } catch (e) { /* skip unreadable */ } }
+  const pts = [];
+  for (const it of use) {
+    const im = imgOf.get(it);
+    if (!im) continue;
+    let x = pr.x(it.lng), y = pr.y(it.lat);
+    for (let t = 0; t < 16 && pts.some((p) => Math.hypot(p.x - x, p.y - y) < 9); t++) {
+      const a = pts.length * 2.399963 + t * 1.1;
+      x += Math.cos(a) * 10; y += Math.sin(a) * 10;
+    }
+    pts.push({ x: x, y: y, im: im, key: groupKey(it) });
+  }
+  if (!pts.length) return;
+  const R = Math.max(42, Math.min(250, Math.hypot(W, H) * 0.115 / Math.sqrt(pts.length)));
+  const cells = pts.map((p, i) => convexClip(voronoiCell(pts, i, W, H), diskPoly(p.x, p.y, R)));
+  ctx.save();
+  ctx.clip(landPath);
+  cells.forEach((cell, i) => {
+    if (cell.length < 3) return;
+    let minX = 1e9, minY = 1e9, maxX = -1e9, maxY = -1e9;
+    cell.forEach((pt) => { if (pt.x < minX) minX = pt.x; if (pt.y < minY) minY = pt.y; if (pt.x > maxX) maxX = pt.x; if (pt.y > maxY) maxY = pt.y; });
+    ctx.save();
+    ctx.clip(cellPath(cell));
+    drawCover(ctx, pts[i].im, minX - 2, minY - 2, (maxX - minX) + 4, (maxY - minY) + 4);
+    ctx.restore();
+  });
+  ctx.strokeStyle = "rgba(255,255,255,.65)"; ctx.lineWidth = 2;
+  cells.forEach((cell) => { if (cell.length >= 3) ctx.stroke(cellPath(cell)); });
+  ctx.restore();
+  ctx.strokeStyle = theme === "night" ? "rgba(242,240,234,.35)" : "rgba(28,28,30,.18)";
+  ctx.lineWidth = 1.5;
+  ctx.stroke(landPath);
+  terrainPts = pts.map((p) => ({ x: p.x, y: p.y, key: p.key, r: R }));
+}
+function setView(mode) {
+  viewMode = mode;
+  $("vsMap").classList.toggle("on", mode === "map");
+  $("vsTerrain").classList.toggle("on", mode === "terrain");
+  $("terrainWrap").classList.toggle("open", mode === "terrain");
+  if (mode === "terrain") renderTerrain();
+}
+$("vsMap").addEventListener("click", () => setView("map"));
+$("vsTerrain").addEventListener("click", () => setView("terrain"));
+$("mapBtn").addEventListener("click", () => setView("map"));
+$("terrainCanvas").addEventListener("click", (e) => {
+  const r = $("terrainCanvas").getBoundingClientRect();
+  const x = e.clientX - r.left, y = e.clientY - r.top;
+  let best = null, bd = 1e9;
+  terrainPts.forEach((p) => { const d = Math.hypot(p.x - x, p.y - y); if (d < bd) { bd = d; best = p; } });
+  if (best && bd < Math.max(best.r * 1.35, 64)) openViewer(best.key);
+});
+window.addEventListener("resize", () => { if (viewMode === "terrain") renderTerrain(); });
+document.querySelectorAll(".themebtn").forEach((b) => b.addEventListener("click", () => { if (viewMode === "terrain") setTimeout(renderTerrain, 60); }));
 
 applyTheme();
 setInterval(applyTheme, 60000);
