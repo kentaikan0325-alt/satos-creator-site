@@ -192,7 +192,7 @@
     <button id="modeTile" class="on">タイル型（敷き詰め）</button>
     <button id="modePos">位置どおり型</button>
   </div>
-  <div id="countryCanvasWrap"><canvas id="countryCanvas" width="900" height="900"></canvas></div>
+  <div id="countryCanvasWrap"><canvas id="countryCanvas" width="900" height="1125"></canvas></div>
   <p id="countryStatus"></p>
   <button class="bigbtn" id="dlCountryBtn">画像として保存する</button>
   <p class="note">国の輪郭は Natural Earth（world-atlas）の公開データを使っています。写真に位置情報がないものは「タイル型」では使えますが、「位置どおり型」では置けません。</p>
@@ -574,10 +574,14 @@ function cellPath(cell) {
 async function renderCountry() {
   const cv = $("countryCanvas"), ctx = cv.getContext("2d");
   const W = cv.width, H = cv.height;
+  /* Poster layout (portrait 4:5): cream ground, spaced country title on top,
+     the shape in the middle, trip dates and brand at the bottom. The poster
+     keeps its own fixed palette in every app theme — it is a share image. */
+  const BG = "#f6f2e9", INK = "#1c1c1e", SUB = "#8a8578", FILL = "#fffdf9";
   const feat = countryData.features.find((f) => f.name === countryName);
+  ctx.fillStyle = BG; ctx.fillRect(0, 0, W, H);
   if (!feat) { $("countryStatus").textContent = "国を選んでください。"; return; }
   if (!items.length) {
-    ctx.clearRect(0, 0, W, H);
     $("countryStatus").textContent = "まだ看板の写真がありません。「看板を追加」から済州の写真を入れてみてください。";
     return;
   }
@@ -589,45 +593,56 @@ async function renderCountry() {
   const imgOf = new Map();
   for (const it of pool) { try { const im = await loadImg(it.img); imgs.push(im); imgOf.set(it, im); } catch (e) { /* skip unreadable */ } }
   if (!imgs.length) { $("countryStatus").textContent = "写真を読み込めませんでした。"; return; }
-  let bbox = countryBBox(feat);
-  if (countryMode === "pos" && inCountry.length >= 2) {
-    const lats = inCountry.map((i) => i.lat), lngs = inCountry.map((i) => i.lng);
-    const pb = { minLng: Math.min.apply(null, lngs), maxLng: Math.max.apply(null, lngs), minLat: Math.min.apply(null, lats), maxLat: Math.max.apply(null, lats) };
-    const spanLng = pb.maxLng - pb.minLng, spanLat = pb.maxLat - pb.minLat;
-    if (spanLng < (bbox.maxLng - bbox.minLng) * 0.35 && spanLat < (bbox.maxLat - bbox.minLat) * 0.35) {
-      const mLng = Math.max(spanLng * 0.6, 0.4), mLat = Math.max(spanLat * 0.6, 0.4);
-      bbox = { minLng: pb.minLng - mLng, maxLng: pb.maxLng + mLng, minLat: pb.minLat - mLat, maxLat: pb.maxLat + mLat };
-    }
+  /* --- title block --- */
+  ctx.textAlign = "center";
+  try { ctx.letterSpacing = "12px"; } catch (e) { /* older canvas */ }
+  ctx.fillStyle = INK;
+  let tSize = 54;
+  ctx.font = "600 " + tSize + "px 'Helvetica Neue', Arial, sans-serif";
+  const en = feat.name.toUpperCase();
+  while (ctx.measureText(en).width > W - 110 && tSize > 26) { tSize -= 4; ctx.font = "600 " + tSize + "px 'Helvetica Neue', Arial, sans-serif"; }
+  ctx.fillText(en, W / 2, 106);
+  const ja = COUNTRY_JA[feat.name] || "";
+  if (ja) {
+    try { ctx.letterSpacing = "7px"; } catch (e) { /* ignore */ }
+    ctx.font = "400 25px sans-serif";
+    ctx.fillStyle = SUB;
+    ctx.fillText(ja, W / 2, 152);
   }
-  const pr = projectFactory(bbox, W, H, 30);
-  const night = document.body.dataset.theme === "night";
-  ctx.clearRect(0, 0, W, H);
-  ctx.fillStyle = night ? "#141416" : "#f3efe4";
-  ctx.fillRect(0, 0, W, H);
+  try { ctx.letterSpacing = "0px"; } catch (e) { /* ignore */ }
+  /* --- shape, framed as a whole country (no zoom-in) --- */
+  const bbox = countryBBox(feat);
+  const area = { x: 56, y: 192, w: W - 112, h: 706 };
+  const bw = bbox.maxLng - bbox.minLng || 1, bh = bbox.maxLat - bbox.minLat || 1;
+  const sc = Math.min(area.w / bw, area.h / bh);
+  const X0 = area.x + (area.w - bw * sc) / 2, Y0 = area.y + (area.h - bh * sc) / 2;
+  const pr = {
+    x: (lng) => X0 + (lng - bbox.minLng) * sc,
+    y: (lat) => Y0 + (bbox.maxLat - lat) * sc,
+    invx: (px) => bbox.minLng + (px - X0) / sc,
+    invy: (py) => bbox.maxLat - (py - Y0) / sc
+  };
   const path = countryPath(feat, pr);
+  ctx.fillStyle = FILL;
+  ctx.fill(path);
   ctx.save();
   ctx.clip(path);
   if (countryMode === "tile") {
-    const cell = 110;
+    const cell = 92;
     let k = 0;
-    for (let gy = 0; gy * cell < H; gy++) {
-      for (let gx = 0; gx * cell < W; gx++) {
-        const cx = gx * cell + cell / 2, cy = gy * cell + cell / 2;
-        const lng = bbox.minLng + (cx - pr.ox) / pr.sc;
-        const lat = bbox.maxLat - (cy - pr.oy) / pr.sc;
+    for (let gy = area.y - cell; gy < area.y + area.h + cell; gy += cell) {
+      for (let gx = area.x - cell; gx < area.x + area.w + cell; gx += cell) {
+        const lng = pr.invx(gx + cell / 2), lat = pr.invy(gy + cell / 2);
         if (!pointInCountry(lng, lat, feat)) continue;
-        drawCover(ctx, imgs[k % imgs.length], gx * cell - 2, gy * cell - 2, cell + 4, cell + 4);
+        drawCover(ctx, imgs[k % imgs.length], gx - 2, gy - 2, cell + 4, cell + 4);
         k++;
       }
     }
-    ctx.strokeStyle = "rgba(255,255,255,.55)"; ctx.lineWidth = 2;
-    ctx.stroke(path);
   } else {
-    ctx.fillStyle = night ? "#1d1d22" : "#e9e4d4";
-    ctx.fill(path);
     /* Shape-filling layout: split the country's interior into one region per
        photo (the area nearest that photo's real location) and fill each
-       region with its photo, so the photos themselves form the shape. */
+       region with its photo, so the photos themselves form the shape.
+       Regions without a nearby photo keep the white silhouette fill. */
     const pts = [];
     for (const it of inCountry) {
       const im = imgOf.get(it);
@@ -649,21 +664,34 @@ async function renderCountry() {
       drawCover(ctx, pts[i].im, minX - 2, minY - 2, (maxX - minX) + 4, (maxY - minY) + 4);
       ctx.restore();
     });
-    ctx.strokeStyle = "rgba(255,255,255,.6)"; ctx.lineWidth = 2;
+    ctx.strokeStyle = "rgba(255,255,255,.65)"; ctx.lineWidth = 2;
     cells.forEach((cell) => { if (cell.length >= 3) ctx.stroke(cellPath(cell)); });
-    ctx.strokeStyle = night ? "rgba(242,240,234,.8)" : "rgba(26,26,26,.55)";
-    ctx.lineWidth = 3;
-    ctx.stroke(path);
   }
   ctx.restore();
-  const label = countryLabel(feat.name);
-  ctx.fillStyle = night ? "#f2f0ea" : "#1a1a1a";
-  ctx.font = "800 34px sans-serif";
-  ctx.fillText(label, 30, H - 28);
-  ctx.font = "600 20px sans-serif";
-  ctx.fillStyle = night ? "rgba(242,240,234,.6)" : "rgba(26,26,26,.55)";
-  ctx.fillText((countryMode === "tile" ? "タイル型" : "位置どおり型") + " ・ " + pool.length + "枚の看板", 30, H - 58);
-  $("countryStatus").textContent = label + "の形で " + pool.length + " 枚の写真を使いました。" +
+  ctx.strokeStyle = "rgba(28,28,30,.10)"; ctx.lineWidth = 1.5;
+  ctx.stroke(path);
+  /* --- bottom block: caption, photo date range, brand --- */
+  ctx.textAlign = "center";
+  ctx.fillStyle = INK;
+  ctx.font = "500 27px 'Helvetica Neue', Arial, sans-serif";
+  ctx.fillText("Signs in " + feat.name, W / 2, 978);
+  const ds = pool.map((i) => i.date).filter(Boolean).sort();
+  if (ds.length) {
+    const f = (iso) => { const d = new Date(iso); return d.getFullYear() + "." + String(d.getMonth() + 1).padStart(2, "0") + "." + String(d.getDate()).padStart(2, "0"); };
+    const range = f(ds[0]) === f(ds[ds.length - 1]) ? f(ds[0]) : f(ds[0]) + " – " + f(ds[ds.length - 1]);
+    try { ctx.letterSpacing = "3px"; } catch (e) { /* ignore */ }
+    ctx.font = "400 23px 'Helvetica Neue', Arial, sans-serif";
+    ctx.fillStyle = SUB;
+    ctx.fillText(range, W / 2, 1022);
+    try { ctx.letterSpacing = "0px"; } catch (e) { /* ignore */ }
+  }
+  try { ctx.letterSpacing = "9px"; } catch (e) { /* ignore */ }
+  ctx.font = "600 19px 'Helvetica Neue', Arial, sans-serif";
+  ctx.fillStyle = SUB;
+  ctx.fillText("SIGN ARCHIVE", W / 2, H - 42);
+  try { ctx.letterSpacing = "0px"; } catch (e) { /* ignore */ }
+  ctx.textAlign = "left";
+  $("countryStatus").textContent = countryLabel(feat.name) + "の形で " + pool.length + " 枚の写真を使いました。" +
     (inCountry.length ? "" : "（この国の位置情報つき写真がまだないので、コレクション全体を使っています）") +
     (countryMode === "pos" && inCountry.length < 2 ? " 位置どおり型は、同じ国に2枚以上の位置情報つき写真があると見栄えがよくなります。" : "");
 }
