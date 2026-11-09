@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>看板マップ試作 v0.9 — 世界の看板を集める</title>
+<title>看板マップ試作 v0.9.1 — 世界の看板を集める</title>
 <link href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css" rel="stylesheet">
 <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/exifr@7.1.3/dist/full.umd.js"></script>
@@ -331,6 +331,7 @@
 
 <script>
 "use strict";
+const $ = (id) => document.getElementById(id);
 const LS_KEY = "signmap-proto-v1";
 const STYLES = {
   morning: "https://basemaps.cartocdn.com/gl/positron-gl-style/style.json",
@@ -574,7 +575,6 @@ $("modePersonal").addEventListener("click", () => setAppMode("personal"));
 $("modeWorld").addEventListener("click", () => setAppMode("world"));
 $("modeGroup").addEventListener("click", () => flash(t("flash.group")));
 
-const $ = (id) => document.getElementById(id);
 function save() {
   try { localStorage.setItem(LS_KEY, JSON.stringify(items)); }
   catch (e) { alert(t("flash.fullPhotos")); }
