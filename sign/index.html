@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>看板マップ試作 v0 — 世界の看板を集める</title>
+<link href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css" rel="stylesheet">
+<script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/exifr@7.1.3/dist/full.umd.js"></script>
+<style>
+  :root{
+    --bg:#f7f4ec; --ink:#1a1a1a; --sub:rgba(26,26,26,.55);
+    --panel:rgba(255,255,255,.92); --line:rgba(26,26,26,.14);
+    --accent:#2456e0; --tape:rgba(232,220,180,.85);
+    --mapfilter:saturate(.82) contrast(.99) brightness(1.02);
+    --tint:rgba(0,0,0,0);
+  }
+  body[data-theme="day"]{
+    --bg:#cfe0f7; --ink:#0e2242; --sub:rgba(14,34,66,.55);
+    --panel:rgba(255,255,255,.94); --line:rgba(14,34,66,.16);
+    --accent:#2456e0; --tape:rgba(214,228,250,.9);
+    --mapfilter:saturate(.9) contrast(.99) brightness(1.03);
+    --tint:rgba(36,86,224,.07);
+  }
+  body[data-theme="night"]{
+    --bg:#0b0b0d; --ink:#f2f0ea; --sub:rgba(242,240,234,.55);
+    --panel:rgba(22,22,26,.94); --line:rgba(242,240,234,.18);
+    --accent:#ffd400; --tape:rgba(120,112,88,.9);
+    --mapfilter:saturate(.8) contrast(1.0) brightness(.96);
+    --tint:rgba(0,0,0,0);
+  }
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{height:100%;overflow:hidden}
+  body{font-family:"Hiragino Kaku Gothic ProN","Hiragino Sans","Noto Sans JP",sans-serif;background:var(--bg);color:var(--ink);transition:background .6s}
+  #map{position:absolute;inset:0}
+  #map canvas{filter:var(--mapfilter)}
+  #grain{position:absolute;inset:0;pointer-events:none;z-index:3;opacity:.5;mix-blend-mode:multiply;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2'/%3E%3CfeColorMatrix values='0 0 0 0 0.45 0 0 0 0 0.4 0 0 0 0 0.32 0 0 0 .06 0'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)'/%3E%3C/svg%3E")}
+  body[data-theme="night"] #grain{mix-blend-mode:screen;opacity:.35}
+  #tint{position:absolute;inset:0;pointer-events:none;z-index:2;background:var(--tint)}
+  header{position:absolute;top:0;left:0;right:0;z-index:10;padding:14px 16px 8px;display:flex;justify-content:space-between;align-items:flex-start;pointer-events:none}
+  header>*{pointer-events:auto}
+  .ttl{font-size:19px;font-weight:800;letter-spacing:.14em}
+  .ttl small{display:block;font-size:10px;font-weight:600;letter-spacing:.3em;color:var(--sub);margin-top:3px}
+  .clockbox{text-align:right}
+  .clock{font-size:19px;font-weight:800;font-variant-numeric:tabular-nums;letter-spacing:.06em}
+  .dateline{font-size:10.5px;color:var(--sub);letter-spacing:.12em;margin-top:3px}
+  #quest{position:absolute;top:76px;left:16px;z-index:9;background:var(--panel);border:1px solid var(--line);border-radius:999px;padding:7px 13px;font-size:12px;backdrop-filter:blur(8px);box-shadow:0 4px 14px rgba(0,0,0,.08)}
+  #quest b{color:var(--accent)}
+  #modes{position:absolute;top:76px;right:16px;z-index:9;display:flex;gap:6px}
+  .mode{font-size:11px;padding:7px 11px;border-radius:999px;border:1px solid var(--line);background:var(--panel);color:var(--sub);backdrop-filter:blur(8px)}
+  .mode.on{color:var(--ink);font-weight:700;border-color:var(--ink)}
+  .mode.soon{opacity:.55}
+  #themes{position:absolute;top:118px;right:16px;z-index:9;display:flex;gap:6px}
+  .themebtn{font-size:11px;padding:6px 10px;border-radius:999px;border:1px solid var(--line);background:var(--panel);color:var(--sub);cursor:pointer}
+  .themebtn.on{color:var(--ink);font-weight:700;border-color:var(--ink)}
+  nav{position:absolute;left:0;right:0;bottom:0;z-index:10;display:flex;justify-content:space-around;align-items:center;padding:10px 8px calc(12px + env(safe-area-inset-bottom));background:var(--panel);border-top:1px solid var(--line);backdrop-filter:blur(10px)}
+  nav button{appearance:none;border:0;background:none;color:var(--ink);font-size:11px;letter-spacing:.08em;display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer;padding:2px 10px}
+  nav button .ic{font-size:19px;line-height:1}
+  #addBtn{background:var(--ink);color:var(--bg);border-radius:999px;padding:10px 22px;font-size:13px;font-weight:700;flex-direction:row;gap:7px;box-shadow:0 6px 18px rgba(0,0,0,.22)}
+  .pin{position:relative;width:56px;height:56px;cursor:pointer;transform:rotate(var(--rot,0deg))}
+  .pin .ph{position:absolute;inset:0;background:#fff;padding:3.5px;box-shadow:0 5px 16px rgba(0,0,0,.35);border-radius:2px}
+  .pin .ph img{width:100%;height:100%;object-fit:cover;display:block}
+  .pin .tape{position:absolute;top:-7px;left:50%;transform:translateX(-50%) rotate(-3deg);width:30px;height:11px;background:var(--tape);opacity:.92;z-index:2;border-left:1px dashed rgba(0,0,0,.12);border-right:1px dashed rgba(0,0,0,.12)}
+  body[data-theme="night"] .pin .ph{background:#e8e4da}
+  .pin .cnt{position:absolute;right:-8px;bottom:-8px;z-index:3;background:var(--accent);color:#fff;font-size:11px;font-weight:800;min-width:21px;height:21px;border-radius:999px;display:flex;align-items:center;justify-content:center;padding:0 5px;box-shadow:0 3px 8px rgba(0,0,0,.3)}
+  body[data-theme="night"] .pin .cnt{color:#111}
+  .sheet{position:absolute;inset:0;z-index:30;display:none;flex-direction:column;background:var(--bg)}
+  .sheet.open{display:flex}
+  .sheethead{display:flex;align-items:center;justify-content:space-between;padding:16px;border-bottom:1px solid var(--line)}
+  .sheethead .t{font-size:15px;font-weight:800;letter-spacing:.1em}
+  .xbtn{appearance:none;border:1px solid var(--line);background:var(--panel);color:var(--ink);width:34px;height:34px;border-radius:999px;font-size:15px;cursor:pointer}
+  .viewtoggle{display:flex;gap:8px;padding:12px 16px 4px}
+  .viewtoggle button{flex:1;padding:9px;border-radius:999px;border:1px solid var(--line);background:transparent;color:var(--sub);font-size:12.5px;cursor:pointer;letter-spacing:.08em}
+  .viewtoggle button.on{background:var(--ink);color:var(--bg);font-weight:700;border-color:var(--ink)}
+  #storyView{flex:1;display:none;flex-direction:column;padding:14px 16px;min-height:0}
+  #storyView.open{display:flex}
+  .storyimg{flex:1;min-height:0;display:flex;align-items:center;justify-content:center;position:relative}
+  .storyimg .frame{background:#fff;padding:8px 8px 30px;box-shadow:0 12px 34px rgba(0,0,0,.28);max-width:100%;max-height:100%;transform:rotate(-.6deg)}
+  body[data-theme="night"] .storyimg .frame{background:#e8e4da}
+  .storyimg img{max-width:100%;max-height:calc(100% - 38px);object-fit:contain;display:block}
+  .storymeta{display:flex;justify-content:space-between;align-items:center;padding:12px 2px 2px;font-size:12px;color:var(--sub);letter-spacing:.06em}
+  .storynav{display:flex;gap:8px}
+  .storynav button{width:44px;height:44px;border-radius:999px;border:1px solid var(--line);background:var(--panel);color:var(--ink);font-size:17px;cursor:pointer}
+  #collageView{flex:1;display:none;overflow-y:auto;padding:16px}
+  #collageView.open{display:block}
+  .collage{display:flex;flex-wrap:wrap;gap:14px;align-content:flex-start}
+  .citem{position:relative;background:#fff;padding:5px 5px 16px;box-shadow:0 6px 18px rgba(0,0,0,.25);width:calc(50% - 7px)}
+  body[data-theme="night"] .citem{background:#e8e4da}
+  .citem img{width:100%;height:130px;object-fit:cover;display:block}
+  .citem .cap{font-size:9.5px;color:#55534c;text-align:center;padding-top:4px;letter-spacing:.05em}
+  .citem .tape{position:absolute;top:-6px;left:50%;transform:translateX(-50%) rotate(-4deg);width:34px;height:11px;background:var(--tape);z-index:2}
+  #gridView{flex:1;overflow-y:auto;padding:14px 16px;display:none}
+  #gridView.open{display:block}
+  .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:7px}
+  .grid img{width:100%;aspect-ratio:1;object-fit:cover;border-radius:3px;cursor:pointer;display:block}
+  .empty{padding:38px 22px;text-align:center;color:var(--sub);font-size:13px;line-height:2}
+  #banner{position:absolute;top:118px;left:16px;z-index:11;display:none;background:var(--accent);color:#fff;font-size:12px;padding:9px 13px;border-radius:10px;box-shadow:0 8px 20px rgba(0,0,0,.25);max-width:62vw;line-height:1.6}
+  body[data-theme="night"] #banner{color:#111}
+  #addSheet{align-items:stretch}
+  .cats{display:flex;flex-wrap:wrap;gap:8px;padding:6px 16px}
+  .cat{padding:9px 14px;border-radius:999px;border:1px solid var(--line);font-size:12.5px;cursor:pointer;background:transparent;color:var(--sub)}
+  .cat.on{background:var(--ink);color:var(--bg);font-weight:700;border-color:var(--ink)}
+  .bigbtn{margin:16px;padding:15px;border:0;border-radius:14px;background:var(--ink);color:var(--bg);font-size:14.5px;font-weight:800;letter-spacing:.1em;cursor:pointer}
+  .note{padding:0 16px;font-size:11.5px;color:var(--sub);line-height:1.8}
+  .del{align-self:center;margin:4px 0 14px;background:none;border:0;color:#c0392b;font-size:12px;cursor:pointer;letter-spacing:.06em}
+  .maplibregl-ctrl-attrib{font-size:9px}
+</style>
+</head>
+<body data-theme="morning">
+<div id="map"></div>
+<div id="tint"></div>
+<div id="grain"></div>
+<header>
+  <div class="ttl">看板マップ<small>SIGN MAP — PROTOTYPE v0</small></div>
+  <div class="clockbox">
+    <div class="clock" id="clock">--:--</div>
+    <div class="dateline" id="dateline">—</div>
+  </div>
+</header>
+<div id="quest"></div>
+<div id="modes">
+  <span class="mode on">個人</span>
+  <span class="mode soon">グループ・近日</span>
+  <span class="mode soon">世界・近日</span>
+</div>
+<div id="themes">
+  <button class="themebtn" data-t="morning">朝</button>
+  <button class="themebtn" data-t="day">昼</button>
+  <button class="themebtn" data-t="night">夜</button>
+  <button class="themebtn on" data-t="auto">自動</button>
+</div>
+<div id="banner"></div>
+<nav>
+  <button id="mapBtn"><span class="ic">🗺</span>地図</button>
+  <button id="addBtn"><span class="ic">＋</span>看板を追加</button>
+  <button id="colBtn"><span class="ic">▦</span>コレクション</button>
+</nav>
+<input type="file" id="fileInput" accept="image/*" multiple hidden>
+
+<div class="sheet" id="viewer">
+  <div class="sheethead">
+    <div class="t" id="viewerTitle">この場所の看板</div>
+    <button class="xbtn" data-close="viewer">✕</button>
+  </div>
+  <div class="viewtoggle">
+    <button id="vtStory" class="on">ストーリー</button>
+    <button id="vtCollage">コラージュ</button>
+  </div>
+  <div id="storyView" class="open">
+    <div class="storyimg"><div class="frame"><img id="storyImg" alt="看板の写真"></div></div>
+    <div class="storymeta">
+      <span id="storyMeta">—</span>
+      <span class="storynav">
+        <button id="prevBtn">‹</button>
+        <button id="nextBtn">›</button>
+      </span>
+    </div>
+    <button class="del" id="delBtn">この写真を削除</button>
+  </div>
+  <div id="collageView"><div class="collage" id="collageBox"></div></div>
+</div>
+
+<div class="sheet" id="collection">
+  <div class="sheethead">
+    <div class="t">マイコレクション</div>
+    <button class="xbtn" data-close="collection">✕</button>
+  </div>
+  <div id="gridView" class="open"><div class="grid" id="gridBox"></div><div class="empty" id="gridEmpty" style="display:none">まだ看板がありません。<br>下の「看板を追加」から、撮った写真を入れてみてください。<br>位置情報つきの写真は、自動でその場所にピンが立ちます。</div></div>
+</div>
+
+<div class="sheet" id="addSheet">
+  <div class="sheethead">
+    <div class="t">看板を追加</div>
+    <button class="xbtn" data-close="addSheet">✕</button>
+  </div>
+  <p class="note" id="addInfo" style="padding-top:14px"></p>
+  <p class="note" style="padding-top:10px">この写真たちのカテゴリ（任意）</p>
+  <div class="cats" id="catBox"></div>
+  <button class="bigbtn" id="saveAddBtn">この内容で追加する</button>
+  <p class="note">位置情報がない写真は、あとで地図をタップして場所を決めます。写真は端末の中だけに保存されます（試作版）。</p>
+</div>
+
+<script>
+"use strict";
+const LS_KEY = "signmap-proto-v1";
+const STYLES = {
+  morning: "https://basemaps.cartocdn.com/gl/positron-gl-style/style.json",
+  day: "https://basemaps.cartocdn.com/gl/voyager-gl-style/style.json",
+  night: "https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json"
+};
+const THEME_LABEL = { morning: "朝", day: "昼", night: "夜" };
+const CATS = ["ネオン", "手書き", "レトロ", "タイポ", "変な看板", "その他"];
+const QUESTS = [
+  "手書きの「営業中」を探せ", "赤いネオンを1枚", "青い看板を2枚", "漢字だけの看板を探せ",
+  "一番古そうな看板を探せ", "動物が描かれた看板を探せ", "英語の看板を1枚", "閉店した店の看板を記録せよ",
+  "手書きの値札・メニューを探せ", "縦書きの看板を探せ", "光る看板を夜に撮れ", "さびれた自動販売機の看板を",
+  "地名が入った看板を探せ", "フォントが美しい看板を1枚"
+];
+let items = [];
+try { items = JSON.parse(localStorage.getItem(LS_KEY) || "[]"); } catch (e) { items = []; }
+let markers = [];
+let pending = [];       // photos waiting for GPS placement
+let staged = [];        // photos processed, waiting for category confirm
+let stagedCat = "その他";
+let currentGroup = null, storyIdx = 0;
+
+const $ = (id) => document.getElementById(id);
+function save() {
+  try { localStorage.setItem(LS_KEY, JSON.stringify(items)); }
+  catch (e) { alert("保存容量がいっぱいです。古い写真を削除してください。"); }
+}
+function fmtDate(iso) {
+  if (!iso) return "日付なし";
+  const d = new Date(iso);
+  return d.getFullYear() + "/" + (d.getMonth() + 1) + "/" + d.getDate();
+}
+function groupKey(it) { return it.lat.toFixed(4) + "," + it.lng.toFixed(4); }
+function groups() {
+  const g = {};
+  items.forEach((it) => { const k = groupKey(it); (g[k] = g[k] || []).push(it); });
+  Object.values(g).forEach((arr) => arr.sort((a, b) => (a.date || "") < (b.date || "") ? -1 : 1));
+  return g;
+}
+
+/* ---------- theme ---------- */
+function autoTheme() {
+  const h = new Date().getHours();
+  if (h >= 5 && h < 11) return "morning";
+  if (h >= 11 && h < 17) return "day";
+  return "night";
+}
+let themeMode = "auto";
+function applyTheme() {
+  const t = themeMode === "auto" ? autoTheme() : themeMode;
+  document.body.dataset.theme = t;
+  if (window.__map && window.__mapStyle !== t) { window.__mapStyle = t; map.setStyle(STYLES[t]); map.once("styledata", renderMarkers); }
+  document.querySelectorAll(".themebtn").forEach((b) => b.classList.toggle("on", b.dataset.t === themeMode));
+}
+document.querySelectorAll(".themebtn").forEach((b) => b.addEventListener("click", () => { themeMode = b.dataset.t; applyTheme(); }));
+
+function tickClock() {
+  const d = new Date();
+  const wd = ["日", "月", "火", "水", "木", "金", "土"][d.getDay()];
+  $("clock").textContent = String(d.getHours()).padStart(2, "0") + ":" + String(d.getMinutes()).padStart(2, "0");
+  $("dateline").textContent = (d.getMonth() + 1) + "月" + d.getDate() + "日(" + wd + ") ・ " + THEME_LABEL[autoTheme()] + "の地図";
+}
+setInterval(tickClock, 20000); tickClock();
+
+(function setQuest() {
+  const now = new Date();
+  const start = new Date(now.getFullYear(), 0, 0);
+  const doy = Math.floor((now - start) / 86400000);
+  $("quest").innerHTML = "今日のお題：<b>" + QUESTS[doy % QUESTS.length] + "</b>";
+})();
+
+/* ---------- map ---------- */
+const map = new maplibregl.Map({
+  container: "map",
+  style: STYLES[autoTheme()],
+  center: [138.25, 37.9], zoom: 4.6,
+  attributionControl: { compact: true }
+});
+window.__map = map; window.__mapStyle = autoTheme();
+map.addControl(new maplibregl.GeolocateControl({ positionOptions: { enableHighAccuracy: true }, trackUserLocation: false }), "bottom-right");
+map.addControl(new maplibregl.NavigationControl({ showCompass: false }), "bottom-right");
+
+function renderMarkers() {
+  markers.forEach((m) => m.remove()); markers = [];
+  const g = groups();
+  Object.entries(g).forEach(([key, arr]) => {
+    const el = document.createElement("div");
+    el.className = "pin";
+    el.style.setProperty("--rot", ((key.charCodeAt(0) + key.charCodeAt(5)) % 9 - 4) + "deg");
+    el.innerHTML = '<div class="tape"></div><div class="ph"><img src="' + arr[arr.length - 1].img + '" alt=""></div>' +
+      (arr.length > 1 ? '<div class="cnt">' + arr.length + "</div>" : "");
+    el.addEventListener("click", (ev) => { ev.stopPropagation(); openViewer(key); });
+    markers.push(new maplibregl.Marker({ element: el, anchor: "center" }).setLngLat([arr[0].lng, arr[0].lat]).addTo(map));
+  });
+}
+map.on("load", () => {
+  renderMarkers();
+  const placed = items.filter((i) => typeof i.lat === "number");
+  if (placed.length) {
+    const b = new maplibregl.LngLatBounds();
+    placed.forEach((i) => b.extend([i.lng, i.lat]));
+    map.fitBounds(b, { padding: 70, maxZoom: 15, duration: 0 });
+  }
+});
+map.on("click", (e) => {
+  if (!pending.length) return;
+  const it = pending.shift();
+  it.lat = e.lngLat.lat; it.lng = e.lngLat.lng;
+  items.push(it); save(); renderMarkers(); updateBanner();
+  map.flyTo({ center: [it.lng, it.lat], zoom: Math.max(map.getZoom(), 13) });
+});
+function updateBanner() {
+  const b = $("banner");
+  if (pending.length) {
+    b.style.display = "block";
+    b.textContent = "場所が分からない写真が " + pending.length + " 枚あります。地図をタップして置く場所を決めてください。";
+  } else b.style.display = "none";
+}
+
+/* ---------- add flow ---------- */
+$("addBtn").addEventListener("click", () => $("fileInput").click());
+$("fileInput").addEventListener("change", async (ev) => {
+  const files = Array.from(ev.target.files || []);
+  ev.target.value = "";
+  if (!files.length) return;
+  staged = [];
+  for (const f of files) {
+    try {
+      const gps = await exifr.gps(f).catch(() => null);
+      let dateIso = null;
+      try {
+        const meta = await exifr.parse(f, { pick: ["DateTimeOriginal", "CreateDate"] });
+        const dv = meta && (meta.DateTimeOriginal || meta.CreateDate);
+        if (dv) dateIso = new Date(dv).toISOString();
+      } catch (e) { /* no date */ }
+      const img = await compress(f);
+      staged.push({ id: "s" + Date.now() + Math.random().toString(36).slice(2, 7), img, lat: gps ? gps.latitude : null, lng: gps ? gps.longitude : null, date: dateIso || new Date(f.lastModified || Date.now()).toISOString(), cat: "その他" });
+    } catch (e) { /* skip unreadable file */ }
+  }
+  if (!staged.length) { alert("読み込める写真がありませんでした。"); return; }
+  const withGps = staged.filter((s) => typeof s.lat === "number").length;
+  $("addInfo").textContent = staged.length + " 枚を読み込みました（位置情報あり " + withGps + " 枚／なし " + (staged.length - withGps) + " 枚）。";
+  stagedCat = "その他"; renderCats();
+  $("addSheet").classList.add("open");
+});
+function renderCats() {
+  $("catBox").innerHTML = CATS.map((c) => '<button class="cat' + (c === stagedCat ? " on" : "") + '" data-c="' + c + '">' + c + "</button>").join("");
+  $("catBox").querySelectorAll(".cat").forEach((b) => b.addEventListener("click", () => { stagedCat = b.dataset.c; renderCats(); }));
+}
+$("saveAddBtn").addEventListener("click", () => {
+  staged.forEach((s) => {
+    s.cat = stagedCat;
+    if (typeof s.lat === "number") items.push(s); else pending.push(s);
+  });
+  staged = [];
+  save(); renderMarkers(); updateBanner();
+  $("addSheet").classList.remove("open");
+  const placed = items.filter((i) => typeof i.lat === "number");
+  if (placed.length && !pending.length) {
+    const b = new maplibregl.LngLatBounds();
+    placed.forEach((i) => b.extend([i.lng, i.lat]));
+    map.fitBounds(b, { padding: 70, maxZoom: 15 });
+  }
+});
+function compress(file) {
+  return new Promise((resolve, reject) => {
+    const url = URL.createObjectURL(file);
+    const im = new Image();
+    im.onload = () => {
+      const max = 1200;
+      const sc = Math.min(1, max / Math.max(im.width, im.height));
+      const cv = document.createElement("canvas");
+      cv.width = Math.round(im.width * sc); cv.height = Math.round(im.height * sc);
+      cv.getContext("2d").drawImage(im, 0, 0, cv.width, cv.height);
+      URL.revokeObjectURL(url);
+      resolve(cv.toDataURL("image/jpeg", 0.82));
+    };
+    im.onerror = reject;
+    im.src = url;
+  });
+}
+
+/* ---------- viewer ---------- */
+function openSheet(id) { $(id).classList.add("open"); }
+function closeSheet(id) { $(id).classList.remove("open"); }
+document.querySelectorAll("[data-close]").forEach((b) => b.addEventListener("click", () => closeSheet(b.dataset.close)));
+$("mapBtn").addEventListener("click", () => { document.querySelectorAll(".sheet").forEach((s) => s.classList.remove("open")); });
+
+function openViewer(key) {
+  currentGroup = key; storyIdx = 0;
+  const arr = groups()[key] || [];
+  if (!arr.length) return;
+  $("viewerTitle").textContent = "この場所の看板（" + arr.length + "枚）";
+  setViewMode("story");
+  drawStory(); drawCollage(arr);
+  openSheet("viewer");
+}
+function setViewMode(m) {
+  $("vtStory").classList.toggle("on", m === "story");
+  $("vtCollage").classList.toggle("on", m === "collage");
+  $("storyView").classList.toggle("open", m === "story");
+  $("collageView").classList.toggle("open", m === "collage");
+}
+$("vtStory").addEventListener("click", () => setViewMode("story"));
+$("vtCollage").addEventListener("click", () => setViewMode("collage"));
+function curArr() { return groups()[currentGroup] || []; }
+function drawStory() {
+  const arr = curArr();
+  if (!arr.length) { closeSheet("viewer"); return; }
+  storyIdx = Math.max(0, Math.min(storyIdx, arr.length - 1));
+  const it = arr[storyIdx];
+  $("storyImg").src = it.img;
+  $("storyMeta").textContent = fmtDate(it.date) + " ・ " + (it.cat || "その他") + " ・ " + (storyIdx + 1) + " / " + arr.length;
+}
+$("prevBtn").addEventListener("click", () => { const a = curArr(); storyIdx = (storyIdx - 1 + a.length) % a.length; drawStory(); });
+$("nextBtn").addEventListener("click", () => { const a = curArr(); storyIdx = (storyIdx + 1) % a.length; drawStory(); });
+$("delBtn").addEventListener("click", () => {
+  const arr = curArr(); const it = arr[storyIdx];
+  if (!it) return;
+  items = items.filter((x) => x.id !== it.id);
+  save(); renderMarkers(); drawStory(); drawCollage(curArr());
+});
+function drawCollage(arr) {
+  $("collageBox").innerHTML = arr.map((it, i) =>
+    '<div class="citem" style="transform:rotate(' + ((i % 5) - 2) * 1.4 + 'deg)"><div class="tape"></div><img src="' + it.img + '" alt=""><div class="cap">' + fmtDate(it.date) + " ・ " + (it.cat || "その他") + "</div></div>"
+  ).join("");
+}
+
+/* ---------- collection ---------- */
+$("colBtn").addEventListener("click", () => {
+  const sorted = [...items].sort((a, b) => (a.date || "") < (b.date || "") ? 1 : -1);
+  $("gridEmpty").style.display = sorted.length ? "none" : "block";
+  $("gridBox").innerHTML = sorted.map((it) => '<img src="' + it.img + '" data-k="' + groupKey(it) + '" alt="">').join("");
+  $("gridBox").querySelectorAll("img").forEach((im) => im.addEventListener("click", () => {
+    closeSheet("collection");
+    const it = sorted.find((x) => groupKey(x) === im.dataset.k);
+    if (it) map.flyTo({ center: [it.lng, it.lat], zoom: 14 });
+    openViewer(im.dataset.k);
+  }));
+  openSheet("collection");
+});
+
+applyTheme();
+setInterval(applyTheme, 60000);
+updateBanner();
+</script>
+</body>
+</html>
