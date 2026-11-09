@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>看板マップ試作 v0.8 — 世界の看板を集める</title>
+<title>看板マップ試作 v0.9 — 世界の看板を集める</title>
 <link href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css" rel="stylesheet">
 <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/exifr@7.1.3/dist/full.umd.js"></script>
@@ -54,6 +54,16 @@
   #themes{position:absolute;top:118px;right:16px;z-index:9;display:flex;gap:6px}
   .themebtn{font-size:11px;padding:6px 10px;border-radius:999px;border:1px solid var(--line);background:var(--panel);color:var(--sub);cursor:pointer}
   .themebtn.on{color:var(--ink);font-weight:700;border-color:var(--ink)}
+  #topTools{position:absolute;top:158px;right:16px;z-index:9;display:flex;gap:6px}
+  #langSel{font-size:11px;padding:6px 8px;border-radius:999px;border:1px solid var(--line);background:var(--panel);color:var(--ink);cursor:pointer}
+  #planChip{font-size:11px;padding:6px 10px;border-radius:999px;border:1px solid var(--line);background:var(--panel);color:var(--ink);cursor:pointer;font-weight:700}
+  #proBadge{display:inline-block;margin-left:8px;padding:2px 8px;border-radius:999px;background:#FFD400;color:#1c1c1e;font-size:10px;font-weight:800;letter-spacing:.12em;vertical-align:middle}
+  .planbox{margin:12px 16px 0;padding:14px 16px;border:1px solid var(--line);border-radius:14px}
+  .planbox.pro{border-color:#FFD400;border-width:2px}
+  .plantitle{font-size:14px;font-weight:800;letter-spacing:.06em}
+  .planprice{font-size:12px;font-weight:700;color:var(--sub)}
+  .planlist{margin:8px 0 2px;padding-left:18px;font-size:12.5px;line-height:1.9;color:var(--ink)}
+  #adSlot{margin:0 16px 16px;padding:16px 12px;border:1.5px dashed var(--line);border-radius:12px;text-align:center;font-size:11px;color:var(--sub);letter-spacing:.06em}
   nav{position:absolute;left:0;right:0;bottom:0;z-index:10;display:flex;justify-content:space-around;align-items:center;padding:10px 8px calc(12px + env(safe-area-inset-bottom));background:var(--panel);border-top:1px solid var(--line);backdrop-filter:blur(10px)}
   nav button{appearance:none;border:0;background:none;color:var(--ink);font-size:11px;letter-spacing:.08em;display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer;padding:2px 10px}
   nav button .ic{font-size:19px;line-height:1}
@@ -151,7 +161,7 @@
 <div id="tint"></div>
 <div id="grain"></div>
 <header>
-  <div class="ttl">看板マップ<small>SIGN MAP — PROTOTYPE v0.8</small></div>
+  <div class="ttl">看板マップ<small>SIGN MAP — PROTOTYPE v0.9</small><span id="proBadge" style="display:none">PRO</span></div>
   <div class="clockbox">
     <div class="clock" id="clock">--:--</div>
     <div class="dateline" id="dateline">—</div>
@@ -159,9 +169,9 @@
 </header>
 <div id="quest"></div>
 <div id="modes">
-  <span class="mode on" id="modePersonal">個人</span>
-  <span class="mode soon" id="modeGroup">グループ・近日</span>
-  <span class="mode" id="modeWorld">世界</span>
+  <span class="mode on" id="modePersonal" data-i18n="mode.personal">個人</span>
+  <span class="mode soon" id="modeGroup" data-i18n="mode.group">グループ・近日</span>
+  <span class="mode" id="modeWorld" data-i18n="mode.world">世界</span>
 </div>
 <div id="flash"></div>
 <div id="themes">
@@ -170,8 +180,16 @@
   <button class="themebtn" data-t="night">夜</button>
   <button class="themebtn on" data-t="auto">自動</button>
 </div>
+<div id="topTools">
+  <select id="langSel" aria-label="Language">
+    <option value="ja">日本語</option>
+    <option value="en">English</option>
+    <option value="ko">한국어</option>
+  </select>
+  <button id="planChip" data-i18n="plan.chip">⭐ プラン</button>
+</div>
 <div id="banner"></div>
-<div id="viewSeg"><button id="vsMap" class="on">地図</button><button id="vsTerrain">地形</button></div>
+<div id="viewSeg"><button id="vsMap" class="on" data-i18n="view.map">地図</button><button id="vsTerrain" data-i18n="view.terrain">地形</button></div>
 <nav>
   <button id="mapBtn"><span class="ic">🗺</span>地図</button>
   <button id="addBtn"><span class="ic">＋</span>看板を追加</button>
@@ -182,12 +200,12 @@
 
 <div class="sheet" id="viewer">
   <div class="sheethead">
-    <div class="t" id="viewerTitle">この場所の看板</div>
+    <div class="t" id="viewerTitle" data-i18n="viewer.title">この場所の看板</div>
     <button class="xbtn" data-close="viewer">✕</button>
   </div>
   <div class="viewtoggle">
-    <button id="vtStory" class="on">ストーリー</button>
-    <button id="vtCollage">コラージュ</button>
+    <button id="vtStory" class="on" data-i18n="viewer.story">ストーリー</button>
+    <button id="vtCollage" data-i18n="viewer.collage">コラージュ</button>
   </div>
   <div id="storyView" class="open">
     <div class="storyimg"><div class="frame"><img id="storyImg" alt="看板の写真"></div></div>
@@ -198,95 +216,117 @@
         <button id="nextBtn">›</button>
       </span>
     </div>
-    <button class="cropbtn" id="cropBtn">切り取り位置を調整</button>
-    <button class="cropbtn" id="mojiFromBtn">この写真から文字を集める</button>
-    <button class="del" id="delBtn">この写真を削除</button>
+    <button class="cropbtn" id="cropBtn" data-i18n="viewer.crop">切り取り位置を調整</button>
+    <button class="cropbtn" id="mojiFromBtn" data-i18n="viewer.moji">この写真から文字を集める</button>
+    <button class="del" id="delBtn" data-i18n="viewer.del">この写真を削除</button>
   </div>
   <div id="collageView"><div class="collage" id="collageBox"></div></div>
 </div>
 
 <div class="sheet" id="collection">
   <div class="sheethead">
-    <div class="t">マイコレクション</div>
+    <div class="t" data-i18n="col.title">マイコレクション</div>
     <button class="xbtn" data-close="collection">✕</button>
   </div>
   <div id="gridView" class="open"><div class="grid" id="gridBox"></div><div class="empty" id="gridEmpty" style="display:none">まだ看板がありません。<br>下の「看板を追加」から、撮った写真を入れてみてください。<br>位置情報つきの写真は、自動でその場所にピンが立ちます。</div></div>
   <button class="countrybtn" id="countryBtn">🗾️ ポスターを見る</button>
+  <button class="countrybtn" id="planBtn" data-i18n="col.plan">⭐ プラン・アップグレード</button>
   <p class="note" id="colNote" style="display:none"></p>
+  <div id="adSlot" data-i18n="plan.adNote">広告スペース（AdSense審査通過後に広告が表示されます）</div>
 </div>
 
 <div class="sheet" id="countrySheet">
   <div class="sheethead">
-    <div class="t">ポスター</div>
+    <div class="t" data-i18n="country.title">ポスター</div>
     <button class="xbtn" data-close="countrySheet">✕</button>
   </div>
-  <p class="note" style="padding-top:14px">写真を投稿すると、その国の形のポスターが自動で作られます。ここでは国の切り替えと、画像の保存ができます。</p>
+  <p class="note" style="padding-top:14px" data-i18n="country.note1">写真を投稿すると、その国の形のポスターが自動で作られます。ここでは国の切り替えと、画像の保存ができます。</p>
   <div class="countryrow">
     <select id="countrySelect"><option value="">読み込み中…</option></select>
   </div>
   <div class="seg">
-    <button id="modeTile" class="on">タイル型（敷き詰め）</button>
-    <button id="modePos">位置どおり型</button>
+    <button id="modeTile" class="on" data-i18n="country.tile">タイル型（敷き詰め）</button>
+    <button id="modePos" data-i18n="country.pos">位置どおり型</button>
   </div>
   <div id="countryCanvasWrap"><canvas id="countryCanvas" width="900" height="1125"></canvas></div>
   <p id="countryStatus"></p>
-  <button class="bigbtn" id="dlCountryBtn">画像として保存する</button>
-  <p class="note">国の輪郭は Natural Earth（world-atlas）の公開データを使っています。写真に位置情報がないものは「タイル型」では使えますが、「位置どおり型」では置けません。</p>
+  <button class="bigbtn" id="dlCountryBtn" data-i18n="country.save">画像として保存する</button>
+  <p class="note" data-i18n="country.note2">国の輪郭は Natural Earth（world-atlas）の公開データを使っています。写真に位置情報がないものは「タイル型」では使えますが、「位置どおり型」では置けません。</p>
 </div>
 
 <div class="sheet" id="cropSheet">
   <div class="sheethead">
-    <div class="t">切り取り位置</div>
+    <div class="t" data-i18n="crop.title">切り取り位置</div>
     <button class="xbtn" data-close="cropSheet">✕</button>
   </div>
-  <p class="note">コラージュで表示される部分です。写真をドラッグして、見せたい場所を選んでください。</p>
+  <p class="note" data-i18n="crop.note">コラージュで表示される部分です。写真をドラッグして、見せたい場所を選んでください。</p>
   <div id="cropFrame"><img id="cropImg" alt="切り取り位置の調整"></div>
-  <button class="bigbtn" id="cropDone">この位置にする</button>
-  <button class="del" id="cropReset">中央に戻す</button>
+  <button class="bigbtn" id="cropDone" data-i18n="crop.done">この位置にする</button>
+  <button class="del" id="cropReset" data-i18n="crop.reset">中央に戻す</button>
 </div>
 
 <div class="sheet" id="mojiSheet">
   <div class="sheethead">
-    <div class="t">文字あつめ</div>
+    <div class="t" data-i18n="moji.title">文字あつめ</div>
     <button class="xbtn" data-close="mojiSheet">✕</button>
   </div>
   <div class="sheetbody">
-    <div class="mojihead">— 文字を組む</div>
+    <div class="mojihead" data-i18n="moji.head1">— 文字を組む</div>
     <div class="mojirow">
-      <input type="text" id="mojiWord" placeholder="例：SEOUL、看板、TOKYO">
-      <button class="mbtn" id="mojiBuild">組む</button>
+      <input type="text" id="mojiWord" data-i18n-ph="moji.wordPh" placeholder="例：SEOUL、看板、TOKYO">
+      <button class="mbtn" id="mojiBuild" data-i18n="moji.build">組む</button>
     </div>
     <div id="mojiPreview"></div>
     <div class="mojirow">
-      <button class="mbtn sub" id="mojiShuffle">シャッフル</button>
-      <button class="mbtn sub" id="mojiSave">画像で保存</button>
+      <button class="mbtn sub" id="mojiShuffle" data-i18n="moji.shuffle">シャッフル</button>
+      <button class="mbtn sub" id="mojiSave" data-i18n="moji.save">画像で保存</button>
     </div>
-    <div class="mojihead">— 文字コレクション</div>
+    <div class="mojihead" data-i18n="moji.head2">— 文字コレクション</div>
     <div id="mojiGrid"></div>
-    <p class="note" id="mojiEmpty">まだ文字がありません。下の「写真から切り取る」で、看板の文字を集めてください。</p>
-    <div class="mojihead">— 写真から切り取る</div>
+    <p class="note" id="mojiEmpty" data-i18n="moji.empty">まだ文字がありません。下の「写真から切り取る」で、看板の文字を集めてください。</p>
+    <div class="mojihead" data-i18n="moji.head3">— 写真から切り取る</div>
     <div class="mojirow">
       <select id="mojiSrcSel"></select>
     </div>
     <div id="mojiFrame"><img id="mojiSrcImg" alt="切り取り元の写真"><div id="mojiSel"></div></div>
     <div class="mojirow">
-      <input type="text" id="mojiChar" maxlength="1" placeholder="この文字（1文字）">
-      <button class="mbtn" id="mojiAdd">追加</button>
+      <input type="text" id="mojiChar" maxlength="1" data-i18n-ph="moji.charPh" placeholder="この文字（1文字）">
+      <button class="mbtn" id="mojiAdd" data-i18n="moji.add">追加</button>
     </div>
-    <p class="note">写真の上で、集めたい文字をドラッグで囲んでください。囲んだ部分が、その文字のタイルになります。</p>
+    <p class="note" data-i18n="moji.note">写真の上で、集めたい文字をドラッグで囲んでください。囲んだ部分が、その文字のタイルになります。</p>
+  </div>
+</div>
+
+<div class="sheet" id="proSheet">
+  <div class="sheethead">
+    <div class="t" data-i18n="plan.title">プラン</div>
+    <button class="xbtn" data-close="proSheet">✕</button>
+  </div>
+  <div class="sheetbody">
+    <p class="note" id="planState" style="padding-top:14px"></p>
+    <div class="planbox">
+      <div class="plantitle" data-i18n="plan.freeT">無料プラン</div>
+      <ul class="planlist" id="freeList"></ul>
+    </div>
+    <div class="planbox pro">
+      <div class="plantitle">Pro <span class="planprice" data-i18n="plan.price">¥480/月（年払い ¥4,800）</span></div>
+      <ul class="planlist" id="proList"></ul>
+    </div>
+    <button class="bigbtn" id="proToggle"></button>
+    <p class="note" data-i18n="plan.note">試作版のデモです。実際の決済は本実装で導入します。Proの機能のうち、透かしなし書き出しと広告非表示はこの試作でも体験できます。</p>
   </div>
 </div>
 
 <div class="sheet" id="addSheet">
   <div class="sheethead">
-    <div class="t">看板を追加</div>
+    <div class="t" data-i18n="add.title">看板を追加</div>
     <button class="xbtn" data-close="addSheet">✕</button>
   </div>
   <p class="note" id="addInfo" style="padding-top:14px"></p>
-  <p class="note" style="padding-top:10px">この写真たちのカテゴリ（任意）</p>
+  <p class="note" style="padding-top:10px" data-i18n="add.cat">この写真たちのカテゴリ（任意）</p>
   <div class="cats" id="catBox"></div>
-  <button class="bigbtn" id="saveAddBtn">この内容で追加する</button>
-  <p class="note">位置情報がない写真は、あとで地図をタップして場所を決めます。写真は端末の中だけに保存されます（試作版）。</p>
+  <button class="bigbtn" id="saveAddBtn" data-i18n="add.save">この内容で追加する</button>
+  <p class="note" data-i18n="add.note">位置情報がない写真は、あとで地図をタップして場所を決めます。写真は端末の中だけに保存されます（試作版）。</p>
 </div>
 
 <script>
@@ -305,6 +345,122 @@ const QUESTS = [
   "手書きの値札・メニューを探せ", "縦書きの看板を探せ", "光る看板を夜に撮れ", "さびれた自動販売機の看板を",
   "地名が入った看板を探せ", "フォントが美しい看板を1枚"
 ];
+
+/* ---------- i18n (ja / en / ko) ----------
+   UI strings live in STR; static HTML opts in with data-i18n / data-i18n-ph,
+   dynamic strings call t(). Photo data (categories) stays in Japanese and is
+   translated only for display via catLabel(). */
+let lang = "ja";
+try { lang = localStorage.getItem("signmap-lang") || "ja"; } catch (e) { lang = "ja"; }
+if (!["ja", "en", "ko"].includes(lang)) lang = "ja";
+const STR = {
+  "nav.map": { ja: "地図", en: "Map", ko: "지도" },
+  "nav.add": { ja: "看板を追加", en: "Add a sign", ko: "간판 추가" },
+  "nav.moji": { ja: "文字", en: "Letters", ko: "문자" },
+  "nav.col": { ja: "コレクション", en: "Collection", ko: "컬렉션" },
+  "view.map": { ja: "地図", en: "Map", ko: "지도" },
+  "view.terrain": { ja: "地形", en: "Terrain", ko: "지형" },
+  "mode.personal": { ja: "個人", en: "Personal", ko: "개인" },
+  "mode.group": { ja: "グループ・近日", en: "Group · Soon", ko: "그룹 · 준비 중" },
+  "mode.world": { ja: "世界", en: "World", ko: "세계" },
+  "theme.morning": { ja: "朝", en: "Morning", ko: "아침" },
+  "theme.day": { ja: "昼", en: "Day", ko: "낮" },
+  "theme.night": { ja: "夜", en: "Night", ko: "밤" },
+  "theme.auto": { ja: "自動", en: "Auto", ko: "자동" },
+  "themeName.morning": { ja: "朝", en: "Morning", ko: "아침" },
+  "themeName.day": { ja: "昼", en: "Daytime", ko: "낮" },
+  "themeName.night": { ja: "夜", en: "Night", ko: "밤" },
+  "quest.label": { ja: "今日のお題：", en: "Today's quest: ", ko: "오늘의 과제: " },
+  "nodate": { ja: "日付なし", en: "No date", ko: "날짜 없음" },
+  "banner.pending": { ja: "場所が分からない写真が {n} 枚あります。地図をタップして置く場所を決めてください。", en: "{n} photo(s) have no location yet. Tap the map to place them.", ko: "위치를 모르는 사진이 {n}장 있습니다. 지도를 탭해서 위치를 정해 주세요." },
+  "viewer.title": { ja: "この場所の看板", en: "Signs at this spot", ko: "이 장소의 간판" },
+  "viewer.story": { ja: "ストーリー", en: "Stories", ko: "스토리" },
+  "viewer.collage": { ja: "コラージュ", en: "Collage", ko: "콜라주" },
+  "viewer.crop": { ja: "切り取り位置を調整", en: "Adjust crop", ko: "자르기 위치 조정" },
+  "viewer.moji": { ja: "この写真から文字を集める", en: "Collect letters from this photo", ko: "이 사진에서 문자 수집" },
+  "viewer.del": { ja: "この写真を削除", en: "Delete this photo", ko: "이 사진 삭제" },
+  "col.title": { ja: "マイコレクション", en: "My collection", ko: "내 컬렉션" },
+  "col.poster": { ja: "🗾️ ポスターを見る", en: "🗾️ View poster", ko: "🗾️ 포스터 보기" },
+  "col.plan": { ja: "⭐ プラン・アップグレード", en: "⭐ Plan & upgrade", ko: "⭐ 플랜 · 업그레이드" },
+  "col.empty": { ja: "まだ看板がありません。<br>下の「看板を追加」から、撮った写真を入れてみてください。<br>位置情報つきの写真は、自動でその場所にピンが立ちます。", en: "No signs yet.<br>Add photos with the “Add a sign” button below.<br>Photos with location data are pinned automatically.", ko: "아직 간판이 없습니다.<br>아래 ‘간판 추가’에서 사진을 넣어 보세요.<br>위치 정보가 있는 사진은 자동으로 핀이 꽂힙니다." },
+  "col.worldNote": { ja: "世界モード：世界の看板（試作用サンプル）＋あなたの写真です。ポスターは個人モードで使えます。", en: "World mode: world signs (prototype samples) + your photos. The poster is available in Personal mode.", ko: "세계 모드: 세계의 간판(시작용 샘플)과 내 사진입니다. 포스터는 개인 모드에서 사용할 수 있습니다." },
+  "country.title": { ja: "ポスター", en: "Poster", ko: "포스터" },
+  "country.note1": { ja: "写真を投稿すると、その国の形のポスターが自動で作られます。ここでは国の切り替えと、画像の保存ができます。", en: "Posting a photo automatically creates a poster in the shape of its country. Here you can switch countries and save the image.", ko: "사진을 올리면 그 나라 모양의 포스터가 자동으로 만들어집니다. 여기서는 나라를 바꾸고 이미지를 저장할 수 있습니다." },
+  "country.tile": { ja: "タイル型（敷き詰め）", en: "Tiles (fill)", ko: "타일형 (채우기)" },
+  "country.pos": { ja: "位置どおり型", en: "By location", ko: "위치형" },
+  "country.save": { ja: "画像として保存する", en: "Save as image", ko: "이미지로 저장" },
+  "country.note2": { ja: "国の輪郭は Natural Earth（world-atlas）の公開データを使っています。写真に位置情報がないものは「タイル型」では使えますが、「位置どおり型」では置けません。", en: "Country outlines use Natural Earth (world-atlas) open data. Photos without location data work in Tiles mode but cannot be placed in By-location mode.", ko: "나라의 윤곽은 Natural Earth(world-atlas) 공개 데이터를 사용합니다. 위치 정보가 없는 사진은 타일형에서는 쓸 수 있지만 위치형에는 놓을 수 없습니다." },
+  "country.loading": { ja: "国の形データを読み込んでいます…", en: "Loading country shapes…", ko: "나라 모양 데이터를 불러오는 중…" },
+  "country.choose": { ja: "国を選んでください。", en: "Choose a country.", ko: "나라를 선택해 주세요." },
+  "country.none": { ja: "まだ看板の写真がありません。「看板を追加」から写真を入れてみてください。", en: "No sign photos yet. Add some from “Add a sign”.", ko: "아직 간판 사진이 없습니다. ‘간판 추가’에서 사진을 넣어 보세요." },
+  "country.drawing": { ja: "描画中…（{n}枚の写真を使用）", en: "Rendering… ({n} photos)", ko: "그리는 중… (사진 {n}장 사용)" },
+  "country.loadfail": { ja: "写真を読み込めませんでした。", en: "Could not load the photos.", ko: "사진을 불러오지 못했습니다." },
+  "country.done": { ja: "{name}の形で {n} 枚の写真を使いました。", en: "Used {n} photos in the shape of {name}.", ko: "{name} 모양에 사진 {n}장을 사용했습니다." },
+  "country.doneAll": { ja: "（この国の位置情報つき写真がまだないので、コレクション全体を使っています）", en: "(No located photos in this country yet, so the whole collection was used.)", ko: "(이 나라의 위치 사진이 아직 없어서 컬렉션 전체를 사용했습니다)" },
+  "country.donePosHint": { ja: " 位置どおり型は、同じ国に2枚以上の位置情報つき写真があると見栄えがよくなります。", en: " By-location mode looks best with 2+ located photos in the same country.", ko: " 위치형은 같은 나라에 위치 사진이 2장 이상 있으면 더 보기 좋습니다." },
+  "country.fetchfail": { ja: "国の形データの読み込みに失敗しました。通信を確認してからもう一度開いてください。", en: "Failed to load country data. Check your connection and reopen.", ko: "나라 모양 데이터를 불러오지 못했습니다. 연결을 확인하고 다시 열어 주세요." },
+  "country.selectLoading": { ja: "読み込み中…", en: "Loading…", ko: "불러오는 중…" },
+  "add.title": { ja: "看板を追加", en: "Add a sign", ko: "간판 추가" },
+  "add.cat": { ja: "この写真たちのカテゴリ（任意）", en: "Category for these photos (optional)", ko: "이 사진들의 카테고리 (선택)" },
+  "add.save": { ja: "この内容で追加する", en: "Add these", ko: "이 내용으로 추가" },
+  "add.note": { ja: "位置情報がない写真は、あとで地図をタップして場所を決めます。写真は端末の中だけに保存されます（試作版）。", en: "Photos without location data can be placed later by tapping the map. Photos are stored only on this device (prototype).", ko: "위치 정보가 없는 사진은 나중에 지도를 탭해서 위치를 정합니다. 사진은 이 기기에만 저장됩니다 (시작 버전)." },
+  "add.info": { ja: "{n} 枚を読み込みました（位置情報あり {g} 枚／なし {h} 枚）。", en: "Loaded {n} photos ({g} with location / {h} without).", ko: "{n}장을 불러왔습니다 (위치 정보 있음 {g}장 / 없음 {h}장)." },
+  "moji.title": { ja: "文字あつめ", en: "Letter collecting", ko: "문자 모으기" },
+  "moji.head1": { ja: "— 文字を組む", en: "— Spell with letters", ko: "— 문자 조합하기" },
+  "moji.build": { ja: "組む", en: "Spell", ko: "조합" },
+  "moji.shuffle": { ja: "シャッフル", en: "Shuffle", ko: "셔플" },
+  "moji.save": { ja: "画像で保存", en: "Save as image", ko: "이미지로 저장" },
+  "moji.head2": { ja: "— 文字コレクション", en: "— Letter collection", ko: "— 문자 컬렉션" },
+  "moji.empty": { ja: "まだ文字がありません。下の「写真から切り取る」で、看板の文字を集めてください。", en: "No letters yet. Cut letters out of your sign photos below.", ko: "아직 문자가 없습니다. 아래 ‘사진에서 자르기’로 간판의 문자를 모아 보세요." },
+  "moji.head3": { ja: "— 写真から切り取る", en: "— Cut from a photo", ko: "— 사진에서 자르기" },
+  "moji.charPh": { ja: "この文字（1文字）", en: "The letter (1 character)", ko: "이 문자 (1글자)" },
+  "moji.add": { ja: "追加", en: "Add", ko: "추가" },
+  "moji.note": { ja: "写真の上で、集めたい文字をドラッグで囲んでください。囲んだ部分が、その文字のタイルになります。", en: "Drag on the photo to box the letter you want. The boxed part becomes that letter's tile.", ko: "사진 위에서 모으고 싶은 문자를 드래그로 감싸 주세요. 감싼 부분이 그 문자의 타일이 됩니다." },
+  "moji.wordPh": { ja: "例：SEOUL、看板、TOKYO", en: "e.g. SEOUL, TOKYO", ko: "예: SEOUL, 간판" },
+  "moji.hint": { ja: "文字を入力して「組む」を押してください。", en: "Type a word and tap “Spell”.", ko: "단어를 입력하고 ‘조합’을 눌러 주세요." },
+  "flash.world": { ja: "世界モード：世界の看板は試作用のサンプルです。あなたの写真も一緒に表示されます。", en: "World mode: the world signs are prototype samples. Your photos are shown together.", ko: "세계 모드: 세계의 간판은 시작용 샘플입니다. 내 사진도 함께 표시됩니다." },
+  "flash.group": { ja: "グループモードは近日公開です。", en: "Group mode is coming soon.", ko: "그룹 모드는 준비 중입니다." },
+  "flash.noPhoto": { ja: "切り取る写真がありません", en: "No photo to cut from", ko: "자를 사진이 없습니다" },
+  "flash.needChar": { ja: "集める文字を1文字入れてください", en: "Enter the letter (1 character)", ko: "모을 문자를 1글자 입력해 주세요" },
+  "flash.needRect": { ja: "写真の上で、集めたい文字をドラッグで囲んでください", en: "Drag on the photo to box the letter", ko: "사진 위에서 문자를 드래그로 감싸 주세요" },
+  "flash.collected": { ja: "「{ch}」を集めました", en: "Collected “{ch}”", ko: "‘{ch}’를 모았습니다" },
+  "flash.needWord": { ja: "まず文字を組んでください", en: "Spell a word first", ko: "먼저 문자를 조합해 주세요" },
+  "flash.proOn": { ja: "Pro（デモ）がオンになりました。透かしなし・広告なしになります。", en: "Pro (demo) is on: no watermark, no ads.", ko: "Pro(데모)가 켜졌습니다. 워터마크 없음 · 광고 없음." },
+  "flash.proOff": { ja: "無料プランに戻しました", en: "Back to the free plan", ko: "무료 플랜으로 돌아갔습니다" },
+  "flash.fullPhotos": { ja: "保存容量がいっぱいです。古い写真を削除してください。", en: "Storage is full. Please delete some old photos.", ko: "저장 공간이 가득 찼습니다. 오래된 사진을 삭제해 주세요." },
+  "flash.fullLetters": { ja: "保存容量がいっぱいです。文字か写真を削除してください。", en: "Storage is full. Please delete some letters or photos.", ko: "저장 공간이 가득 찼습니다. 문자나 사진을 삭제해 주세요." },
+  "flash.noLoadable": { ja: "読み込める写真がありませんでした。", en: "No readable photos were found.", ko: "불러올 수 있는 사진이 없었습니다." },
+  "crop.title": { ja: "切り取り位置", en: "Crop position", ko: "자르기 위치" },
+  "crop.note": { ja: "コラージュで表示される部分です。写真をドラッグして、見せたい場所を選んでください。", en: "This is the part shown in collages. Drag the photo to choose what to show.", ko: "콜라주에 표시되는 부분입니다. 사진을 드래그해서 보여 줄 곳을 고르세요." },
+  "crop.done": { ja: "この位置にする", en: "Use this position", ko: "이 위치로 하기" },
+  "crop.reset": { ja: "中央に戻す", en: "Reset to centre", ko: "가운데로 되돌리기" },
+  "plan.title": { ja: "プラン", en: "Plan", ko: "플랜" },
+  "plan.chip": { ja: "⭐ プラン", en: "⭐ Plan", ko: "⭐ 플랜" },
+  "plan.nowFree": { ja: "現在のプラン：無料", en: "Current plan: Free", ko: "현재 플랜: 무료" },
+  "plan.nowPro": { ja: "現在のプラン：Pro（試作デモ中）", en: "Current plan: Pro (prototype demo)", ko: "현재 플랜: Pro (시작 데모 중)" },
+  "plan.freeT": { ja: "無料プラン", en: "Free", ko: "무료 플랜" },
+  "plan.price": { ja: "¥480/月（年払い ¥4,800）", en: "¥480 per month (¥4,800 per year)", ko: "월 ¥480 (연 ¥4,800)" },
+  "plan.try": { ja: "Proを試す（デモ）", en: "Try Pro (demo)", ko: "Pro 체험하기 (데모)" },
+  "plan.back": { ja: "無料プランに戻す", en: "Back to free", ko: "무료로 돌아가기" },
+  "plan.note": { ja: "試作版のデモです。実際の決済は本実装で導入します。Proの機能のうち、透かしなし書き出しと広告非表示はこの試作でも体験できます。", en: "This is a prototype demo; real billing comes with the production build. Watermark-free exports and no ads already work in this prototype.", ko: "시작 버전의 데모입니다. 실제 결제는 정식 버전에서 도입합니다. 워터마크 없는 저장과 광고 없음은 지금도 체험할 수 있습니다." },
+  "plan.adNote": { ja: "広告スペース（AdSense審査通過後に広告が表示されます）", en: "Ad space (ads appear here once AdSense is approved)", ko: "광고 공간 (AdSense 승인 후 광고가 표시됩니다)" },
+  "plan.freeList": { ja: ["投稿・閲覧は無制限", "地形コラージュ・ポスター（通常画質＋透かし入り）", "文字あつめ（作成・通常保存）", "広告あり"], en: ["Unlimited posting & viewing", "Terrain collage & posters (standard quality, watermarked)", "Letter collecting (create & standard export)", "Ads shown"], ko: ["게시 · 열람 무제한", "지형 콜라주 · 포스터 (일반 화질 + 워터마크)", "문자 모으기 (만들기 · 일반 저장)", "광고 표시"] },
+  "plan.proList": { ja: ["広告なし", "写真の原寸保存＋バックアップ", "書き出しが高画質・透かしなし", "地図テーマ追加", "変遷アラート（看板の変化を通知）", "自分のコレクション内OCR検索", "思い出BOOKの割引"], en: ["No ads", "Full-size photo storage + backup", "High-quality, watermark-free exports", "Extra map themes", "Change alerts for signs you recorded", "OCR search across your collection", "Discount on the memory BOOK"], ko: ["광고 없음", "사진 원본 저장 + 백업", "고화질 · 워터마크 없는 저장", "지도 테마 추가", "변화 알림 (간판이 바뀌면 알림)", "내 컬렉션 OCR 검색", "추억 BOOK 할인"] },
+  "cat.ネオン": { ja: "ネオン", en: "Neon", ko: "네온" },
+  "cat.手書き": { ja: "手書き", en: "Handwritten", ko: "손글씨" },
+  "cat.レトロ": { ja: "レトロ", en: "Retro", ko: "레트로" },
+  "cat.タイポ": { ja: "タイポ", en: "Typography", ko: "타이포" },
+  "cat.変な看板": { ja: "変な看板", en: "Quirky", ko: "특이한 간판" },
+  "cat.その他": { ja: "その他", en: "Other", ko: "기타" }
+};
+const QUESTS_I18N = {
+  ja: QUESTS,
+  en: ["Find a handwritten “Open” sign", "One red neon sign", "Two blue signs", "A sign in kanji only", "Find the oldest-looking sign", "A sign with an animal on it", "One sign in English", "Record a sign of a closed shop", "A handwritten price tag or menu", "A vertical sign", "Shoot a glowing sign at night", "A rusty vending-machine sign", "A sign with a place name in it", "One sign with beautiful type"],
+  ko: ["손글씨 ‘영업 중’ 간판 찾기", "빨간 네온 1장", "파란 간판 2장", "한자만 있는 간판 찾기", "가장 오래돼 보이는 간판 찾기", "동물이 그려진 간판 찾기", "영어 간판 1장", "문 닫은 가게의 간판 기록하기", "손글씨 가격표 · 메뉴 찾기", "세로쓰기 간판 찾기", "빛나는 간판을 밤에 찍기", "녹슨 자판기 간판", "지명이 들어간 간판 찾기", "폰트가 아름다운 간판 1장"]
+};
+const WD = { ja: ["日", "月", "火", "水", "木", "金", "土"], en: ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"], ko: ["일", "월", "화", "수", "목", "금", "토"] };
+function t(key) { const e = STR[key]; return e ? (e[lang] !== undefined ? e[lang] : e.ja) : key; }
+function catLabel(c) { return t("cat." + c); }
 let items = [];
 try { items = JSON.parse(localStorage.getItem(LS_KEY) || "[]"); } catch (e) { items = []; }
 let markers = [];
@@ -412,19 +568,19 @@ function setAppMode(m) {
     list.forEach((i) => b.extend([i.lng, i.lat]));
     map.fitBounds(b, { padding: 60, maxZoom: m === "world" ? 4 : 15, duration: 600 });
   }
-  if (m === "world") flash("世界モード：世界の看板は試作用のサンプルです。あなたの写真も一緒に表示されます。");
+  if (m === "world") flash(t("flash.world"));
 }
 $("modePersonal").addEventListener("click", () => setAppMode("personal"));
 $("modeWorld").addEventListener("click", () => setAppMode("world"));
-$("modeGroup").addEventListener("click", () => flash("グループモードは近日公開です。"));
+$("modeGroup").addEventListener("click", () => flash(t("flash.group")));
 
 const $ = (id) => document.getElementById(id);
 function save() {
   try { localStorage.setItem(LS_KEY, JSON.stringify(items)); }
-  catch (e) { alert("保存容量がいっぱいです。古い写真を削除してください。"); }
+  catch (e) { alert(t("flash.fullPhotos")); }
 }
 function fmtDate(iso) {
-  if (!iso) return "日付なし";
+  if (!iso) return t("nodate");
   const d = new Date(iso);
   return d.getFullYear() + "/" + (d.getMonth() + 1) + "/" + d.getDate();
 }
@@ -454,18 +610,25 @@ document.querySelectorAll(".themebtn").forEach((b) => b.addEventListener("click"
 
 function tickClock() {
   const d = new Date();
-  const wd = ["日", "月", "火", "水", "木", "金", "土"][d.getDay()];
+  const wd = WD[lang][d.getDay()];
   $("clock").textContent = String(d.getHours()).padStart(2, "0") + ":" + String(d.getMinutes()).padStart(2, "0");
-  $("dateline").textContent = (d.getMonth() + 1) + "月" + d.getDate() + "日(" + wd + ") ・ " + THEME_LABEL[autoTheme()] + "の地図";
+  const tn = t("themeName." + autoTheme());
+  $("dateline").textContent = lang === "en"
+    ? (d.getMonth() + 1) + "/" + d.getDate() + " (" + wd + ") · " + tn + " map"
+    : lang === "ko"
+    ? (d.getMonth() + 1) + "월 " + d.getDate() + "일 (" + wd + ") · " + tn + " 지도"
+    : (d.getMonth() + 1) + "月" + d.getDate() + "日(" + wd + ") ・ " + tn + "の地図";
 }
 setInterval(tickClock, 20000); tickClock();
 
-(function setQuest() {
+function setQuestText() {
   const now = new Date();
   const start = new Date(now.getFullYear(), 0, 0);
   const doy = Math.floor((now - start) / 86400000);
-  $("quest").innerHTML = "今日のお題：<b>" + QUESTS[doy % QUESTS.length] + "</b>";
-})();
+  const list = QUESTS_I18N[lang] || QUESTS;
+  $("quest").innerHTML = t("quest.label") + "<b>" + list[doy % list.length] + "</b>";
+}
+setQuestText();
 
 /* ---------- map ---------- */
 const map = new maplibregl.Map({
@@ -513,7 +676,7 @@ function updateBanner() {
   const b = $("banner");
   if (pending.length) {
     b.style.display = "block";
-    b.textContent = "場所が分からない写真が " + pending.length + " 枚あります。地図をタップして置く場所を決めてください。";
+    b.textContent = t("banner.pending").replace("{n}", pending.length);
   } else b.style.display = "none";
 }
 
@@ -537,14 +700,14 @@ $("fileInput").addEventListener("change", async (ev) => {
       staged.push({ id: "s" + Date.now() + Math.random().toString(36).slice(2, 7), img, lat: gps ? gps.latitude : null, lng: gps ? gps.longitude : null, date: dateIso || new Date(f.lastModified || Date.now()).toISOString(), cat: "その他" });
     } catch (e) { /* skip unreadable file */ }
   }
-  if (!staged.length) { alert("読み込める写真がありませんでした。"); return; }
+  if (!staged.length) { alert(t("flash.noLoadable")); return; }
   const withGps = staged.filter((s) => typeof s.lat === "number").length;
-  $("addInfo").textContent = staged.length + " 枚を読み込みました（位置情報あり " + withGps + " 枚／なし " + (staged.length - withGps) + " 枚）。";
+  $("addInfo").textContent = t("add.info").replace("{n}", staged.length).replace("{g}", withGps).replace("{h}", staged.length - withGps);
   stagedCat = "その他"; renderCats();
   $("addSheet").classList.add("open");
 });
 function renderCats() {
-  $("catBox").innerHTML = CATS.map((c) => '<button class="cat' + (c === stagedCat ? " on" : "") + '" data-c="' + c + '">' + c + "</button>").join("");
+  $("catBox").innerHTML = CATS.map((c) => '<button class="cat' + (c === stagedCat ? " on" : "") + '" data-c="' + c + '">' + catLabel(c) + "</button>").join("");
   $("catBox").querySelectorAll(".cat").forEach((b) => b.addEventListener("click", () => { stagedCat = b.dataset.c; renderCats(); }));
 }
 $("saveAddBtn").addEventListener("click", () => {
@@ -613,7 +776,7 @@ function drawStory() {
   storyIdx = Math.max(0, Math.min(storyIdx, arr.length - 1));
   const it = arr[storyIdx];
   $("storyImg").src = it.img;
-  $("storyMeta").textContent = fmtDate(it.date) + " ・ " + (it.cat || "その他") + (it.place ? " ・ " + it.place : "") + " ・ " + (storyIdx + 1) + " / " + arr.length;
+  $("storyMeta").textContent = fmtDate(it.date) + " ・ " + catLabel(it.cat || "その他") + (it.place ? " ・ " + it.place : "") + " ・ " + (storyIdx + 1) + " / " + arr.length;
   const own = !it.world;
   $("delBtn").style.display = own ? "" : "none";
   $("cropBtn").style.display = own ? "" : "none";
@@ -640,7 +803,7 @@ $("colBtn").addEventListener("click", () => {
   const cn = $("colNote");
   if (appMode === "world") {
     cn.style.display = "block";
-    cn.textContent = "世界モード：世界の看板（試作用サンプル）＋あなたの写真です。ポスターは個人モードで使えます。";
+    cn.textContent = t("col.worldNote");
   } else cn.style.display = "none";
   $("gridEmpty").style.display = sorted.length ? "none" : "block";
   $("gridBox").innerHTML = sorted.map((it) => '<img src="' + it.img + '" data-k="' + groupKey(it) + '" alt="">').join("");
@@ -669,7 +832,7 @@ function loadScript(src) {
 }
 async function loadCountries() {
   if (countryData) return countryData;
-  $("countryStatus").textContent = "国の形データを読み込んでいます…";
+  $("countryStatus").textContent = t("country.loading");
   await loadScript("https://cdn.jsdelivr.net/npm/topojson-client@3/dist/topojson-client.min.js");
   const topo = await fetch("https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json").then((r) => r.json());
   const fc = topojson.feature(topo, topo.objects.countries);
@@ -885,19 +1048,19 @@ async function renderCountry() {
   const BG = "#f6f2e9", INK = "#1c1c1e", SUB = "#8a8578", FILL = "#fffdf9";
   const feat = countryData.features.find((f) => f.name === countryName);
   ctx.fillStyle = BG; ctx.fillRect(0, 0, W, H);
-  if (!feat) { $("countryStatus").textContent = "国を選んでください。"; return; }
+  if (!feat) { $("countryStatus").textContent = t("country.choose"); return; }
   if (!items.length) {
-    $("countryStatus").textContent = "まだ看板の写真がありません。「看板を追加」から済州の写真を入れてみてください。";
+    $("countryStatus").textContent = t("country.none");
     return;
   }
   const placed = items.filter((i) => typeof i.lat === "number");
   const inCountry = placed.filter((i) => inCountryTol(i.lng, i.lat, feat));
   const pool = inCountry.length ? inCountry : placed;
-  $("countryStatus").textContent = "描画中…（" + pool.length + "枚の写真を使用）";
+  $("countryStatus").textContent = t("country.drawing").replace("{n}", pool.length);
   const imgs = [];
   const imgOf = new Map();
   for (const it of pool) { try { const im = await loadImg(it.img); imgs.push(im); imgOf.set(it, im); } catch (e) { /* skip unreadable */ } }
-  if (!imgs.length) { $("countryStatus").textContent = "写真を読み込めませんでした。"; return; }
+  if (!imgs.length) { $("countryStatus").textContent = t("country.loadfail"); return; }
   /* --- title block --- */
   ctx.textAlign = "center";
   try { ctx.letterSpacing = "12px"; } catch (e) { /* older canvas */ }
@@ -992,9 +1155,22 @@ async function renderCountry() {
   ctx.fillText("SIGN ARCHIVE", W / 2, H - 42);
   try { ctx.letterSpacing = "0px"; } catch (e) { /* ignore */ }
   ctx.textAlign = "left";
-  $("countryStatus").textContent = countryLabel(feat.name) + "の形で " + pool.length + " 枚の写真を使いました。" +
-    (inCountry.length ? "" : "（この国の位置情報つき写真がまだないので、コレクション全体を使っています）") +
-    (countryMode === "pos" && inCountry.length < 2 ? " 位置どおり型は、同じ国に2枚以上の位置情報つき写真があると見栄えがよくなります。" : "");
+  if (!isPro()) {
+    ctx.save();
+    ctx.translate(W / 2, 560);
+    ctx.rotate(-0.42);
+    ctx.font = "800 62px 'Helvetica Neue', Arial, sans-serif";
+    ctx.textAlign = "center";
+    ctx.fillStyle = "rgba(28,28,30,.07)";
+    ctx.fillText("SIGN ARCHIVE", 0, -100);
+    ctx.fillText("SIGN ARCHIVE", 0, 20);
+    ctx.fillText("SIGN ARCHIVE", 0, 140);
+    ctx.restore();
+    ctx.textAlign = "left";
+  }
+  $("countryStatus").textContent = t("country.done").replace("{name}", countryLabel(feat.name)).replace("{n}", pool.length) +
+    (inCountry.length ? "" : t("country.doneAll")) +
+    (countryMode === "pos" && inCountry.length < 2 ? t("country.donePosHint") : "");
 }
 async function openCountry(preferName) {
   openSheet("countrySheet");
@@ -1015,7 +1191,7 @@ async function openCountry(preferName) {
     sel.value = def; countryName = def;
     renderCountry();
   } catch (e) {
-    $("countryStatus").textContent = "国の形データの読み込みに失敗しました。通信を確認してからもう一度開いてください。";
+    $("countryStatus").textContent = t("country.fetchfail");
   }
 }
 /* After a photo is posted, show it on the home terrain collage —
@@ -1155,7 +1331,7 @@ let mojiComp = [];
 let mojiRect = null;
 function saveLetters() {
   try { localStorage.setItem(LS_MOJI, JSON.stringify(letters)); }
-  catch (e) { alert("保存容量がいっぱいです。文字か写真を削除してください。"); }
+  catch (e) { alert(t("flash.fullLetters")); }
 }
 function drawMojiGrid() {
   $("mojiEmpty").style.display = letters.length ? "none" : "block";
@@ -1179,13 +1355,13 @@ function buildMoji() {
     if (c.space) return '<div style="width:26px"></div>';
     if (c.letter) return '<img src="' + c.letter.img + '" alt="">';
     return '<div class="miss">' + c.ch + "</div>";
-  }).join("") : '<span class="note" style="padding:0">文字を入力して「組む」を押してください。</span>';
+  }).join("") : '<span class="note" style="padding:0">' + t("moji.hint") + "</span>";
 }
 $("mojiBuild").addEventListener("click", buildMoji);
 $("mojiShuffle").addEventListener("click", () => { mojiSeed++; buildMoji(); });
 $("mojiWord").addEventListener("keydown", (e) => { if (e.key === "Enter") buildMoji(); });
 $("mojiSave").addEventListener("click", async () => {
-  if (!mojiComp.length) { flash("まず文字を組んでください"); return; }
+  if (!mojiComp.length) { flash(t("flash.needWord")); return; }
   const tileH = 200, gap = 12, pad = 40;
   const parts = [];
   for (const c of mojiComp) {
@@ -1216,6 +1392,16 @@ $("mojiSave").addEventListener("click", async () => {
   });
   ctx.fillStyle = "#8a8578"; ctx.font = "600 17px 'Helvetica Neue', Arial, sans-serif"; ctx.textAlign = "center";
   try { ctx.letterSpacing = "6px"; } catch (e) { /* ignore */ }
+  if (!isPro()) {
+    ctx.save();
+    ctx.translate(W / 2, pad + tileH / 2);
+    ctx.rotate(-0.3);
+    ctx.font = "800 52px sans-serif";
+    ctx.textAlign = "center";
+    ctx.fillStyle = "rgba(28,28,30,.08)";
+    ctx.fillText("SIGN ARCHIVE", 0, 0);
+    ctx.restore();
+  }
   ctx.fillText("SIGN ARCHIVE — MOJI ATSUME", W / 2, H - 26);
   const a = document.createElement("a");
   a.download = "moji-atsume.png";
@@ -1295,9 +1481,9 @@ $("mojiFromBtn").addEventListener("click", () => {
 $("mojiAdd").addEventListener("click", async () => {
   const chRaw = ($("mojiChar").value || "").trim();
   const it = items.find((x) => x.id === $("mojiSrcSel").value);
-  if (!it) { flash("切り取る写真がありません"); return; }
-  if (!chRaw) { flash("集める文字を1文字入れてください"); return; }
-  if (!mojiRect || Math.abs(mojiRect.x1 - mojiRect.x0) < 0.03 || Math.abs(mojiRect.y1 - mojiRect.y0) < 0.03) { flash("写真の上で、集めたい文字をドラッグで囲んでください"); return; }
+  if (!it) { flash(t("flash.noPhoto")); return; }
+  if (!chRaw) { flash(t("flash.needChar")); return; }
+  if (!mojiRect || Math.abs(mojiRect.x1 - mojiRect.x0) < 0.03 || Math.abs(mojiRect.y1 - mojiRect.y0) < 0.03) { flash(t("flash.needRect")); return; }
   const ch = [...chRaw][0];
   const im = await loadImg(it.img);
   const iw = im.width, ih = im.height;
@@ -1313,7 +1499,7 @@ $("mojiAdd").addEventListener("click", async () => {
   drawMojiGrid();
   buildMoji();
   $("mojiChar").value = "";
-  flash("「" + ch + "」を集めました");
+  flash(t("flash.collected").replace("{ch}", ch));
 });
 
 /* ---------- crop position editor ----------
@@ -1380,6 +1566,65 @@ $("cropDone").addEventListener("click", () => {
   closeSheet("cropSheet");
   if (viewMode === "terrain") renderTerrain();
 });
+
+/* ---------- language switching + Pro plan (demo) ---------- */
+function setBtnLabel(btn, txt) {
+  if (!btn) return;
+  let done = false;
+  btn.childNodes.forEach((n) => {
+    if (n.nodeType === 3 && n.textContent.trim()) { n.textContent = txt; done = true; }
+  });
+  if (!done) btn.appendChild(document.createTextNode(txt));
+}
+function fillPlanLists() {
+  $("freeList").innerHTML = t("plan.freeList").map((s) => "<li>" + s + "</li>").join("");
+  $("proList").innerHTML = t("plan.proList").map((s) => "<li>" + s + "</li>").join("");
+}
+function applyLang() {
+  document.documentElement.lang = lang;
+  document.querySelectorAll("[data-i18n]").forEach((el) => { el.textContent = t(el.dataset.i18n); });
+  document.querySelectorAll("[data-i18n-ph]").forEach((el) => { el.placeholder = t(el.dataset.i18nPh); });
+  document.querySelectorAll(".themebtn").forEach((b) => { b.textContent = t("theme." + b.dataset.t); });
+  setBtnLabel($("mapBtn"), t("nav.map"));
+  setBtnLabel($("addBtn"), t("nav.add"));
+  setBtnLabel($("mojiBtn"), t("nav.moji"));
+  setBtnLabel($("colBtn"), t("nav.col"));
+  $("countryBtn").textContent = t("col.poster");
+  $("gridEmpty").innerHTML = t("col.empty");
+  tickClock();
+  setQuestText();
+  renderCats();
+  updateBanner();
+  if ($("viewer").classList.contains("open")) drawStory();
+  fillPlanLists();
+  applyPro();
+}
+const LS_PRO = "signmap-pro-v1";
+let pro = false;
+try { pro = localStorage.getItem(LS_PRO) === "1"; } catch (e) { pro = false; }
+function isPro() { return pro; }
+function applyPro() {
+  $("proBadge").style.display = pro ? "" : "none";
+  $("adSlot").style.display = pro ? "none" : "";
+  $("planState").textContent = pro ? t("plan.nowPro") : t("plan.nowFree");
+  $("proToggle").textContent = pro ? t("plan.back") : t("plan.try");
+}
+$("proToggle").addEventListener("click", () => {
+  pro = !pro;
+  try { localStorage.setItem(LS_PRO, pro ? "1" : "0"); } catch (e) { /* ignore */ }
+  applyPro();
+  flash(pro ? t("flash.proOn") : t("flash.proOff"));
+  if (viewMode === "terrain") renderTerrain();
+});
+$("planChip").addEventListener("click", () => openSheet("proSheet"));
+$("planBtn").addEventListener("click", () => { closeSheet("collection"); openSheet("proSheet"); });
+$("langSel").addEventListener("change", () => {
+  lang = $("langSel").value;
+  try { localStorage.setItem("signmap-lang", lang); } catch (e) { /* ignore */ }
+  applyLang();
+});
+$("langSel").value = lang;
+applyLang();
 
 applyTheme();
 setInterval(applyTheme, 60000);
