@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>看板マップ試作 v0.6 — 世界の看板を集める</title>
+<title>看板マップ試作 v0.7 — 世界の看板を集める</title>
 <link href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css" rel="stylesheet">
 <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/exifr@7.1.3/dist/full.umd.js"></script>
@@ -119,6 +119,9 @@
   #viewSeg{position:absolute;left:50%;transform:translateX(-50%);bottom:calc(88px + env(safe-area-inset-bottom));z-index:12;display:flex;gap:4px;background:var(--panel);border:1px solid var(--line);border-radius:999px;padding:4px;box-shadow:0 8px 20px rgba(0,0,0,.16)}
   #viewSeg button{border:0;background:transparent;color:var(--sub);font-size:12.5px;padding:8px 18px;border-radius:999px;cursor:pointer;letter-spacing:.08em;font-weight:600}
   #viewSeg button.on{background:var(--ink);color:var(--bg);font-weight:800}
+  .cropbtn{align-self:center;margin:0 0 8px;background:none;border:0;color:var(--ink);font-size:12.5px;cursor:pointer;letter-spacing:.06em;text-decoration:underline}
+  #cropFrame{margin:8px 16px;border-radius:12px;overflow:hidden;position:relative;height:320px;background:#111;touch-action:none;box-shadow:0 8px 22px rgba(0,0,0,.18);cursor:grab}
+  #cropFrame img{position:absolute;left:0;top:0;max-width:none;user-select:none;-webkit-user-select:none}
   .maplibregl-ctrl-attrib{font-size:9px}
 </style>
 </head>
@@ -128,7 +131,7 @@
 <div id="tint"></div>
 <div id="grain"></div>
 <header>
-  <div class="ttl">看板マップ<small>SIGN MAP — PROTOTYPE v0.6</small></div>
+  <div class="ttl">看板マップ<small>SIGN MAP — PROTOTYPE v0.7</small></div>
   <div class="clockbox">
     <div class="clock" id="clock">--:--</div>
     <div class="dateline" id="dateline">—</div>
@@ -173,6 +176,7 @@
         <button id="nextBtn">›</button>
       </span>
     </div>
+    <button class="cropbtn" id="cropBtn">切り取り位置を調整</button>
     <button class="del" id="delBtn">この写真を削除</button>
   </div>
   <div id="collageView"><div class="collage" id="collageBox"></div></div>
@@ -204,6 +208,17 @@
   <p id="countryStatus"></p>
   <button class="bigbtn" id="dlCountryBtn">画像として保存する</button>
   <p class="note">国の輪郭は Natural Earth（world-atlas）の公開データを使っています。写真に位置情報がないものは「タイル型」では使えますが、「位置どおり型」では置けません。</p>
+</div>
+
+<div class="sheet" id="cropSheet">
+  <div class="sheethead">
+    <div class="t">切り取り位置</div>
+    <button class="xbtn" data-close="cropSheet">✕</button>
+  </div>
+  <p class="note">コラージュで表示される部分です。写真をドラッグして、見せたい場所を選んでください。</p>
+  <div id="cropFrame"><img id="cropImg" alt="切り取り位置の調整"></div>
+  <button class="bigbtn" id="cropDone">この位置にする</button>
+  <button class="del" id="cropReset">中央に戻す</button>
 </div>
 
 <div class="sheet" id="addSheet">
@@ -569,10 +584,17 @@ function countryPath(feat, pr) {
 function loadImg(src) {
   return new Promise((res, rej) => { const im = new Image(); im.onload = () => res(im); im.onerror = rej; im.src = src; });
 }
-function drawCover(ctx, im, dx, dy, dw, dh) {
+/* Cover-fit draw. fx/fy (0..1, per-photo, user-adjustable) choose which part
+   of the photo is shown: the source window is centred on that focal point. */
+function drawCover(ctx, im, dx, dy, dw, dh, fx, fy) {
+  if (!im || dw <= 0 || dh <= 0) return;
   const s = Math.max(dw / im.width, dh / im.height);
   const sw = dw / s, sh = dh / s;
-  ctx.drawImage(im, (im.width - sw) / 2, (im.height - sh) / 2, sw, sh, dx, dy, dw, dh);
+  const cx = (typeof fx === "number" ? fx : 0.5) * im.width;
+  const cy = (typeof fy === "number" ? fy : 0.5) * im.height;
+  const sx = Math.max(0, Math.min(im.width - sw, cx - sw / 2));
+  const sy = Math.max(0, Math.min(im.height - sh, cy - sh / 2));
+  ctx.drawImage(im, sx, sy, sw, sh, dx, dy, dw, dh);
 }
 /* Voronoi cell: the region of the plane closer to pts[i] than to any other point.
    Built by clipping a rect with each perpendicular-bisector half-plane,
@@ -633,6 +655,55 @@ function diskPoly(cx, cy, r, n) {
   const pts = [];
   for (let i = 0; i < (n || 26); i++) { const a = (i / (n || 26)) * Math.PI * 2; pts.push({ x: cx + Math.cos(a) * r, y: cy + Math.sin(a) * r }); }
   return pts;
+}
+/* Spots (photos sharing one rounded location) keep ONE footprint. The photos
+   inside a spot subdivide that footprint between them, so the more photos are
+   added at the same place, the finer its mosaic becomes — a single-photo
+   spot looks exactly as before. Spot entries: {img, fx, fy, key, lng, lat}. */
+function buildSpots(entries) {
+  const map = new Map();
+  entries.forEach((en) => {
+    const k = groupKey(en);
+    if (!map.has(k)) map.set(k, { lng: en.lng, lat: en.lat, entries: [] });
+    map.get(k).entries.push(en);
+  });
+  return [...map.values()];
+}
+function subdivideSpots(spots, R) {
+  const subs = [];
+  spots.forEach((sp) => {
+    const k = sp.entries.length;
+    sp.entries.forEach((en, j) => {
+      let x = sp.cx, y = sp.cy;
+      if (k > 1) {
+        const rr = 0.46 * R * Math.sqrt((j + 0.5) / k), aa = j * 2.399963;
+        x += Math.cos(aa) * rr; y += Math.sin(aa) * rr;
+      }
+      subs.push({ x: x, y: y, cx: sp.cx, cy: sp.cy, k: k, img: en.img, fx: en.fx, fy: en.fy, key: groupKey(en) });
+    });
+  });
+  return subs;
+}
+function spotCells(subs, W, H, R) {
+  return subs.map((s, i) => {
+    let cell = voronoiCell(subs, i, W, H);
+    cell = convexClip(cell, diskPoly(s.x, s.y, s.k > 1 ? R * 0.7 : R));
+    if (s.k > 1) cell = convexClip(cell, diskPoly(s.cx, s.cy, R * 1.03));
+    return cell;
+  });
+}
+function drawCells(ctx, subs, cells) {
+  cells.forEach((cell, i) => {
+    if (cell.length < 3) return;
+    let minX = 1e9, minY = 1e9, maxX = -1e9, maxY = -1e9;
+    cell.forEach((pt) => { if (pt.x < minX) minX = pt.x; if (pt.y < minY) minY = pt.y; if (pt.x > maxX) maxX = pt.x; if (pt.y > maxY) maxY = pt.y; });
+    ctx.save();
+    ctx.clip(cellPath(cell));
+    drawCover(ctx, subs[i].img, minX - 2, minY - 2, (maxX - minX) + 4, (maxY - minY) + 4, subs[i].fx, subs[i].fy);
+    ctx.restore();
+  });
+  ctx.strokeStyle = "rgba(255,255,255,.65)"; ctx.lineWidth = 2;
+  cells.forEach((cell) => { if (cell.length >= 3) ctx.stroke(cellPath(cell)); });
 }
 async function renderCountry() {
   const cv = $("countryCanvas"), ctx = cv.getContext("2d");
@@ -702,45 +773,29 @@ async function renderCountry() {
       }
     }
   } else {
-    /* Shape-filling layout: split the country's interior into one region per
-       photo (the area nearest that photo's real location) and fill each
-       region with its photo, so the photos themselves form the shape.
-       Regions without a nearby photo keep the white silhouette fill. */
-    const pts = [];
-    for (const it of inCountry) {
-      const im = imgOf.get(it);
-      if (!im) continue;
-      let x = pr.x(it.lng), y = pr.y(it.lat);
-      for (let t = 0; t < 16 && pts.some((p) => Math.hypot(p.x - x, p.y - y) < 7); t++) {
-        const a = pts.length * 2.399963 + t * 1.1;
-        x += Math.cos(a) * 8; y += Math.sin(a) * 8;
+    /* Shape-filling layout: each spot (one location) gets one footprint
+       region around its real location, and the photos at that spot subdivide
+       the footprint — more photos at one place, finer mosaic. Regions with
+       no photo nearby keep the white silhouette fill, like the reference. */
+    const entries = inCountry.map((it) => Object.assign({}, it, { img: imgOf.get(it) })).filter((e) => e.img);
+    const spots = buildSpots(entries).map((sp) => ({ cx: pr.x(sp.lng), cy: pr.y(sp.lat), entries: sp.entries }));
+    spots.forEach((sp, i) => {
+      for (let t = 0; t < 16 && spots.some((q, j) => j < i && Math.hypot(q.cx - sp.cx, q.cy - sp.cy) < 7); t++) {
+        const a = i * 2.399963 + t * 1.1;
+        sp.cx += Math.cos(a) * 8; sp.cy += Math.sin(a) * 8;
       }
-      pts.push({ x: x, y: y, im: im });
-    }
-    /* Bound each photo to its own area: a photo fills only the neighbourhood
-       of where it was taken, so the rest of the shape stays white like the
-       reference posters. The radius follows how spread out the photos are. */
+    });
     let R = 150;
-    if (pts.length >= 2) {
-      const nn = pts.map((p, i) => {
+    if (spots.length >= 2) {
+      const nn = spots.map((p, i) => {
         let best = 1e9;
-        pts.forEach((q, j) => { if (j !== i) best = Math.min(best, Math.hypot(p.x - q.x, p.y - q.y)); });
+        spots.forEach((q, j) => { if (j !== i) best = Math.min(best, Math.hypot(p.cx - q.cx, p.cy - q.cy)); });
         return best;
       }).sort((a, b) => a - b);
       R = Math.max(46, Math.min(320, nn[Math.floor(nn.length / 2)] * 1.5));
     }
-    const cells = pts.map((p, i) => convexClip(voronoiCell(pts, i, W, H), diskPoly(p.x, p.y, R)));
-    cells.forEach((cell, i) => {
-      if (cell.length < 3) return;
-      let minX = 1e9, minY = 1e9, maxX = -1e9, maxY = -1e9;
-      cell.forEach((pt) => { if (pt.x < minX) minX = pt.x; if (pt.y < minY) minY = pt.y; if (pt.x > maxX) maxX = pt.x; if (pt.y > maxY) maxY = pt.y; });
-      ctx.save();
-      ctx.clip(cellPath(cell));
-      drawCover(ctx, pts[i].im, minX - 2, minY - 2, (maxX - minX) + 4, (maxY - minY) + 4);
-      ctx.restore();
-    });
-    ctx.strokeStyle = "rgba(255,255,255,.65)"; ctx.lineWidth = 2;
-    cells.forEach((cell) => { if (cell.length >= 3) ctx.stroke(cellPath(cell)); });
+    const subs = subdivideSpots(spots, R);
+    drawCells(ctx, subs, spotCells(subs, W, H, R));
   }
   ctx.restore();
   ctx.strokeStyle = "rgba(28,28,30,.10)"; ctx.lineWidth = 1.5;
@@ -876,38 +931,26 @@ async function renderTerrain() {
   ctx.strokeStyle = landFill; ctx.lineWidth = 15; ctx.lineJoin = "round"; ctx.stroke(landPath);
   const imgOf = new Map();
   for (const it of use) { try { imgOf.set(it, await loadImg(it.img)); } catch (e) { /* skip unreadable */ } }
-  const pts = [];
-  for (const it of use) {
-    const im = imgOf.get(it);
-    if (!im) continue;
-    let x = pr.x(it.lng), y = pr.y(it.lat);
-    for (let t = 0; t < 16 && pts.some((p) => Math.hypot(p.x - x, p.y - y) < 9); t++) {
-      const a = pts.length * 2.399963 + t * 1.1;
-      x += Math.cos(a) * 10; y += Math.sin(a) * 10;
+  const entries = use.map((it) => Object.assign({}, it, { img: imgOf.get(it) })).filter((e) => e.img);
+  const spots = buildSpots(entries).map((sp) => ({ cx: pr.x(sp.lng), cy: pr.y(sp.lat), entries: sp.entries }));
+  spots.forEach((sp, i) => {
+    for (let t = 0; t < 16 && spots.some((q, j) => j < i && Math.hypot(q.cx - sp.cx, q.cy - sp.cy) < 9); t++) {
+      const a = i * 2.399963 + t * 1.1;
+      sp.cx += Math.cos(a) * 10; sp.cy += Math.sin(a) * 10;
     }
-    pts.push({ x: x, y: y, im: im, key: groupKey(it) });
-  }
-  if (!pts.length) return;
-  const R = Math.max(42, Math.min(250, Math.hypot(W, H) * 0.115 / Math.sqrt(pts.length)));
-  const cells = pts.map((p, i) => convexClip(voronoiCell(pts, i, W, H), diskPoly(p.x, p.y, R)));
+  });
+  if (!spots.length) return;
+  const R = Math.max(42, Math.min(250, Math.hypot(W, H) * 0.115 / Math.sqrt(spots.length)));
+  const subs = subdivideSpots(spots, R);
+  const cells = spotCells(subs, W, H, R);
   ctx.save();
   ctx.clip(landPath);
-  cells.forEach((cell, i) => {
-    if (cell.length < 3) return;
-    let minX = 1e9, minY = 1e9, maxX = -1e9, maxY = -1e9;
-    cell.forEach((pt) => { if (pt.x < minX) minX = pt.x; if (pt.y < minY) minY = pt.y; if (pt.x > maxX) maxX = pt.x; if (pt.y > maxY) maxY = pt.y; });
-    ctx.save();
-    ctx.clip(cellPath(cell));
-    drawCover(ctx, pts[i].im, minX - 2, minY - 2, (maxX - minX) + 4, (maxY - minY) + 4);
-    ctx.restore();
-  });
-  ctx.strokeStyle = "rgba(255,255,255,.65)"; ctx.lineWidth = 2;
-  cells.forEach((cell) => { if (cell.length >= 3) ctx.stroke(cellPath(cell)); });
+  drawCells(ctx, subs, cells);
   ctx.restore();
   ctx.strokeStyle = theme === "night" ? "rgba(242,240,234,.35)" : "rgba(28,28,30,.18)";
   ctx.lineWidth = 1.5;
   ctx.stroke(landPath);
-  terrainPts = pts.map((p) => ({ x: p.x, y: p.y, key: p.key, r: R }));
+  terrainPts = subs.map((s) => ({ x: s.x, y: s.y, key: s.key, r: R }));
 }
 function setView(mode) {
   viewMode = mode;
@@ -928,6 +971,70 @@ $("terrainCanvas").addEventListener("click", (e) => {
 });
 window.addEventListener("resize", () => { if (viewMode === "terrain") renderTerrain(); });
 document.querySelectorAll(".themebtn").forEach((b) => b.addEventListener("click", () => { if (viewMode === "terrain") setTimeout(renderTerrain, 60); }));
+
+/* ---------- crop position editor ----------
+   Each photo can choose which part of it the collage shows. The focal point
+   (fx/fy, 0..1) is stored on the item and honoured by drawCover everywhere
+   the collage is drawn (terrain view and poster). */
+let cropItem = null, cropFx = 0.5, cropFy = 0.5;
+$("cropBtn").addEventListener("click", () => {
+  const it = storyItems[storyIdx];
+  if (!it) return;
+  cropItem = it;
+  cropFx = typeof it.fx === "number" ? it.fx : 0.5;
+  cropFy = typeof it.fy === "number" ? it.fy : 0.5;
+  const im = $("cropImg");
+  im.onload = () => layoutCrop();
+  im.src = it.img;
+  openSheet("cropSheet");
+  requestAnimationFrame(() => layoutCrop());
+});
+function layoutCrop() {
+  const fr = $("cropFrame"), im = $("cropImg");
+  const W = fr.clientWidth, H = fr.clientHeight, iw = im.naturalWidth, ih = im.naturalHeight;
+  if (!W || !iw) return;
+  const sc = Math.max(W / iw, H / ih);
+  im.style.width = (iw * sc) + "px";
+  im.style.height = (ih * sc) + "px";
+  placeCrop();
+}
+function placeCrop() {
+  const fr = $("cropFrame"), im = $("cropImg");
+  const W = fr.clientWidth, H = fr.clientHeight;
+  const dw = parseFloat(im.style.width) || 0, dh = parseFloat(im.style.height) || 0;
+  if (!dw || !dh) return;
+  let left = W / 2 - cropFx * dw, top = H / 2 - cropFy * dh;
+  left = Math.max(W - dw, Math.min(0, left));
+  top = Math.max(H - dh, Math.min(0, top));
+  im.style.left = left + "px";
+  im.style.top = top + "px";
+}
+(function () {
+  const fr = $("cropFrame");
+  let drag = null;
+  fr.addEventListener("pointerdown", (e) => { drag = { x: e.clientX, y: e.clientY, fx: cropFx, fy: cropFy }; try { fr.setPointerCapture(e.pointerId); } catch (err) { /* ignore */ } });
+  fr.addEventListener("pointermove", (e) => {
+    if (!drag) return;
+    const im = $("cropImg");
+    const dw = parseFloat(im.style.width) || 1, dh = parseFloat(im.style.height) || 1;
+    cropFx = Math.max(0, Math.min(1, drag.fx - (e.clientX - drag.x) / dw));
+    cropFy = Math.max(0, Math.min(1, drag.fy - (e.clientY - drag.y) / dh));
+    placeCrop();
+  });
+  const end = () => { drag = null; };
+  fr.addEventListener("pointerup", end);
+  fr.addEventListener("pointercancel", end);
+})();
+$("cropReset").addEventListener("click", () => { cropFx = 0.5; cropFy = 0.5; placeCrop(); });
+$("cropDone").addEventListener("click", () => {
+  if (cropItem) {
+    if (cropFx === 0.5 && cropFy === 0.5) { delete cropItem.fx; delete cropItem.fy; }
+    else { cropItem.fx = Math.round(cropFx * 1000) / 1000; cropItem.fy = Math.round(cropFy * 1000) / 1000; }
+    save();
+  }
+  closeSheet("cropSheet");
+  if (viewMode === "terrain") renderTerrain();
+});
 
 applyTheme();
 setInterval(applyTheme, 60000);
