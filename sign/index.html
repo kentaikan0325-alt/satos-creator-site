@@ -571,6 +571,33 @@ function cellPath(cell) {
   p.closePath();
   return p;
 }
+function polyArea(p) { let s = 0; for (let i = 0; i < p.length; i++) { const a = p[i], b = p[(i + 1) % p.length]; s += a.x * b.y - b.x * a.y; } return s / 2; }
+/* Intersect a polygon with a convex clip polygon (Sutherland–Hodgman),
+   so a photo's region can be bounded to the area around its own location. */
+function convexClip(subject, clip) {
+  const orient = Math.sign(polyArea(clip)) || 1;
+  const cross = (a, b, p) => ((b.x - a.x) * (p.y - a.y) - (b.y - a.y) * (p.x - a.x)) * orient;
+  let out = subject;
+  for (let e = 0; e < clip.length && out.length; e++) {
+    const a = clip[e], b = clip[(e + 1) % clip.length];
+    const inp = out; out = [];
+    for (let i = 0; i < inp.length; i++) {
+      const p = inp[i], q = inp[(i + 1) % inp.length];
+      const dp = cross(a, b, p), dq = cross(a, b, q);
+      if (dp >= 0) out.push(p);
+      if ((dp >= 0) !== (dq >= 0)) {
+        const t = dp / (dp - dq);
+        out.push({ x: p.x + (q.x - p.x) * t, y: p.y + (q.y - p.y) * t });
+      }
+    }
+  }
+  return out;
+}
+function diskPoly(cx, cy, r, n) {
+  const pts = [];
+  for (let i = 0; i < (n || 26); i++) { const a = (i / (n || 26)) * Math.PI * 2; pts.push({ x: cx + Math.cos(a) * r, y: cy + Math.sin(a) * r }); }
+  return pts;
+}
 async function renderCountry() {
   const cv = $("countryCanvas"), ctx = cv.getContext("2d");
   const W = cv.width, H = cv.height;
@@ -654,7 +681,19 @@ async function renderCountry() {
       }
       pts.push({ x: x, y: y, im: im });
     }
-    const cells = pts.map((p, i) => voronoiCell(pts, i, W, H));
+    /* Bound each photo to its own area: a photo fills only the neighbourhood
+       of where it was taken, so the rest of the shape stays white like the
+       reference posters. The radius follows how spread out the photos are. */
+    let R = 150;
+    if (pts.length >= 2) {
+      const nn = pts.map((p, i) => {
+        let best = 1e9;
+        pts.forEach((q, j) => { if (j !== i) best = Math.min(best, Math.hypot(p.x - q.x, p.y - q.y)); });
+        return best;
+      }).sort((a, b) => a - b);
+      R = Math.max(46, Math.min(320, nn[Math.floor(nn.length / 2)] * 1.5));
+    }
+    const cells = pts.map((p, i) => convexClip(voronoiCell(pts, i, W, H), diskPoly(p.x, p.y, R)));
     cells.forEach((cell, i) => {
       if (cell.length < 3) return;
       let minX = 1e9, minY = 1e9, maxX = -1e9, maxY = -1e9;
