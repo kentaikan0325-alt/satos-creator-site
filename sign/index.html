@@ -538,6 +538,39 @@ function drawCover(ctx, im, dx, dy, dw, dh) {
   const sw = dw / s, sh = dh / s;
   ctx.drawImage(im, (im.width - sw) / 2, (im.height - sh) / 2, sw, sh, dx, dy, dw, dh);
 }
+/* Voronoi cell: the region of the plane closer to pts[i] than to any other point.
+   Built by clipping a rect with each perpendicular-bisector half-plane,
+   so the cells together follow the outline of whatever they are clipped by. */
+function clipBisector(poly, pi, pj) {
+  const mx = (pi.x + pj.x) / 2, my = (pi.y + pj.y) / 2;
+  const dx = pj.x - pi.x, dy = pj.y - pi.y;
+  const out = [];
+  for (let a = 0; a < poly.length; a++) {
+    const p = poly[a], q = poly[(a + 1) % poly.length];
+    const dp = (p.x - mx) * dx + (p.y - my) * dy;
+    const dq = (q.x - mx) * dx + (q.y - my) * dy;
+    if (dp <= 0) out.push(p);
+    if ((dp < 0 && dq > 0) || (dp > 0 && dq < 0)) {
+      const t = dp / (dp - dq);
+      out.push({ x: p.x + (q.x - p.x) * t, y: p.y + (q.y - p.y) * t });
+    }
+  }
+  return out;
+}
+function voronoiCell(pts, i, W, H) {
+  let cell = [{ x: 0, y: 0 }, { x: W, y: 0 }, { x: W, y: H }, { x: 0, y: H }];
+  for (let j = 0; j < pts.length && cell.length; j++) {
+    if (j === i) continue;
+    cell = clipBisector(cell, pts[i], pts[j]);
+  }
+  return cell;
+}
+function cellPath(cell) {
+  const p = new Path2D();
+  cell.forEach((pt, i) => { if (i === 0) p.moveTo(pt.x, pt.y); else p.lineTo(pt.x, pt.y); });
+  p.closePath();
+  return p;
+}
 async function renderCountry() {
   const cv = $("countryCanvas"), ctx = cv.getContext("2d");
   const W = cv.width, H = cv.height;
@@ -553,7 +586,8 @@ async function renderCountry() {
   const pool = inCountry.length ? inCountry : placed;
   $("countryStatus").textContent = "描画中…（" + pool.length + "枚の写真を使用）";
   const imgs = [];
-  for (const it of pool) { try { imgs.push(await loadImg(it.img)); } catch (e) { /* skip unreadable */ } }
+  const imgOf = new Map();
+  for (const it of pool) { try { const im = await loadImg(it.img); imgs.push(im); imgOf.set(it, im); } catch (e) { /* skip unreadable */ } }
   if (!imgs.length) { $("countryStatus").textContent = "写真を読み込めませんでした。"; return; }
   let bbox = countryBBox(feat);
   if (countryMode === "pos" && inCountry.length >= 2) {
@@ -591,22 +625,32 @@ async function renderCountry() {
   } else {
     ctx.fillStyle = night ? "#1d1d22" : "#e9e4d4";
     ctx.fill(path);
-    for (let i = 0; i < inCountry.length; i++) {
-      const it = inCountry[i];
-      const im = imgs[pool.indexOf(it)];
+    /* Shape-filling layout: split the country's interior into one region per
+       photo (the area nearest that photo's real location) and fill each
+       region with its photo, so the photos themselves form the shape. */
+    const pts = [];
+    for (const it of inCountry) {
+      const im = imgOf.get(it);
       if (!im) continue;
-      const size = 150;
-      const x = pr.x(it.lng), y = pr.y(it.lat);
-      ctx.save();
-      ctx.translate(x, y);
-      ctx.rotate(((i * 37) % 11 - 5) * Math.PI / 180);
-      ctx.fillStyle = "#fff";
-      ctx.shadowColor = "rgba(0,0,0,.35)"; ctx.shadowBlur = 14; ctx.shadowOffsetY = 5;
-      ctx.fillRect(-size / 2, -size / 2, size, size + 26);
-      ctx.shadowColor = "transparent"; ctx.shadowBlur = 0; ctx.shadowOffsetY = 0;
-      drawCover(ctx, im, -size / 2 + 6, -size / 2 + 6, size - 12, size - 12);
-      ctx.restore();
+      let x = pr.x(it.lng), y = pr.y(it.lat);
+      for (let t = 0; t < 16 && pts.some((p) => Math.hypot(p.x - x, p.y - y) < 7); t++) {
+        const a = pts.length * 2.399963 + t * 1.1;
+        x += Math.cos(a) * 8; y += Math.sin(a) * 8;
+      }
+      pts.push({ x: x, y: y, im: im });
     }
+    const cells = pts.map((p, i) => voronoiCell(pts, i, W, H));
+    cells.forEach((cell, i) => {
+      if (cell.length < 3) return;
+      let minX = 1e9, minY = 1e9, maxX = -1e9, maxY = -1e9;
+      cell.forEach((pt) => { if (pt.x < minX) minX = pt.x; if (pt.y < minY) minY = pt.y; if (pt.x > maxX) maxX = pt.x; if (pt.y > maxY) maxY = pt.y; });
+      ctx.save();
+      ctx.clip(cellPath(cell));
+      drawCover(ctx, pts[i].im, minX - 2, minY - 2, (maxX - minX) + 4, (maxY - minY) + 4);
+      ctx.restore();
+    });
+    ctx.strokeStyle = "rgba(255,255,255,.6)"; ctx.lineWidth = 2;
+    cells.forEach((cell) => { if (cell.length >= 3) ctx.stroke(cellPath(cell)); });
     ctx.strokeStyle = night ? "rgba(242,240,234,.8)" : "rgba(26,26,26,.55)";
     ctx.lineWidth = 3;
     ctx.stroke(path);
