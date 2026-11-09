@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>看板マップ試作 v0.1 — 世界の看板を集める</title>
+<title>看板マップ試作 v0.5 — 世界の看板を集める</title>
 <link href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css" rel="stylesheet">
 <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/exifr@7.1.3/dist/full.umd.js"></script>
@@ -121,7 +121,7 @@
 <div id="tint"></div>
 <div id="grain"></div>
 <header>
-  <div class="ttl">看板マップ<small>SIGN MAP — PROTOTYPE v0.1</small></div>
+  <div class="ttl">看板マップ<small>SIGN MAP — PROTOTYPE v0.5</small></div>
   <div class="clockbox">
     <div class="clock" id="clock">--:--</div>
     <div class="dateline" id="dateline">—</div>
@@ -176,15 +176,15 @@
     <button class="xbtn" data-close="collection">✕</button>
   </div>
   <div id="gridView" class="open"><div class="grid" id="gridBox"></div><div class="empty" id="gridEmpty" style="display:none">まだ看板がありません。<br>下の「看板を追加」から、撮った写真を入れてみてください。<br>位置情報つきの写真は、自動でその場所にピンが立ちます。</div></div>
-  <button class="countrybtn" id="countryBtn">🗾️ 国の形コラージュを作る</button>
+  <button class="countrybtn" id="countryBtn">🗾️ ポスターを見る</button>
 </div>
 
 <div class="sheet" id="countrySheet">
   <div class="sheethead">
-    <div class="t">国の形コラージュ</div>
+    <div class="t">ポスター</div>
     <button class="xbtn" data-close="countrySheet">✕</button>
   </div>
-  <p class="note" style="padding-top:14px">集めた看板の写真を、国の形に敷き詰めて1枚の絵にします。作るのは無料・書き出しはこの試作ではそのまま保存できます。</p>
+  <p class="note" style="padding-top:14px">写真を投稿すると、その国の形のポスターが自動で作られます。ここでは国の切り替えと、画像の保存ができます。</p>
   <div class="countryrow">
     <select id="countrySelect"><option value="">読み込み中…</option></select>
   </div>
@@ -322,6 +322,7 @@ map.on("click", (e) => {
   it.lat = e.lngLat.lat; it.lng = e.lngLat.lng;
   items.push(it); save(); renderMarkers(); updateBanner();
   map.flyTo({ center: [it.lng, it.lat], zoom: Math.max(map.getZoom(), 13) });
+  if (!pending.length) setTimeout(() => autoPoster(it), 600);
 });
 function updateBanner() {
   const b = $("banner");
@@ -362,6 +363,7 @@ function renderCats() {
   $("catBox").querySelectorAll(".cat").forEach((b) => b.addEventListener("click", () => { stagedCat = b.dataset.c; renderCats(); }));
 }
 $("saveAddBtn").addEventListener("click", () => {
+  const addedPlaced = staged.filter((s) => typeof s.lat === "number");
   staged.forEach((s) => {
     s.cat = stagedCat;
     if (typeof s.lat === "number") items.push(s); else pending.push(s);
@@ -375,6 +377,8 @@ $("saveAddBtn").addEventListener("click", () => {
     placed.forEach((i) => b.extend([i.lng, i.lat]));
     map.fitBounds(b, { padding: 70, maxZoom: 15 });
   }
+  /* Posting a photo automatically builds that country's poster. */
+  if (addedPlaced.length) setTimeout(() => autoPoster(addedPlaced[addedPlaced.length - 1]), 400);
 });
 function compress(file) {
   return new Promise((resolve, reject) => {
@@ -734,7 +738,7 @@ async function renderCountry() {
     (inCountry.length ? "" : "（この国の位置情報つき写真がまだないので、コレクション全体を使っています）") +
     (countryMode === "pos" && inCountry.length < 2 ? " 位置どおり型は、同じ国に2枚以上の位置情報つき写真があると見栄えがよくなります。" : "");
 }
-async function openCountry() {
+async function openCountry(preferName) {
   openSheet("countrySheet");
   try {
     await loadCountries();
@@ -746,7 +750,8 @@ async function openCountry() {
     const counts = {};
     placed.forEach((i) => { const c = countryOf(i.lng, i.lat); if (c) counts[c.name] = (counts[c.name] || 0) + 1; });
     const top = Object.entries(counts).sort((a, b) => b[1] - a[1])[0];
-    if (prev && countryData.features.some((f) => f.name === prev)) def = prev;
+    if (preferName && countryData.features.some((f) => f.name === preferName)) def = preferName;
+    else if (prev && countryData.features.some((f) => f.name === prev)) def = prev;
     else if (top) def = top[0];
     else if (countryData.features.some((f) => f.name === "Japan")) def = "Japan";
     sel.value = def; countryName = def;
@@ -755,7 +760,20 @@ async function openCountry() {
     $("countryStatus").textContent = "国の形データの読み込みに失敗しました。通信を確認してからもう一度開いてください。";
   }
 }
-$("countryBtn").addEventListener("click", openCountry);
+/* After a photo is posted, build its country's poster automatically and
+   show it — posting is the only action the user takes. */
+async function autoPoster(item) {
+  try {
+    await loadCountries();
+    const c = item ? countryOf(item.lng, item.lat) : null;
+    if (countryMode !== "pos") {
+      countryMode = "pos";
+      $("modePos").classList.add("on"); $("modeTile").classList.remove("on");
+    }
+    openCountry(c ? c.name : "");
+  } catch (e) { /* the poster is automatic gravy; never block posting */ }
+}
+$("countryBtn").addEventListener("click", () => openCountry(""));
 $("countrySelect").addEventListener("change", (e) => { countryName = e.target.value; renderCountry(); });
 $("modeTile").addEventListener("click", () => { countryMode = "tile"; $("modeTile").classList.add("on"); $("modePos").classList.remove("on"); renderCountry(); });
 $("modePos").addEventListener("click", () => { countryMode = "pos"; $("modePos").classList.add("on"); $("modeTile").classList.remove("on"); renderCountry(); });
