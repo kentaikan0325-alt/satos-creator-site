@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>看板マップ試作 v0.7.1 — 世界の看板を集める</title>
+<title>看板マップ試作 v0.8 — 世界の看板を集める</title>
 <link href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css" rel="stylesheet">
 <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/exifr@7.1.3/dist/full.umd.js"></script>
@@ -122,6 +122,26 @@
   .cropbtn{align-self:center;margin:0 0 8px;background:none;border:0;color:var(--ink);font-size:12.5px;cursor:pointer;letter-spacing:.06em;text-decoration:underline}
   #cropFrame{margin:8px 16px;border-radius:12px;overflow:hidden;position:relative;height:320px;background:#111;touch-action:none;box-shadow:0 8px 22px rgba(0,0,0,.18);cursor:grab}
   #cropFrame img{position:absolute;left:0;top:0;max-width:none;user-select:none;-webkit-user-select:none}
+  #modes .mode{cursor:pointer}
+  #flash{position:absolute;top:158px;left:50%;transform:translateX(-50%);z-index:60;display:none;background:var(--panel);color:var(--ink);border:1px solid var(--line);border-radius:12px;padding:10px 14px;font-size:12.5px;line-height:1.6;max-width:86vw;text-align:center;box-shadow:0 10px 26px rgba(0,0,0,.22)}
+  .sheetbody{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding-bottom:20px}
+  .mojihead{padding:16px 16px 2px;font-size:11.5px;letter-spacing:.14em;color:var(--sub);font-weight:700}
+  .mojirow{display:flex;gap:8px;padding:8px 16px;align-items:center}
+  .mojirow input[type=text]{flex:1;padding:11px;border-radius:10px;border:1px solid var(--line);background:var(--panel);color:var(--ink);font-size:15px;min-width:0}
+  .mojirow select{flex:1;padding:11px;border-radius:10px;border:1px solid var(--line);background:var(--panel);color:var(--ink);font-size:13.5px;min-width:0}
+  .mbtn{padding:11px 16px;border-radius:999px;border:1px solid var(--ink);background:var(--ink);color:var(--bg);font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap}
+  .mbtn.sub{background:transparent;color:var(--ink);border-color:var(--line);font-weight:600;flex:1}
+  #mojiPreview{display:flex;flex-wrap:wrap;gap:6px;padding:8px 16px;align-items:flex-end;min-height:24px}
+  #mojiPreview img{height:84px;border-radius:6px;box-shadow:0 4px 12px rgba(0,0,0,.2);display:block}
+  #mojiPreview .miss{height:84px;width:64px;border:2px dashed var(--line);border-radius:6px;display:flex;align-items:center;justify-content:center;color:var(--sub);font-size:26px}
+  #mojiGrid{display:flex;flex-wrap:wrap;gap:10px;padding:8px 16px}
+  .ltile{position:relative;width:64px}
+  .ltile img{width:64px;height:64px;object-fit:cover;border-radius:8px;display:block}
+  .ltile span{position:absolute;left:4px;bottom:4px;background:rgba(0,0,0,.65);color:#fff;font-size:11px;padding:1px 6px;border-radius:999px}
+  .ltile .lx{position:absolute;top:-6px;right:-6px;width:20px;height:20px;border-radius:50%;border:0;background:#c0392b;color:#fff;font-size:11px;cursor:pointer;line-height:1}
+  #mojiFrame{margin:6px 16px;height:300px;position:relative;background:#111;border-radius:12px;overflow:hidden;touch-action:none}
+  #mojiFrame img{width:100%;height:100%;object-fit:contain;display:block}
+  #mojiSel{position:absolute;border:2px solid #ffd400;background:rgba(255,212,0,.18);display:none;border-radius:4px;pointer-events:none}
   .maplibregl-ctrl-attrib{font-size:9px}
 </style>
 </head>
@@ -131,7 +151,7 @@
 <div id="tint"></div>
 <div id="grain"></div>
 <header>
-  <div class="ttl">看板マップ<small>SIGN MAP — PROTOTYPE v0.7.1</small></div>
+  <div class="ttl">看板マップ<small>SIGN MAP — PROTOTYPE v0.8</small></div>
   <div class="clockbox">
     <div class="clock" id="clock">--:--</div>
     <div class="dateline" id="dateline">—</div>
@@ -139,10 +159,11 @@
 </header>
 <div id="quest"></div>
 <div id="modes">
-  <span class="mode on">個人</span>
-  <span class="mode soon">グループ・近日</span>
-  <span class="mode soon">世界・近日</span>
+  <span class="mode on" id="modePersonal">個人</span>
+  <span class="mode soon" id="modeGroup">グループ・近日</span>
+  <span class="mode" id="modeWorld">世界</span>
 </div>
+<div id="flash"></div>
 <div id="themes">
   <button class="themebtn" data-t="morning">朝</button>
   <button class="themebtn" data-t="day">昼</button>
@@ -154,6 +175,7 @@
 <nav>
   <button id="mapBtn"><span class="ic">🗺</span>地図</button>
   <button id="addBtn"><span class="ic">＋</span>看板を追加</button>
+  <button id="mojiBtn"><span class="ic">あ</span>文字</button>
   <button id="colBtn"><span class="ic">▦</span>コレクション</button>
 </nav>
 <input type="file" id="fileInput" accept="image/*" multiple hidden>
@@ -177,6 +199,7 @@
       </span>
     </div>
     <button class="cropbtn" id="cropBtn">切り取り位置を調整</button>
+    <button class="cropbtn" id="mojiFromBtn">この写真から文字を集める</button>
     <button class="del" id="delBtn">この写真を削除</button>
   </div>
   <div id="collageView"><div class="collage" id="collageBox"></div></div>
@@ -189,6 +212,7 @@
   </div>
   <div id="gridView" class="open"><div class="grid" id="gridBox"></div><div class="empty" id="gridEmpty" style="display:none">まだ看板がありません。<br>下の「看板を追加」から、撮った写真を入れてみてください。<br>位置情報つきの写真は、自動でその場所にピンが立ちます。</div></div>
   <button class="countrybtn" id="countryBtn">🗾️ ポスターを見る</button>
+  <p class="note" id="colNote" style="display:none"></p>
 </div>
 
 <div class="sheet" id="countrySheet">
@@ -219,6 +243,38 @@
   <div id="cropFrame"><img id="cropImg" alt="切り取り位置の調整"></div>
   <button class="bigbtn" id="cropDone">この位置にする</button>
   <button class="del" id="cropReset">中央に戻す</button>
+</div>
+
+<div class="sheet" id="mojiSheet">
+  <div class="sheethead">
+    <div class="t">文字あつめ</div>
+    <button class="xbtn" data-close="mojiSheet">✕</button>
+  </div>
+  <div class="sheetbody">
+    <div class="mojihead">— 文字を組む</div>
+    <div class="mojirow">
+      <input type="text" id="mojiWord" placeholder="例：SEOUL、看板、TOKYO">
+      <button class="mbtn" id="mojiBuild">組む</button>
+    </div>
+    <div id="mojiPreview"></div>
+    <div class="mojirow">
+      <button class="mbtn sub" id="mojiShuffle">シャッフル</button>
+      <button class="mbtn sub" id="mojiSave">画像で保存</button>
+    </div>
+    <div class="mojihead">— 文字コレクション</div>
+    <div id="mojiGrid"></div>
+    <p class="note" id="mojiEmpty">まだ文字がありません。下の「写真から切り取る」で、看板の文字を集めてください。</p>
+    <div class="mojihead">— 写真から切り取る</div>
+    <div class="mojirow">
+      <select id="mojiSrcSel"></select>
+    </div>
+    <div id="mojiFrame"><img id="mojiSrcImg" alt="切り取り元の写真"><div id="mojiSel"></div></div>
+    <div class="mojirow">
+      <input type="text" id="mojiChar" maxlength="1" placeholder="この文字（1文字）">
+      <button class="mbtn" id="mojiAdd">追加</button>
+    </div>
+    <p class="note">写真の上で、集めたい文字をドラッグで囲んでください。囲んだ部分が、その文字のタイルになります。</p>
+  </div>
 </div>
 
 <div class="sheet" id="addSheet">
@@ -257,6 +313,111 @@ let staged = [];        // photos processed, waiting for category confirm
 let stagedCat = "その他";
 let currentGroup = null, storyIdx = 0;
 
+/* ---------- app modes: personal / world ----------
+   World mode shows a world archive: built-in sample signs from cities
+   around the world (drawn procedurally at runtime — the real product would
+   serve other people's posted signs from a server) plus the user's own. */
+let appMode = "personal";
+let flashTimer = null;
+function flash(msg) {
+  const f = $("flash");
+  f.textContent = msg;
+  f.style.display = "block";
+  clearTimeout(flashTimer);
+  flashTimer = setTimeout(() => { f.style.display = "none"; }, 3400);
+}
+const WORLD_DEFS = [
+  { id: "w-london", lat: 51.5007, lng: -0.1246, cat: "タイポ", date: "2026-03-14", place: "London", board: "#1d3a8a", fg: "#ffffff", text: "MIND THE GAP", sub: "UNDERGROUND", bg: ["#3a4a5a", "#141c26"], style: "enamel" },
+  { id: "w-berlin", lat: 52.5200, lng: 13.4050, cat: "タイポ", date: "2026-03-20", place: "Berlin", board: "#1256a0", fg: "#ffffff", text: "Berliner Straße", sub: "", bg: ["#4a4a52", "#23232a"], style: "enamel" },
+  { id: "w-amsterdam", lat: 52.3731, lng: 4.8922, cat: "レトロ", date: "2026-03-22", place: "Amsterdam", board: "#6b4226", fg: "#f5e9d0", text: "AMSTERDAM", sub: "CENTRAAL", bg: ["#54626e", "#26313a"], style: "wood" },
+  { id: "w-paris", lat: 48.8566, lng: 2.3522, cat: "ネオン", date: "2026-03-25", place: "Paris", board: "#7a1020", fg: "#ffe9ec", text: "Métro", sub: "", bg: ["#3d3a4d", "#191724"], style: "neon" },
+  { id: "w-nyc", lat: 40.7580, lng: -73.9855, cat: "タイポ", date: "2026-04-02", place: "New York", board: "#14532d", fg: "#ffffff", text: "BROADWAY", sub: "W 45 ST", bg: ["#5a5148", "#2a251f"], style: "enamel" },
+  { id: "w-seoul", lat: 37.5665, lng: 126.9780, cat: "ネオン", date: "2026-05-11", place: "Seoul", board: "#101828", fg: "#7df0ff", text: "김밥천국", sub: "24시 영업", bg: ["#2c3550", "#10131f"], style: "neon" },
+  { id: "w-busan", lat: 35.0969, lng: 129.0303, cat: "手書き", date: "2026-05-13", place: "Busan", board: "#f3ead8", fg: "#20304a", text: "자갈치시장", sub: "JAGALCHI MARKET", bg: ["#5d6a72", "#2e3a40"], style: "paper" },
+  { id: "w-tokyo", lat: 35.6595, lng: 139.7005, cat: "ネオン", date: "2026-06-01", place: "Tokyo", board: "#20060a", fg: "#ff5d7a", text: "やきとり", sub: "炭火焼", bg: ["#33272e", "#171016"], style: "neon" },
+  { id: "w-osaka", lat: 34.6687, lng: 135.5013, cat: "変な看板", date: "2026-06-03", place: "Osaka", board: "#ffd23e", fg: "#c81e1e", text: "たこやき", sub: "本場の味", bg: ["#4d4438", "#241f16"], style: "paper" },
+  { id: "w-kyoto", lat: 35.0037, lng: 135.7709, cat: "レトロ", date: "2026-06-05", place: "Kyoto", board: "#4a3220", fg: "#f5e9d0", text: "先斗町", sub: "", bg: ["#4c4438", "#221d15"], style: "wood" },
+  { id: "w-taipei", lat: 25.0329, lng: 121.5650, cat: "ネオン", date: "2026-06-18", place: "Taipei", board: "#140b20", fg: "#ffb3d9", text: "夜市", sub: "TAIPEI NIGHT MARKET", bg: ["#372b4a", "#171021"], style: "neon" },
+  { id: "w-sydney", lat: -33.8915, lng: 151.2767, cat: "タイポ", date: "2026-07-02", place: "Sydney", board: "#0e5a74", fg: "#ffffff", text: "BONDI BEACH", sub: "", bg: ["#7a97a5", "#3c5a68"], style: "enamel" }
+];
+function rrect(ctx, x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.arcTo(x + w, y, x + w, y + h, r);
+  ctx.arcTo(x + w, y + h, x, y + h, r);
+  ctx.arcTo(x, y + h, x, y, r);
+  ctx.arcTo(x, y, x + w, y, r);
+  ctx.closePath();
+}
+/* Draw a plausible "photo of a sign" for a world-sample entry. */
+function drawSeedSign(d) {
+  const cv = document.createElement("canvas");
+  cv.width = 640; cv.height = 480;
+  const ctx = cv.getContext("2d");
+  const g = ctx.createLinearGradient(0, 0, 0, 480);
+  g.addColorStop(0, d.bg[0]); g.addColorStop(1, d.bg[1]);
+  ctx.fillStyle = g; ctx.fillRect(0, 0, 640, 480);
+  ctx.fillStyle = "rgba(0,0,0,.18)";
+  [40, 470, 210].forEach((x, i) => ctx.fillRect(x, 60 + i * 30, 90, 300));
+  ctx.fillStyle = "rgba(255,255,220,.20)";
+  for (let i = 0; i < 26; i++) ctx.fillRect(52 + (i % 3) * 26 + (Math.floor(i / 9) * 380), 84 + (i % 9) * 30, 12, 16);
+  ctx.fillStyle = "rgba(0,0,0,.28)"; ctx.fillRect(0, 392, 640, 88);
+  ctx.save();
+  ctx.translate(320, 218); ctx.rotate(-0.017);
+  const bw = 500, bh = d.sub ? 190 : 160;
+  ctx.shadowColor = "rgba(0,0,0,.45)"; ctx.shadowBlur = 26; ctx.shadowOffsetY = 10;
+  rrect(ctx, -bw / 2, -bh / 2, bw, bh, 14);
+  ctx.fillStyle = d.board; ctx.fill();
+  ctx.shadowColor = "transparent"; ctx.shadowBlur = 0; ctx.shadowOffsetY = 0;
+  ctx.lineWidth = 3; ctx.strokeStyle = d.fg; ctx.globalAlpha = 0.55;
+  rrect(ctx, -bw / 2 + 9, -bh / 2 + 9, bw - 18, bh - 18, 9); ctx.stroke();
+  ctx.globalAlpha = 1;
+  ctx.textAlign = "center"; ctx.textBaseline = "middle";
+  let size = 74;
+  ctx.font = "800 " + size + "px 'Hiragino Sans', 'Noto Sans JP', sans-serif";
+  while (ctx.measureText(d.text).width > bw - 56 && size > 26) { size -= 5; ctx.font = "800 " + size + "px 'Hiragino Sans', 'Noto Sans JP', sans-serif"; }
+  if (d.style === "neon") { ctx.shadowColor = d.fg; ctx.shadowBlur = 26; }
+  ctx.fillStyle = d.fg;
+  ctx.fillText(d.text, 0, d.sub ? -22 : 0);
+  ctx.shadowBlur = 0;
+  if (d.sub) {
+    ctx.font = "600 27px 'Hiragino Sans', 'Noto Sans JP', sans-serif";
+    try { ctx.letterSpacing = "5px"; } catch (e) { /* ignore */ }
+    ctx.globalAlpha = 0.9;
+    ctx.fillText(d.sub, 0, 48);
+    ctx.globalAlpha = 1;
+  }
+  ctx.restore();
+  const v = ctx.createRadialGradient(320, 240, 210, 320, 240, 470);
+  v.addColorStop(0, "rgba(0,0,0,0)"); v.addColorStop(1, "rgba(0,0,0,.36)");
+  ctx.fillStyle = v; ctx.fillRect(0, 0, 640, 480);
+  return cv.toDataURL("image/jpeg", 0.82);
+}
+let worldItemsCache = null;
+function worldItems() {
+  if (worldItemsCache) return worldItemsCache;
+  worldItemsCache = WORLD_DEFS.map((d) => ({ id: d.id, lat: d.lat, lng: d.lng, cat: d.cat, date: d.date, img: drawSeedSign(d), world: true, place: d.place }));
+  return worldItemsCache;
+}
+function activeItems() { return appMode === "world" ? worldItems().concat(items) : items; }
+function setAppMode(m) {
+  appMode = m;
+  $("modePersonal").classList.toggle("on", m === "personal");
+  $("modeWorld").classList.toggle("on", m === "world");
+  renderMarkers();
+  if (viewMode === "terrain") renderTerrain();
+  const list = activeItems().filter((i) => typeof i.lat === "number");
+  if (list.length) {
+    const b = new maplibregl.LngLatBounds();
+    list.forEach((i) => b.extend([i.lng, i.lat]));
+    map.fitBounds(b, { padding: 60, maxZoom: m === "world" ? 4 : 15, duration: 600 });
+  }
+  if (m === "world") flash("世界モード：世界の看板は試作用のサンプルです。あなたの写真も一緒に表示されます。");
+}
+$("modePersonal").addEventListener("click", () => setAppMode("personal"));
+$("modeWorld").addEventListener("click", () => setAppMode("world"));
+$("modeGroup").addEventListener("click", () => flash("グループモードは近日公開です。"));
+
 const $ = (id) => document.getElementById(id);
 function save() {
   try { localStorage.setItem(LS_KEY, JSON.stringify(items)); }
@@ -270,7 +431,7 @@ function fmtDate(iso) {
 function groupKey(it) { return it.lat.toFixed(4) + "," + it.lng.toFixed(4); }
 function groups() {
   const g = {};
-  items.forEach((it) => { const k = groupKey(it); (g[k] = g[k] || []).push(it); });
+  activeItems().forEach((it) => { const k = groupKey(it); (g[k] = g[k] || []).push(it); });
   Object.values(g).forEach((arr) => arr.sort((a, b) => (a.date || "") < (b.date || "") ? -1 : 1));
   return g;
 }
@@ -452,13 +613,17 @@ function drawStory() {
   storyIdx = Math.max(0, Math.min(storyIdx, arr.length - 1));
   const it = arr[storyIdx];
   $("storyImg").src = it.img;
-  $("storyMeta").textContent = fmtDate(it.date) + " ・ " + (it.cat || "その他") + " ・ " + (storyIdx + 1) + " / " + arr.length;
+  $("storyMeta").textContent = fmtDate(it.date) + " ・ " + (it.cat || "その他") + (it.place ? " ・ " + it.place : "") + " ・ " + (storyIdx + 1) + " / " + arr.length;
+  const own = !it.world;
+  $("delBtn").style.display = own ? "" : "none";
+  $("cropBtn").style.display = own ? "" : "none";
+  $("mojiFromBtn").style.display = own ? "" : "none";
 }
 $("prevBtn").addEventListener("click", () => { const a = curArr(); storyIdx = (storyIdx - 1 + a.length) % a.length; drawStory(); });
 $("nextBtn").addEventListener("click", () => { const a = curArr(); storyIdx = (storyIdx + 1) % a.length; drawStory(); });
 $("delBtn").addEventListener("click", () => {
   const arr = curArr(); const it = arr[storyIdx];
-  if (!it) return;
+  if (!it || it.world) return;
   items = items.filter((x) => x.id !== it.id);
   save(); renderMarkers(); drawStory(); drawCollage(curArr());
 });
@@ -470,7 +635,13 @@ function drawCollage(arr) {
 
 /* ---------- collection ---------- */
 $("colBtn").addEventListener("click", () => {
-  const sorted = [...items].sort((a, b) => (a.date || "") < (b.date || "") ? 1 : -1);
+  const sorted = [...activeItems()].sort((a, b) => (a.date || "") < (b.date || "") ? 1 : -1);
+  $("countryBtn").style.display = appMode === "world" ? "none" : "";
+  const cn = $("colNote");
+  if (appMode === "world") {
+    cn.style.display = "block";
+    cn.textContent = "世界モード：世界の看板（試作用サンプル）＋あなたの写真です。ポスターは個人モードで使えます。";
+  } else cn.style.display = "none";
   $("gridEmpty").style.display = sorted.length ? "none" : "block";
   $("gridBox").innerHTML = sorted.map((it) => '<img src="' + it.img + '" data-k="' + groupKey(it) + '" alt="">').join("");
   $("gridBox").querySelectorAll("img").forEach((im) => im.addEventListener("click", () => {
@@ -907,7 +1078,7 @@ async function renderTerrain() {
   const landFill = theme === "night" ? "#26262e" : "#fffdf9";
   ctx.fillStyle = sea; ctx.fillRect(0, 0, W, H);
   terrainPts = [];
-  const placed = items.filter((i) => typeof i.lat === "number");
+  const placed = activeItems().filter((i) => typeof i.lat === "number");
   if (!placed.length) return;
   try { await loadLand(); } catch (e) { return; }
   const counts = {};
@@ -971,6 +1142,179 @@ $("terrainCanvas").addEventListener("click", (e) => {
 });
 window.addEventListener("resize", () => { if (viewMode === "terrain") renderTerrain(); });
 document.querySelectorAll(".themebtn").forEach((b) => b.addEventListener("click", () => { if (viewMode === "terrain") setTimeout(renderTerrain, 60); }));
+
+/* ---------- moji-atsume (letter collecting) ----------
+   Cut single letters out of your own sign photos and keep them as tiles;
+   then spell words with the collected letters and export the composition.
+   Creating is free-form; tiles live in localStorage like the photos. */
+const LS_MOJI = "signmap-letters-v1";
+let letters = [];
+try { letters = JSON.parse(localStorage.getItem(LS_MOJI) || "[]"); } catch (e) { letters = []; }
+let mojiSeed = 0;
+let mojiComp = [];
+let mojiRect = null;
+function saveLetters() {
+  try { localStorage.setItem(LS_MOJI, JSON.stringify(letters)); }
+  catch (e) { alert("保存容量がいっぱいです。文字か写真を削除してください。"); }
+}
+function drawMojiGrid() {
+  $("mojiEmpty").style.display = letters.length ? "none" : "block";
+  $("mojiGrid").innerHTML = letters.map((l) => '<div class="ltile"><img src="' + l.img + '" alt=""><span>' + l.ch + '</span><button class="lx" data-lid="' + l.id + '">✕</button></div>').join("");
+  $("mojiGrid").querySelectorAll(".lx").forEach((b) => b.addEventListener("click", () => {
+    letters = letters.filter((l) => l.id !== b.dataset.lid);
+    saveLetters(); drawMojiGrid(); buildMoji();
+  }));
+}
+function buildMoji() {
+  const word = $("mojiWord").value || "";
+  const counts = {};
+  mojiComp = [...word].map((ch) => {
+    if (ch === " " || ch === "　") return { ch: " ", letter: null, space: true };
+    const cands = letters.filter((l) => l.ch === ch || l.ch.toUpperCase() === ch.toUpperCase());
+    if (!cands.length) return { ch: ch, letter: null };
+    const n = (counts[ch] = (counts[ch] || 0) + 1);
+    return { ch: ch, letter: cands[(n - 1 + mojiSeed) % cands.length] };
+  });
+  $("mojiPreview").innerHTML = mojiComp.length ? mojiComp.map((c) => {
+    if (c.space) return '<div style="width:26px"></div>';
+    if (c.letter) return '<img src="' + c.letter.img + '" alt="">';
+    return '<div class="miss">' + c.ch + "</div>";
+  }).join("") : '<span class="note" style="padding:0">文字を入力して「組む」を押してください。</span>';
+}
+$("mojiBuild").addEventListener("click", buildMoji);
+$("mojiShuffle").addEventListener("click", () => { mojiSeed++; buildMoji(); });
+$("mojiWord").addEventListener("keydown", (e) => { if (e.key === "Enter") buildMoji(); });
+$("mojiSave").addEventListener("click", async () => {
+  if (!mojiComp.length) { flash("まず文字を組んでください"); return; }
+  const tileH = 200, gap = 12, pad = 40;
+  const parts = [];
+  for (const c of mojiComp) {
+    if (c.space) { parts.push({ w: 60 }); continue; }
+    if (c.letter) {
+      const im = await loadImg(c.letter.img);
+      parts.push({ w: Math.max(56, Math.min(330, tileH * im.width / im.height)), im: im });
+    } else parts.push({ w: 130, miss: c.ch });
+  }
+  const W = pad * 2 + parts.reduce((s, p) => s + p.w, 0) + gap * (parts.length - 1);
+  const H = tileH + pad * 2 + 44;
+  const cv = document.createElement("canvas");
+  cv.width = W; cv.height = H;
+  const ctx = cv.getContext("2d");
+  ctx.fillStyle = "#f6f2e9"; ctx.fillRect(0, 0, W, H);
+  let x = pad;
+  parts.forEach((p) => {
+    if (p.im) drawCover(ctx, p.im, x, pad, p.w, tileH);
+    else if (p.miss) {
+      ctx.save();
+      ctx.strokeStyle = "#b9b2a0"; ctx.lineWidth = 3; ctx.setLineDash([10, 8]);
+      ctx.strokeRect(x, pad, p.w, tileH);
+      ctx.fillStyle = "#8a8578"; ctx.font = "600 84px sans-serif"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
+      ctx.fillText(p.miss, x + p.w / 2, pad + tileH / 2);
+      ctx.restore();
+    }
+    x += p.w + gap;
+  });
+  ctx.fillStyle = "#8a8578"; ctx.font = "600 17px 'Helvetica Neue', Arial, sans-serif"; ctx.textAlign = "center";
+  try { ctx.letterSpacing = "6px"; } catch (e) { /* ignore */ }
+  ctx.fillText("SIGN ARCHIVE — MOJI ATSUME", W / 2, H - 26);
+  const a = document.createElement("a");
+  a.download = "moji-atsume.png";
+  a.href = cv.toDataURL("image/png");
+  a.click();
+});
+function fillMojiSources(selectId) {
+  const sel = $("mojiSrcSel");
+  const sorted = [...items].sort((a, b) => (a.date || "") < (b.date || "") ? 1 : -1);
+  sel.innerHTML = sorted.map((it) => '<option value="' + it.id + '">' + fmtDate(it.date) + " ・ " + (it.cat || "その他") + "</option>").join("");
+  if (selectId) sel.value = selectId;
+  setMojiSource();
+}
+function setMojiSource() {
+  const it = items.find((x) => x.id === $("mojiSrcSel").value);
+  mojiRect = null;
+  $("mojiSel").style.display = "none";
+  if (it) $("mojiSrcImg").src = it.img;
+}
+$("mojiSrcSel").addEventListener("change", setMojiSource);
+$("mojiBtn").addEventListener("click", () => { fillMojiSources(); drawMojiGrid(); openSheet("mojiSheet"); });
+$("mojiFromBtn").addEventListener("click", () => {
+  const arr = curArr(); const it = arr[storyIdx];
+  if (!it || it.world) return;
+  closeSheet("viewer");
+  fillMojiSources(it.id);
+  drawMojiGrid();
+  openSheet("mojiSheet");
+});
+(function () {
+  const fr = $("mojiFrame");
+  let drag = null;
+  const rel = (e) => {
+    const r = fr.getBoundingClientRect();
+    const im = $("mojiSrcImg");
+    const iw = im.naturalWidth, ih = im.naturalHeight;
+    if (!iw || !r.width) return null;
+    const sc = Math.min(r.width / iw, r.height / ih);
+    const dw = iw * sc, dh = ih * sc, ox = (r.width - dw) / 2, oy = (r.height - dh) / 2;
+    return {
+      x: Math.max(0, Math.min(1, (e.clientX - r.left - ox) / dw)),
+      y: Math.max(0, Math.min(1, (e.clientY - r.top - oy) / dh)),
+      ox: ox, oy: oy, dw: dw, dh: dh
+    };
+  };
+  const show = () => {
+    if (!mojiRect || !drag) return;
+    const sel = $("mojiSel");
+    const x0 = Math.min(mojiRect.x0, mojiRect.x1), x1 = Math.max(mojiRect.x0, mojiRect.x1);
+    const y0 = Math.min(mojiRect.y0, mojiRect.y1), y1 = Math.max(mojiRect.y0, mojiRect.y1);
+    sel.style.display = "block";
+    sel.style.left = (drag.ox + x0 * drag.dw) + "px";
+    sel.style.top = (drag.oy + y0 * drag.dh) + "px";
+    sel.style.width = ((x1 - x0) * drag.dw) + "px";
+    sel.style.height = ((y1 - y0) * drag.dh) + "px";
+  };
+  fr.addEventListener("pointerdown", (e) => {
+    const p = rel(e);
+    if (!p) return;
+    drag = p;
+    mojiRect = { x0: p.x, y0: p.y, x1: p.x, y1: p.y };
+    try { fr.setPointerCapture(e.pointerId); } catch (err) { /* ignore */ }
+    show();
+  });
+  fr.addEventListener("pointermove", (e) => {
+    if (!drag) return;
+    const p = rel(e);
+    if (!p) return;
+    drag = p;
+    mojiRect.x1 = p.x; mojiRect.y1 = p.y;
+    show();
+  });
+  const end = () => { drag = null; };
+  fr.addEventListener("pointerup", end);
+  fr.addEventListener("pointercancel", end);
+})();
+$("mojiAdd").addEventListener("click", async () => {
+  const chRaw = ($("mojiChar").value || "").trim();
+  const it = items.find((x) => x.id === $("mojiSrcSel").value);
+  if (!it) { flash("切り取る写真がありません"); return; }
+  if (!chRaw) { flash("集める文字を1文字入れてください"); return; }
+  if (!mojiRect || Math.abs(mojiRect.x1 - mojiRect.x0) < 0.03 || Math.abs(mojiRect.y1 - mojiRect.y0) < 0.03) { flash("写真の上で、集めたい文字をドラッグで囲んでください"); return; }
+  const ch = [...chRaw][0];
+  const im = await loadImg(it.img);
+  const iw = im.width, ih = im.height;
+  const x0 = Math.min(mojiRect.x0, mojiRect.x1), x1 = Math.max(mojiRect.x0, mojiRect.x1);
+  const y0 = Math.min(mojiRect.y0, mojiRect.y1), y1 = Math.max(mojiRect.y0, mojiRect.y1);
+  const sw = (x1 - x0) * iw, sh = (y1 - y0) * ih;
+  const sc = Math.min(1, 260 / Math.max(sw, sh));
+  const cv = document.createElement("canvas");
+  cv.width = Math.max(8, Math.round(sw * sc)); cv.height = Math.max(8, Math.round(sh * sc));
+  cv.getContext("2d").drawImage(im, x0 * iw, y0 * ih, sw, sh, 0, 0, cv.width, cv.height);
+  letters.unshift({ id: "L" + Date.now(), ch: ch, img: cv.toDataURL("image/jpeg", 0.85), src: it.id, ts: Date.now() });
+  saveLetters();
+  drawMojiGrid();
+  buildMoji();
+  $("mojiChar").value = "";
+  flash("「" + ch + "」を集めました");
+});
 
 /* ---------- crop position editor ----------
    Each photo can choose which part of it the collage shows. The focal point
