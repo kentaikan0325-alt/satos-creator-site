@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>看板マップ試作 v0.10 — 世界の看板を集める</title>
+<title>看板マップ試作 v0.11 — 世界の看板を集める</title>
 <link href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css" rel="stylesheet">
 <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/exifr@7.1.3/dist/full.umd.js"></script>
@@ -129,6 +129,9 @@
   #viewSeg{position:absolute;left:50%;transform:translateX(-50%);bottom:calc(88px + env(safe-area-inset-bottom));z-index:12;display:flex;gap:4px;background:var(--panel);border:1px solid var(--line);border-radius:999px;padding:4px;box-shadow:0 8px 20px rgba(0,0,0,.16)}
   #viewSeg button{border:0;background:transparent;color:var(--sub);font-size:12.5px;padding:8px 18px;border-radius:999px;cursor:pointer;letter-spacing:.08em;font-weight:600}
   #viewSeg button.on{background:var(--ink);color:var(--bg);font-weight:800}
+  #selBtn{position:absolute;left:16px;bottom:calc(88px + env(safe-area-inset-bottom));z-index:12;font-size:12px;padding:9px 14px;border-radius:999px;border:1px solid var(--line);background:var(--panel);color:var(--ink);cursor:pointer;backdrop-filter:blur(8px);box-shadow:0 8px 20px rgba(0,0,0,.16);font-weight:700}
+  #selBtn.on{background:var(--ink);color:var(--bg)}
+  #selHint{position:absolute;left:50%;transform:translateX(-50%);bottom:calc(138px + env(safe-area-inset-bottom));z-index:12;background:var(--ink);color:var(--bg);font-size:11.5px;padding:7px 13px;border-radius:999px;letter-spacing:.04em;white-space:nowrap}
   .cropbtn{align-self:center;margin:0 0 8px;background:none;border:0;color:var(--ink);font-size:12.5px;cursor:pointer;letter-spacing:.06em;text-decoration:underline}
   #cropFrame{margin:8px 16px;border-radius:12px;overflow:hidden;position:relative;height:320px;background:#111;touch-action:none;box-shadow:0 8px 22px rgba(0,0,0,.18);cursor:grab}
   #cropFrame img{position:absolute;left:0;top:0;max-width:none;user-select:none;-webkit-user-select:none}
@@ -161,7 +164,7 @@
 <div id="tint"></div>
 <div id="grain"></div>
 <header>
-  <div class="ttl">看板マップ<small>SIGN MAP — PROTOTYPE v0.10</small><span id="proBadge" style="display:none">PRO</span></div>
+  <div class="ttl">看板マップ<small>SIGN MAP — PROTOTYPE v0.11</small><span id="proBadge" style="display:none">PRO</span></div>
   <div class="clockbox">
     <div class="clock" id="clock">--:--</div>
     <div class="dateline" id="dateline">—</div>
@@ -190,6 +193,8 @@
 </div>
 <div id="banner"></div>
 <div id="viewSeg"><button id="vsMap" class="on" data-i18n="view.map">地図</button><button id="vsTerrain" data-i18n="view.terrain">地形</button></div>
+<button id="selBtn" style="display:none">場所を選ぶ</button>
+<div id="selHint" style="display:none">タップでコラージュに入れる場所を切替</div>
 <nav>
   <button id="mapBtn"><span class="ic">🗺</span>地図</button>
   <button id="addBtn"><span class="ic">＋</span>看板を追加</button>
@@ -218,6 +223,7 @@
     </div>
     <button class="cropbtn" id="cropBtn" data-i18n="viewer.crop">切り取り位置を調整</button>
     <button class="cropbtn" id="mojiFromBtn" data-i18n="viewer.moji">この写真から文字を集める</button>
+    <button class="cropbtn" id="collageBtn">コラージュから外す</button>
     <button class="del" id="delBtn" data-i18n="viewer.del">この写真を削除</button>
   </div>
   <div id="collageView"><div class="collage" id="collageBox"></div></div>
@@ -361,6 +367,11 @@ const STR = {
   "nav.col": { ja: "コレクション", en: "Collection", ko: "컬렉션" },
   "view.map": { ja: "地図", en: "Map", ko: "지도" },
   "view.terrain": { ja: "地形", en: "Terrain", ko: "지형" },
+  "sel.pick": { ja: "場所を選ぶ", en: "Choose places", ko: "장소 선택" },
+  "sel.done": { ja: "完了", en: "Done", ko: "완료" },
+  "sel.hint": { ja: "タップでコラージュに入れる場所を切替", en: "Tap a place to include or exclude it", ko: "장소를 눌러 콜라주 포함을 전환" },
+  "viewer.collageIn": { ja: "コラージュに入れる", en: "Include in collage", ko: "콜라주에 넣기" },
+  "viewer.collageOut": { ja: "コラージュから外す", en: "Remove from collage", ko: "콜라주에서 빼기" },
   "mode.personal": { ja: "個人", en: "Personal", ko: "개인" },
   "mode.group": { ja: "グループ・近日", en: "Group · Soon", ko: "그룹 · 준비 중" },
   "mode.world": { ja: "世界", en: "World", ko: "세계" },
@@ -428,6 +439,8 @@ const STR = {
   "flash.needWord": { ja: "まず文字を組んでください", en: "Spell a word first", ko: "먼저 문자를 조합해 주세요" },
   "flash.proOn": { ja: "Pro（デモ）がオンになりました。透かしなし・広告なしになります。", en: "Pro (demo) is on: no watermark, no ads.", ko: "Pro(데모)가 켜졌습니다. 워터마크 없음 · 광고 없음." },
   "flash.proOff": { ja: "無料プランに戻しました", en: "Back to the free plan", ko: "무료 플랜으로 돌아갔습니다" },
+  "flash.spotIn": { ja: "コラージュに入れました", en: "Added to the collage", ko: "콜라주에 넣었습니다" },
+  "flash.spotOut": { ja: "コラージュから外しました", en: "Removed from the collage", ko: "콜라주에서 뺐습니다" },
   "flash.fullPhotos": { ja: "保存容量がいっぱいです。古い写真を削除してください。", en: "Storage is full. Please delete some old photos.", ko: "저장 공간이 가득 찼습니다. 오래된 사진을 삭제해 주세요." },
   "flash.fullLetters": { ja: "保存容量がいっぱいです。文字か写真を削除してください。", en: "Storage is full. Please delete some letters or photos.", ko: "저장 공간이 가득 찼습니다. 문자나 사진을 삭제해 주세요." },
   "flash.noLoadable": { ja: "読み込める写真がありませんでした。", en: "No readable photos were found.", ko: "불러올 수 있는 사진이 없었습니다." },
@@ -465,6 +478,28 @@ function catLabel(c) { return t("cat." + c); }
 let items = [];
 try { items = JSON.parse(localStorage.getItem(LS_KEY) || "[]"); } catch (e) { items = []; }
 let markers = [];
+/* Decoded-photo cache: terrain repaints while dragging must be synchronous,
+   so each photo is decoded once and kept; a repaint never waits on a load. */
+const imgCache = new Map();
+function imgEntry(src) {
+  if (!imgCache.has(src)) {
+    const e = { img: null, p: null };
+    e.p = loadImg(src).then((im) => { e.img = im; return im; }).catch(() => null);
+    imgCache.set(src, e);
+  }
+  return imgCache.get(src);
+}
+/* Which places take part in the collage is the user's own choice: excluded
+   spot keys persist on-device; every place is included by default. */
+const LS_COLLAGE_OFF = "signmap-collage-off-v1";
+let collageOff = new Set();
+try { collageOff = new Set(JSON.parse(localStorage.getItem(LS_COLLAGE_OFF) || "[]")); } catch (e) { collageOff = new Set(); }
+function spotOn(key) { return !collageOff.has(key); }
+function setSpotOn(key, on) {
+  if (on) collageOff.delete(key); else collageOff.add(key);
+  try { localStorage.setItem(LS_COLLAGE_OFF, JSON.stringify([...collageOff])); } catch (e) { /* keep session state */ }
+}
+let selectMode = false;
 let pending = [];       // photos waiting for GPS placement
 let staged = [];        // photos processed, waiting for category confirm
 let stagedCat = "その他";
@@ -781,6 +816,7 @@ function drawStory() {
   $("delBtn").style.display = own ? "" : "none";
   $("cropBtn").style.display = own ? "" : "none";
   $("mojiFromBtn").style.display = own ? "" : "none";
+  $("collageBtn").textContent = t(spotOn(groupKey(it)) ? "viewer.collageOut" : "viewer.collageIn");
 }
 $("prevBtn").addEventListener("click", () => { const a = curArr(); storyIdx = (storyIdx - 1 + a.length) % a.length; drawStory(); });
 $("nextBtn").addEventListener("click", () => { const a = curArr(); storyIdx = (storyIdx + 1) % a.length; drawStory(); });
@@ -789,6 +825,16 @@ $("delBtn").addEventListener("click", () => {
   if (!it || it.world) return;
   items = items.filter((x) => x.id !== it.id);
   save(); renderMarkers(); drawStory(); drawCollage(curArr());
+});
+$("collageBtn").addEventListener("click", () => {
+  const arr = curArr(); const it = arr[storyIdx];
+  if (!it) return;
+  const k = groupKey(it);
+  const on = !spotOn(k);
+  setSpotOn(k, on);
+  flash(t(on ? "flash.spotIn" : "flash.spotOut"));
+  drawStory();
+  if (viewMode === "terrain") paintTerrain();
 });
 function drawCollage(arr) {
   $("collageBox").innerHTML = arr.map((it, i) =>
@@ -1054,7 +1100,9 @@ async function renderCountry() {
   }
   const placed = items.filter((i) => typeof i.lat === "number");
   const inCountry = placed.filter((i) => inCountryTol(i.lng, i.lat, feat));
-  const pool = inCountry.length ? inCountry : placed;
+  let pool = inCountry.length ? inCountry : placed;
+  const poolOn = pool.filter((i) => spotOn(groupKey(i)));
+  if (poolOn.length) pool = poolOn;
   $("countryStatus").textContent = t("country.drawing").replace("{n}", pool.length);
   const imgs = [];
   const imgOf = new Map();
@@ -1110,7 +1158,7 @@ async function renderCountry() {
        region around its real location, clipped by the country shape, so
        the photos spread along the region itself; the photos at one spot
        subdivide its region — more photos at one place, finer mosaic. */
-    const entries = inCountry.map((it) => Object.assign({}, it, { img: imgOf.get(it) })).filter((e) => e.img);
+    const entries = pool.map((it) => Object.assign({}, it, { img: imgOf.get(it) })).filter((e) => e.img);
     const spots = buildSpots(entries).map((sp) => ({ cx: pr.x(sp.lng), cy: pr.y(sp.lat), entries: sp.entries }));
     spots.forEach((sp, i) => {
       for (let t = 0; t < 16 && spots.some((q, j) => j < i && Math.hypot(q.cx - sp.cx, q.cy - sp.cy) < 7); t++) {
@@ -1244,11 +1292,23 @@ function bbUnion(a, b) { return { minLng: Math.min(a.minLng, b.minLng), maxLng: 
 function bbHit(a, b) { return a.minLng <= b.maxLng && a.maxLng >= b.minLng && a.minLat <= b.maxLat && a.maxLat >= b.minLat; }
 function bbArea(b) { return Math.max(0, (b.maxLng - b.minLng)) * Math.max(0, (b.maxLat - b.minLat)); }
 async function renderTerrain() {
+  /* Async front door, used when data changes: make sure the land data and
+     every photo are decoded first, then paint. Painting itself is fully
+     synchronous (paintTerrain), so drag / pinch repaints never flicker:
+     the old code re-loaded every photo on every repaint and painted the
+     sea and land first, so the photos blinked off on each frame. */
+  try { await loadLand(); } catch (e) { return; }
+  const placed = activeItems().filter((i) => typeof i.lat === "number");
+  await Promise.all(placed.map((i) => imgEntry(i.img).p));
+  paintTerrain();
+}
+function paintTerrain() {
   const wrap = $("terrainWrap"), cv = $("terrainCanvas");
   const W = wrap.clientWidth, H = wrap.clientHeight;
-  if (!W || !H) return;
+  if (!W || !H || !landData) return;
   const dpr = Math.min(window.devicePixelRatio || 1, 2);
-  cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr);
+  const cw = Math.round(W * dpr), ch = Math.round(H * dpr);
+  if (cv.width !== cw || cv.height !== ch) { cv.width = cw; cv.height = ch; }
   const ctx = cv.getContext("2d");
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
   const theme = document.body.dataset.theme || "day";
@@ -1258,7 +1318,6 @@ async function renderTerrain() {
   terrainPts = [];
   const placed = activeItems().filter((i) => typeof i.lat === "number");
   if (!placed.length) return;
-  try { await loadLand(); } catch (e) { return; }
   const counts = {};
   placed.forEach((i) => { const c = landOf(i.lng, i.lat); if (c) counts[c.name] = (counts[c.name] || 0) + 1; });
   const top = Object.entries(counts).sort((a, b) => b[1] - a[1])[0];
@@ -1288,34 +1347,59 @@ async function renderTerrain() {
      stroke in the fill colour fattens the land back over those spots. */
   ctx.strokeStyle = landFill; ctx.lineWidth = 15; ctx.lineJoin = "round"; ctx.stroke(landPath);
   const imgOf = new Map();
-  for (const it of use) { try { imgOf.set(it, await loadImg(it.img)); } catch (e) { /* skip unreadable */ } }
+  use.forEach((it) => { const e = imgEntry(it.img); if (e.img) imgOf.set(it, e.img); });
   const entries = use.map((it) => Object.assign({}, it, { img: imgOf.get(it) })).filter((e) => e.img);
-  const spots = buildSpots(entries).map((sp) => ({ cx: pr.x(sp.lng), cy: pr.y(sp.lat), entries: sp.entries }));
+  const allSpots = buildSpots(entries);
+  const onEntries = entries.filter((e) => spotOn(groupKey(e)));
+  const spots = buildSpots(onEntries).map((sp) => ({ cx: pr.x(sp.lng), cy: pr.y(sp.lat), entries: sp.entries }));
   spots.forEach((sp, i) => {
     for (let t = 0; t < 16 && spots.some((q, j) => j < i && Math.hypot(q.cx - sp.cx, q.cy - sp.cy) < 9); t++) {
       const a = i * 2.399963 + t * 1.1;
       sp.cx += Math.cos(a) * 10; sp.cy += Math.sin(a) * 10;
     }
   });
-  if (!spots.length) return;
-  const R = Math.max(42, Math.min(250, Math.hypot(W, H) * 0.115 / Math.sqrt(spots.length)));
-  const subs = subdivideSpots(spots, R);
-  const cells = spotCells(subs, W, H, R);
-  ctx.save();
-  ctx.clip(landPath);
-  drawCells(ctx, subs, cells);
-  ctx.restore();
+  const R = Math.max(42, Math.min(250, Math.hypot(W, H) * 0.115 / Math.sqrt(Math.max(1, spots.length))));
+  if (spots.length) {
+    const subs = subdivideSpots(spots, R);
+    const cells = spotCells(subs, W, H, R);
+    ctx.save();
+    ctx.clip(landPath);
+    drawCells(ctx, subs, cells);
+    ctx.restore();
+    terrainPts = subs.map((s) => ({ x: s.x, y: s.y, key: s.key, r: R, off: false }));
+  }
   ctx.strokeStyle = theme === "night" ? "rgba(242,240,234,.35)" : "rgba(28,28,30,.18)";
   ctx.lineWidth = 1.5;
   ctx.stroke(landPath);
-  terrainPts = subs.map((s) => ({ x: s.x, y: s.y, key: s.key, r: R }));
+  if (selectMode) {
+    /* excluded places stay visible as grey discs so they can be tapped back in */
+    allSpots.filter((sp) => !spotOn(groupKey(sp.entries[0]))).forEach((sp) => {
+      const x = pr.x(sp.lng), y = pr.y(sp.lat);
+      const rr = Math.max(22, Math.min(64, R * 0.55));
+      ctx.beginPath(); ctx.arc(x, y, rr, 0, Math.PI * 2);
+      ctx.fillStyle = "rgba(96,96,102,.5)"; ctx.fill();
+      ctx.setLineDash([5, 4]); ctx.strokeStyle = "rgba(255,255,255,.95)"; ctx.lineWidth = 1.6; ctx.stroke(); ctx.setLineDash([]);
+      terrainPts.push({ x: x, y: y, key: groupKey(sp.entries[0]), r: rr, off: true });
+    });
+  }
   terrainLandPx = usePolys.map((poly) => poly.map((ring) => ring.map((pt) => [pr.x(pt[0]), pr.y(pt[1])])));
 }
+function setSelectMode(on) {
+  selectMode = on;
+  $("selBtn").textContent = t(on ? "sel.done" : "sel.pick");
+  $("selBtn").classList.toggle("on", on);
+  $("selHint").style.display = on ? "" : "none";
+  if (viewMode === "terrain") paintTerrain();
+}
+$("selBtn").addEventListener("click", () => setSelectMode(!selectMode));
+
 function setView(mode) {
   viewMode = mode;
   $("vsMap").classList.toggle("on", mode === "map");
   $("vsTerrain").classList.toggle("on", mode === "terrain");
   $("terrainWrap").classList.toggle("open", mode === "terrain");
+  $("selBtn").style.display = mode === "terrain" ? "" : "none";
+  if (mode !== "terrain" && selectMode) setSelectMode(false);
   document.querySelectorAll(".maplibregl-ctrl-group").forEach((el) => { el.style.display = mode === "terrain" ? "none" : ""; });
   if (mode === "terrain") { tZoom = 1; tPan = { lng: 0, lat: 0 }; renderTerrain(); }
 }
@@ -1331,6 +1415,18 @@ function pointInRingPx(x, y, ring) {
   return inside;
 }
 function onTerrainTap(x, y) {
+  if (selectMode) {
+    /* select mode: a tap toggles the nearest place in or out of the collage */
+    let bestS = null, bdS = 1e9;
+    terrainPts.forEach((p) => { const d = Math.hypot(p.x - x, p.y - y); if (d < bdS) { bdS = d; bestS = p; } });
+    if (bestS && bdS < 150) {
+      const on = !spotOn(bestS.key);
+      setSpotOn(bestS.key, on);
+      flash(t(on ? "flash.spotIn" : "flash.spotOut"));
+      paintTerrain();
+    }
+    return;
+  }
   const onLand = terrainLandPx.some((poly) => poly.some((ring) => pointInRingPx(x, y, ring)));
   if (!onLand) return;
   /* the cells are a Voronoi diagram: the tapped land point belongs to the
@@ -1346,9 +1442,10 @@ function onTerrainTap(x, y) {
   const ptrs = new Map();
   let lastDist = 0, moved = 0, downAt = 0, rafPending = false;
   const reqRender = () => {
+    if (!landData) { renderTerrain(); return; }
     if (rafPending) return;
     rafPending = true;
-    requestAnimationFrame(() => { rafPending = false; if (viewMode === "terrain") renderTerrain(); });
+    requestAnimationFrame(() => { rafPending = false; if (viewMode === "terrain") paintTerrain(); });
   };
   cv.addEventListener("pointerdown", (e) => {
     ptrs.set(e.pointerId, { x: e.clientX, y: e.clientY });
@@ -1673,6 +1770,8 @@ function applyLang() {
   if ($("viewer").classList.contains("open")) drawStory();
   fillPlanLists();
   applyPro();
+  $("selBtn").textContent = t(selectMode ? "sel.done" : "sel.pick");
+  $("selHint").textContent = t("sel.hint");
 }
 const LS_PRO = "signmap-pro-v1";
 let pro = false;
