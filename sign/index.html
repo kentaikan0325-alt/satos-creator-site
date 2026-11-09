@@ -3,7 +3,11 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>看板マップ試作 v0.11 — 世界の看板を集める</title>
+<title>看板マップ試作 v0.12 — 世界の看板を集める</title>
+<meta name="description" content="世界の看板を集める地図アーカイブ試作。写真の位置情報で自動でピンが立ち、地形そのものがコラージュになる。">
+<meta property="og:title" content="看板マップ — 世界の看板を集める">
+<meta property="og:description" content="撮った看板が、地図と地形のコラージュになる。SIGN ARCHIVE prototype.">
+<meta property="og:type" content="website">
 <link href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css" rel="stylesheet">
 <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/exifr@7.1.3/dist/full.umd.js"></script>
@@ -64,6 +68,13 @@
   .planprice{font-size:12px;font-weight:700;color:var(--sub)}
   .planlist{margin:8px 0 2px;padding-left:18px;font-size:12.5px;line-height:1.9;color:var(--ink)}
   #adSlot{margin:0 16px 16px;padding:16px 12px;border:1.5px dashed var(--line);border-radius:12px;text-align:center;font-size:11px;color:var(--sub);letter-spacing:.06em}
+  .coltools{display:flex;gap:8px;padding:0 16px 10px}
+  .coltools button{flex:1;padding:11px 4px;border-radius:12px;border:1px solid var(--line);background:transparent;color:var(--ink);font-size:12px;cursor:pointer;letter-spacing:.03em}
+  #ambient{position:fixed;inset:0;z-index:60;background:#060607;display:none;align-items:center;justify-content:center}
+  #ambient.open{display:flex}
+  #ambientImg{max-width:100%;max-height:100%;object-fit:contain;transition:opacity 1.1s ease;opacity:1}
+  #ambientCap{position:absolute;left:0;right:0;bottom:calc(30px + env(safe-area-inset-bottom));text-align:center;color:rgba(255,255,255,.85);font-size:12.5px;letter-spacing:.14em}
+  #ambientHint{position:absolute;top:calc(16px + env(safe-area-inset-top));right:16px;color:rgba(255,255,255,.45);font-size:11px;letter-spacing:.1em}
   nav{position:absolute;left:0;right:0;bottom:0;z-index:10;display:flex;justify-content:space-around;align-items:center;padding:10px 8px calc(12px + env(safe-area-inset-bottom));background:var(--panel);border-top:1px solid var(--line);backdrop-filter:blur(10px)}
   nav button{appearance:none;border:0;background:none;color:var(--ink);font-size:11px;letter-spacing:.08em;display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer;padding:2px 10px}
   nav button .ic{font-size:19px;line-height:1}
@@ -164,7 +175,7 @@
 <div id="tint"></div>
 <div id="grain"></div>
 <header>
-  <div class="ttl">看板マップ<small>SIGN MAP — PROTOTYPE v0.11</small><span id="proBadge" style="display:none">PRO</span></div>
+  <div class="ttl">看板マップ<small>SIGN MAP — PROTOTYPE v0.12</small><span id="proBadge" style="display:none">PRO</span></div>
   <div class="clockbox">
     <div class="clock" id="clock">--:--</div>
     <div class="dateline" id="dateline">—</div>
@@ -195,6 +206,7 @@
 <div id="viewSeg"><button id="vsMap" class="on" data-i18n="view.map">地図</button><button id="vsTerrain" data-i18n="view.terrain">地形</button></div>
 <button id="selBtn" style="display:none">場所を選ぶ</button>
 <div id="selHint" style="display:none">タップでコラージュに入れる場所を切替</div>
+<div id="ambient"><img id="ambientImg" alt=""><div id="ambientCap"></div><div id="ambientHint" data-i18n="ambient.hint">タップで閉じる</div></div>
 <nav>
   <button id="mapBtn"><span class="ic">🗺</span>地図</button>
   <button id="addBtn"><span class="ic">＋</span>看板を追加</button>
@@ -237,6 +249,13 @@
   <div id="gridView" class="open"><div class="grid" id="gridBox"></div><div class="empty" id="gridEmpty" style="display:none">まだ看板がありません。<br>下の「看板を追加」から、撮った写真を入れてみてください。<br>位置情報つきの写真は、自動でその場所にピンが立ちます。</div></div>
   <button class="countrybtn" id="countryBtn">🗾️ ポスターを見る</button>
   <button class="countrybtn" id="planBtn" data-i18n="col.plan">⭐ プラン・アップグレード</button>
+  <div class="coltools">
+    <button id="ambientBtn" data-i18n="col.ambient">▶ 眺める</button>
+    <button id="backupBtn" data-i18n="col.backup">バックアップ書き出し</button>
+    <button id="restoreBtn" data-i18n="col.restore">バックアップ読込</button>
+  </div>
+  <p class="note" id="storageInfo" style="padding-bottom:10px"></p>
+  <input type="file" id="restoreInput" accept="application/json,.json" hidden>
   <p class="note" id="colNote" style="display:none"></p>
   <div id="adSlot" data-i18n="plan.adNote">広告スペース（AdSense審査通過後に広告が表示されます）</div>
 </div>
@@ -396,6 +415,15 @@ const STR = {
   "col.plan": { ja: "⭐ プラン・アップグレード", en: "⭐ Plan & upgrade", ko: "⭐ 플랜 · 업그레이드" },
   "col.empty": { ja: "まだ看板がありません。<br>下の「看板を追加」から、撮った写真を入れてみてください。<br>位置情報つきの写真は、自動でその場所にピンが立ちます。", en: "No signs yet.<br>Add photos with the “Add a sign” button below.<br>Photos with location data are pinned automatically.", ko: "아직 간판이 없습니다.<br>아래 ‘간판 추가’에서 사진을 넣어 보세요.<br>위치 정보가 있는 사진은 자동으로 핀이 꽂힙니다." },
   "col.worldNote": { ja: "世界モード：世界の看板（試作用サンプル）＋あなたの写真です。ポスターは個人モードで使えます。", en: "World mode: world signs (prototype samples) + your photos. The poster is available in Personal mode.", ko: "세계 모드: 세계의 간판(시작용 샘플)과 내 사진입니다. 포스터는 개인 모드에서 사용할 수 있습니다." },
+  "col.ambient": { ja: "▶ 眺める", en: "▶ Ambient", ko: "▶ 감상" },
+  "col.backup": { ja: "バックアップ書き出し", en: "Export backup", ko: "백업 내보내기" },
+  "col.restore": { ja: "バックアップ読込", en: "Import backup", ko: "백업 불러오기" },
+  "col.storage": { ja: "写真 {n} 枚 ・ 約 {mb} MB（この端末に保存中）", en: "{n} photos · about {mb} MB (stored on this device)", ko: "사진 {n}장 · 약 {mb} MB (이 기기에 저장 중)" },
+  "ambient.hint": { ja: "タップで閉じる", en: "Tap to close", ko: "눌러서 닫기" },
+  "flash.restored": { ja: "バックアップを復元しました（写真 {n} 枚）", en: "Backup restored ({n} photos)", ko: "백업을 복원했습니다 (사진 {n}장)" },
+  "flash.backupBad": { ja: "バックアップファイルを読めませんでした", en: "Could not read that backup file", ko: "백업 파일을 읽을 수 없습니다" },
+  "flash.noAmbient": { ja: "眺める写真がまだありません", en: "No photos to show yet", ko: "아직 보여줄 사진이 없습니다" },
+  "confirm.restore": { ja: "今のデータを、バックアップの内容で上書きします。よいですか？", en: "Replace the current data with this backup?", ko: "현재 데이터를 이 백업으로 덮어쓸까요?" },
   "country.title": { ja: "ポスター", en: "Poster", ko: "포스터" },
   "country.note1": { ja: "写真を投稿すると、その国の形のポスターが自動で作られます。ここでは国の切り替えと、画像の保存ができます。", en: "Posting a photo automatically creates a poster in the shape of its country. Here you can switch countries and save the image.", ko: "사진을 올리면 그 나라 모양의 포스터가 자동으로 만들어집니다. 여기서는 나라를 바꾸고 이미지를 저장할 수 있습니다." },
   "country.tile": { ja: "タイル型（敷き詰め）", en: "Tiles (fill)", ko: "타일형 (채우기)" },
@@ -859,8 +887,93 @@ $("colBtn").addEventListener("click", () => {
     if (it) map.flyTo({ center: [it.lng, it.lat], zoom: 14 });
     openViewer(im.dataset.k);
   }));
+  refreshStorageInfo();
   openSheet("collection");
 });
+
+/* ---------- backup / storage / ambient ----------
+   All data lives on this device (localStorage), so an exportable backup is
+   the safety net until accounts and cloud sync arrive: one JSON file holds
+   the photos, the collected letters and the collage selection. */
+function storageInfoText() {
+  let bytes = 0;
+  try { bytes = (localStorage.getItem(LS_KEY) || "").length + (localStorage.getItem(LS_MOJI) || "").length; } catch (e) { /* ignore */ }
+  return t("col.storage").replace("{n}", items.length).replace("{mb}", (bytes / 1048576).toFixed(1));
+}
+function refreshStorageInfo() { const el = $("storageInfo"); if (el) el.textContent = storageInfoText(); }
+if (navigator.storage && navigator.storage.persist) { try { navigator.storage.persist(); } catch (e) { /* best effort */ } }
+$("backupBtn").addEventListener("click", () => {
+  const data = {
+    app: "sign-archive", version: 1, exportedAt: new Date().toISOString(),
+    items: items, letters: letters, collageOff: [...collageOff]
+  };
+  const blob = new Blob([JSON.stringify(data)], { type: "application/json" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  const d = new Date();
+  a.download = "sign-archive-backup-" + d.getFullYear() + String(d.getMonth() + 1).padStart(2, "0") + String(d.getDate()).padStart(2, "0") + ".json";
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+});
+$("restoreBtn").addEventListener("click", () => $("restoreInput").click());
+$("restoreInput").addEventListener("change", () => {
+  const f = $("restoreInput").files[0];
+  $("restoreInput").value = "";
+  if (!f) return;
+  const rd = new FileReader();
+  rd.onload = () => {
+    try {
+      const data = JSON.parse(rd.result);
+      if (!data || !Array.isArray(data.items)) throw new Error("shape");
+      if (!confirm(t("confirm.restore"))) return;
+      items = data.items;
+      letters = Array.isArray(data.letters) ? data.letters : [];
+      collageOff = new Set(Array.isArray(data.collageOff) ? data.collageOff : []);
+      save(); saveLetters();
+      try { localStorage.setItem(LS_COLLAGE_OFF, JSON.stringify([...collageOff])); } catch (e) { /* ignore */ }
+      imgCache.clear();
+      renderMarkers(); updateBanner(); refreshStorageInfo();
+      if (viewMode === "terrain") renderTerrain();
+      closeSheet("collection");
+      flash(t("flash.restored").replace("{n}", items.length));
+    } catch (e) { flash(t("flash.backupBad")); }
+  };
+  rd.readAsText(f);
+});
+/* ambient mode: the collection drifts by as a slow slideshow */
+let ambientTimer = null, ambientIdx = 0, ambientList = [];
+function ambientCaption(it) {
+  return (it.place ? it.place + " ・ " : "") + fmtDate(it.date) + " ・ " + catLabel(it.cat || "その他");
+}
+function ambientStep() {
+  if (!ambientList.length) return;
+  const it = ambientList[ambientIdx % ambientList.length];
+  ambientIdx++;
+  const im = $("ambientImg");
+  im.style.opacity = "0";
+  setTimeout(() => {
+    im.src = it.img;
+    $("ambientCap").textContent = ambientCaption(it);
+    im.style.opacity = "1";
+  }, 700);
+}
+function stopAmbient() {
+  if (ambientTimer) { clearInterval(ambientTimer); ambientTimer = null; }
+  $("ambient").classList.remove("open");
+}
+$("ambientBtn").addEventListener("click", () => {
+  ambientList = activeItems().filter((i) => i.img);
+  if (!ambientList.length) { flash(t("flash.noAmbient")); return; }
+  closeSheet("collection");
+  $("ambient").classList.add("open");
+  const im = $("ambientImg");
+  im.src = ambientList[0].img;
+  im.style.opacity = "1";
+  $("ambientCap").textContent = ambientCaption(ambientList[0]);
+  ambientIdx = 1;
+  ambientTimer = setInterval(ambientStep, 5000);
+});
+$("ambient").addEventListener("click", stopAmbient);
 
 /* ---------- country-shape collage ---------- */
 let countryData = null; // {features:[{name, polygons:[[[lng,lat],...],...]}]}
@@ -1772,6 +1885,7 @@ function applyLang() {
   applyPro();
   $("selBtn").textContent = t(selectMode ? "sel.done" : "sel.pick");
   $("selHint").textContent = t("sel.hint");
+  refreshStorageInfo();
 }
 const LS_PRO = "signmap-pro-v1";
 let pro = false;
