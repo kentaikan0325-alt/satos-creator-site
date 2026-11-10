@@ -103,8 +103,8 @@
   .price dd{color:var(--night-mute);text-align:right}
   .price h3{font-size:14px;font-weight:700;color:var(--night-mute);margin-bottom:6px}
   .price .flow{list-style:none;counter-reset:s;border-top:1px solid var(--night-line)}
-  .price .flow li{counter-increment:s;display:grid;grid-template-columns:2.6em 1fr;padding:16px 0;border-bottom:1px solid var(--night-line);font-size:15.5px;font-weight:700}
-  .price .flow li::before{content:counter(s);font-family:var(--display);font-weight:500;font-size:28px;line-height:1.1;color:var(--klein-soft)}
+  .price .flow li{counter-increment:s;display:grid;grid-template-columns:2.6em 1fr;align-items:start;padding:20px 0;border-bottom:1px solid var(--night-line);font-size:15.5px;font-weight:700}
+  .price .flow li::before{content:counter(s);font-family:var(--display);font-weight:500;font-size:28px;line-height:1.1;text-align:center;color:var(--night-text)}
   .price .flow em{display:block;font-style:normal;font-weight:400;color:var(--night-mute);font-size:14.5px;margin-top:2px}
   .price .ctas{margin-top:32px}
   @media(max-width:860px){.price .wrap{grid-template-columns:1fr}}
