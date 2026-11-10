@@ -1,0 +1,275 @@
+/* =========================================================
+   Sato's creator — 共通スタイル（全ページで読み込む）
+   色・書体・動きの定義はここだけ。ページ固有のものは各HTMLへ。
+   ========================================================= */
+:root{
+  --paper:#E4E3DF;      /* 打ちっぱなしの紙色 */
+  --bone:#F5F4F1;
+  --ink:#000;
+  --mute:#5E5D59;
+  --line:#BDBBB5;
+  --klein:#1F2BD6;      /* 差し色：インクブルー */
+  --klein-soft:#8C93FF; /* 黒地の上で使う青 */
+  --night-text:#F2F1EE;
+  --night-mute:#B9B8B3;
+  --night-line:#3A3A38;
+  --display:"Bodoni Moda","Didot","Bodoni 72",serif;
+  --jp:"Zen Kaku Gothic New","Hiragino Sans","Hiragino Kaku Gothic ProN","Yu Gothic",sans-serif;
+  --gutter:clamp(18px,4vw,56px);
+  --ease:cubic-bezier(.2,.7,.1,1);
+  --ease-io:cubic-bezier(.76,0,.24,1);
+  --t0:.35s;            /* ページ表示から最初の演出までの待ち時間 */
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth;overflow-x:clip}
+body{background:var(--paper);color:var(--ink);font-family:var(--jp);font-size:16px;line-height:1.85;-webkit-font-smoothing:antialiased;overflow-x:clip}
+img{display:block;max-width:100%}
+a{color:inherit}
+button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
+a:focus-visible,button:focus-visible,summary:focus-visible{outline:2px solid var(--klein);outline-offset:3px}
+::selection{background:var(--klein);color:#fff}
+.en{font-family:var(--display)}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+
+/* ---------- ページ切り替えの幕 ---------- */
+.curtain{position:fixed;inset:0;z-index:200;background:var(--ink);pointer-events:none;transform:translateY(0);animation:curtain-out .9s var(--ease-io) .05s forwards}
+.curtain.leave{animation:curtain-in .5s var(--ease-io) forwards;pointer-events:auto}
+@keyframes curtain-out{to{transform:translateY(-101%)}}
+@keyframes curtain-in{from{transform:translateY(101%)}to{transform:translateY(0)}}
+
+/* ---------- カーソル（マウス操作のときだけ） ---------- */
+.cursor{position:fixed;left:0;top:0;z-index:150;pointer-events:none;width:12px;height:12px;margin:-6px 0 0 -6px;border-radius:50%;background:var(--klein);display:none;align-items:center;justify-content:center;color:#fff;font-size:13px;font-weight:700;white-space:nowrap;opacity:0;transition:width .35s var(--ease),height .35s var(--ease),margin .35s var(--ease),opacity .3s}
+.cursor span{opacity:0;transition:opacity .2s}
+.cursor.on{width:84px;height:84px;margin:-42px 0 0 -42px}
+.cursor.on span{opacity:1}
+@media (hover:hover) and (pointer:fine){.js .cursor{display:flex}}
+
+/* ---------- ナビ ---------- */
+.bar{position:sticky;top:0;z-index:100;display:flex;align-items:center;justify-content:space-between;gap:16px;padding:12px var(--gutter);background:rgba(228,227,223,.86);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);border-bottom:1px solid var(--line);transition:transform .45s var(--ease)}
+.bar.hide{transform:translateY(-101%)}
+.bar .brand{display:flex;align-items:center;gap:10px;text-decoration:none;font-family:var(--display);font-weight:800;font-size:18px;letter-spacing:-.01em}
+.bar .brand img{width:28px;height:28px;border-radius:50%;transition:transform .6s var(--ease)}
+.bar .brand:hover img{transform:rotate(-24deg)}
+.bar ul{display:flex;align-items:center;gap:clamp(12px,2.4vw,28px);list-style:none;flex-wrap:wrap}
+.bar ul a{position:relative;text-decoration:none;font-size:13.5px;font-weight:500;padding:4px 0}
+.bar ul a:not(.contact)::after{content:"";position:absolute;left:0;right:0;bottom:0;height:1.5px;background:currentColor;transform:scaleX(0);transform-origin:right;transition:transform .4s var(--ease)}
+.bar ul a:not(.contact):hover::after,.bar ul a[aria-current]::after{transform:scaleX(1);transform-origin:left}
+.bar .contact{background:var(--ink);color:var(--paper);padding:8px 18px;border-radius:999px;transition:background .25s}
+.bar .contact:hover{background:var(--klein)}
+.bar .menu-btn{display:none;font-size:13.5px;font-weight:700;padding:8px 0 8px 12px}
+.bar .menu-btn i{display:inline-block;width:18px;height:8px;margin-left:8px;position:relative;vertical-align:middle}
+.bar .menu-btn i::before,.bar .menu-btn i::after{content:"";position:absolute;left:0;right:0;height:1.5px;background:currentColor;transition:transform .4s var(--ease)}
+.bar .menu-btn i::before{top:0}.bar .menu-btn i::after{bottom:0}
+.menu-open .bar .menu-btn i::before{transform:translateY(3.25px) rotate(45deg)}
+.menu-open .bar .menu-btn i::after{transform:translateY(-3.25px) rotate(-45deg)}
+@media(max-width:760px){
+  .bar ul a{font-size:12.5px}
+  /* JSが動くときは全画面メニューに畳む */
+  .js .bar .menu-btn{display:block}
+  .js .bar ul{position:fixed;left:0;right:0;top:100%;height:calc(100dvh - 100%);flex-direction:column;align-items:flex-start;justify-content:center;flex-wrap:nowrap;gap:6px;padding:0 var(--gutter) 12vh;background:var(--ink);color:var(--night-text);clip-path:inset(0 0 100% 0);visibility:hidden;transition:clip-path .6s var(--ease-io),visibility 0s .6s}
+  .js.menu-open .bar ul{clip-path:inset(0);visibility:visible;transition:clip-path .6s var(--ease-io),visibility 0s}
+  .js .bar ul li{overflow:hidden}
+  .js .bar ul a{display:block;font-size:clamp(30px,9.5vw,44px);font-weight:900;line-height:1.5;transform:translateY(110%);transition:transform .7s var(--ease)}
+  .js.menu-open .bar ul a{transform:none;transition-delay:calc(.12s + var(--i,0)*.06s)}
+  .js .bar ul a::after{display:none}
+  .js .bar ul .contact{background:none;color:var(--klein-soft);padding:0;border-radius:0}
+  .js.menu-open .bar{background:var(--paper)}
+  .js.menu-open{overflow:hidden}
+}
+
+/* ---------- ボタン ---------- */
+.ctas{display:flex;flex-wrap:wrap;gap:12px}
+.btn{position:relative;display:inline-flex;align-items:center;gap:10px;padding:15px 28px;border-radius:999px;font-size:15px;font-weight:700;text-decoration:none;border:1.5px solid var(--ink);overflow:hidden;isolation:isolate;transition:color .35s,border-color .35s;will-change:transform}
+.btn::before{content:"";position:absolute;inset:-1px;z-index:-1;background:var(--klein);border-radius:inherit;transform:translateY(102%);transition:transform .5s var(--ease)}
+.btn:hover::before{transform:none}
+.btn:hover{color:#fff;border-color:var(--klein)}
+.btn.solid{background:var(--ink);color:var(--paper)}
+.btn svg{width:14px;height:14px;transition:transform .4s var(--ease)}
+.btn:hover svg{transform:translate(3px,-3px)}
+.dark .btn{border-color:var(--night-text);color:var(--night-text)}
+.dark .btn.solid{background:var(--night-text);color:var(--ink)}
+.dark .btn:hover{color:#fff;border-color:var(--klein)}
+
+/* ---------- 出現：行ごとのマスク ---------- */
+.ln{display:block;overflow:hidden;padding-bottom:.08em;margin-bottom:-.08em}
+.ln>span{display:block}
+.js .ln>span{transform:translateY(112%);transition:transform 1s var(--ease);transition-delay:calc(var(--d,0)*.09s)}
+.js .in .ln>span,.js .ln.in>span{transform:none}
+.js [data-fade]{opacity:0;transform:translateY(18px);transition:opacity .9s var(--ease),transform .9s var(--ease);transition-delay:calc(var(--d,0)*.08s)}
+.js [data-fade].in{opacity:1;transform:none}
+
+/* ---------- 流れる帯 ---------- */
+.marquee{background:var(--ink);color:var(--night-text);overflow:hidden;padding:clamp(14px,2vw,22px) 0;border-block:1px solid var(--ink)}
+.marquee .track{display:flex;width:max-content;animation:marquee 38s linear infinite;will-change:transform}
+.marquee .set{display:flex;align-items:center;flex:none}
+.marquee .set span{font-size:clamp(20px,3vw,40px);font-weight:900;white-space:nowrap;padding:0 clamp(16px,2.4vw,36px)}
+.marquee .set span.en{font-weight:500;font-style:italic;font-size:clamp(24px,3.6vw,48px)}
+.marquee .set img{width:clamp(22px,2.6vw,36px);height:auto;flex:none;animation:spin 9s linear infinite}
+@keyframes marquee{to{transform:translateX(-50%)}}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* ---------- 下層ページの冒頭 ---------- */
+.phero{padding:clamp(40px,7vw,96px) var(--gutter) clamp(44px,6vw,80px);border-bottom:1px solid var(--ink)}
+.phero .crumb{display:flex;justify-content:space-between;gap:16px;font-size:13px;color:var(--mute);margin-bottom:clamp(24px,4vw,48px)}
+.phero .crumb a{text-decoration:none}
+.phero .crumb a:hover{text-decoration:underline;text-underline-offset:4px}
+.phero h1{font-size:clamp(40px,9.6vw,150px);font-weight:900;line-height:1.14;letter-spacing:-.04em}
+.phero h1 .ln:nth-child(2){text-align:right}
+.phero .under{margin-top:clamp(28px,4vw,56px);display:grid;grid-template-columns:1.25fr 1fr;gap:28px;align-items:end}
+.phero .lead{font-size:clamp(16px,1.7vw,19px);max-width:34em}
+.phero .offer{margin-top:14px;font-weight:900;font-size:clamp(17px,2vw,22px);line-height:1.6}
+.phero .ctas{justify-content:flex-end}
+@media(max-width:760px){
+  .phero .under{grid-template-columns:1fr}
+  .phero .ctas{justify-content:flex-start}
+  .phero h1 .ln:nth-child(2){text-align:left}
+}
+
+/* ---------- セクションの基本 ---------- */
+.sec{padding:clamp(56px,8vw,120px) var(--gutter)}
+.sec+.sec{border-top:1px solid var(--ink)}
+.sec.dark{background:var(--ink);color:var(--night-text);border-color:var(--ink)}
+.sec-head{display:flex;justify-content:space-between;align-items:flex-end;gap:24px;margin-bottom:clamp(28px,4vw,56px)}
+.sec-head h2{font-size:clamp(30px,5.4vw,76px);font-weight:900;line-height:1.2;letter-spacing:-.03em}
+.sec-head h2.en{font-weight:500;font-size:clamp(46px,8.4vw,128px);line-height:.92}
+.sec-head p{max-width:24em;font-size:14.5px;color:var(--mute)}
+.dark .sec-head p{color:var(--night-mute)}
+@media(max-width:760px){.sec-head{flex-direction:column;align-items:flex-start}}
+
+/* 罫線で区切るマス目（こんな方に／できること等） */
+.cells{display:grid;grid-template-columns:repeat(3,1fr);border-top:1px solid var(--ink)}
+.cells.two{grid-template-columns:repeat(2,1fr)}
+.cells.four{grid-template-columns:repeat(4,1fr)}
+.cell{padding:clamp(22px,2.6vw,36px) clamp(18px,2.4vw,32px) clamp(28px,3vw,44px) 0;border-bottom:1px solid var(--line)}
+.cell+.cell{padding-left:clamp(18px,2.4vw,32px);border-left:1px solid var(--line)}
+.cell h3{font-size:clamp(19px,2vw,24px);font-weight:900;line-height:1.45}
+.cell p{margin-top:10px;font-size:15px;color:var(--mute)}
+.cell a{text-underline-offset:4px}
+.cell a:hover{color:var(--klein)}
+.dark .cells{border-color:var(--night-line)}
+.dark .cell{border-color:var(--night-line)}
+.dark .cell p{color:var(--night-mute)}
+@media(max-width:860px){
+  .cells,.cells.two,.cells.four{grid-template-columns:1fr}
+  .cell,.cell+.cell{padding-left:0;padding-right:0;border-left:0}
+}
+
+/* 料金の札 */
+.plans{display:grid;grid-template-columns:repeat(2,1fr);gap:clamp(14px,2vw,28px)}
+.plan{background:var(--bone);border:1px solid var(--ink);padding:clamp(24px,3vw,44px);display:flex;flex-direction:column}
+.plan.main{background:var(--ink);color:var(--night-text)}
+.plan h3{font-size:15px;font-weight:700}
+.plan .fig{margin-top:10px;font-family:var(--display);font-weight:800;font-variant-numeric:tabular-nums;font-size:clamp(48px,6.6vw,104px);line-height:.95;letter-spacing:-.04em}
+.plan .fig small{display:block;font-family:var(--jp);font-size:clamp(14px,1.5vw,17px);font-weight:700;letter-spacing:0;line-height:1.6;margin-top:.7em}
+.plan ul{list-style:none;margin-top:clamp(18px,2.4vw,28px);border-top:1px solid var(--line)}
+.plan li{padding:11px 0;border-bottom:1px solid var(--line);font-size:15px}
+.plan.main ul,.plan.main li{border-color:var(--night-line)}
+.fine{margin-top:22px;font-size:13.5px;color:var(--mute);line-height:1.9}
+.dark .fine{color:var(--night-mute)}
+.fine a{text-underline-offset:3px}
+@media(max-width:760px){.plans{grid-template-columns:1fr}}
+
+/* 進め方（順番があるので番号つき） */
+.steps{list-style:none;counter-reset:s;display:grid;grid-template-columns:repeat(4,1fr);gap:clamp(14px,2vw,28px)}
+.steps li{counter-increment:s;position:relative;padding-top:clamp(18px,2vw,26px);border-top:1px solid var(--line)}
+.steps li::after{content:"";position:absolute;left:0;top:-1px;height:2px;width:100%;background:var(--klein);transform:scaleX(0);transform-origin:left;transition:transform 1.1s var(--ease);transition-delay:calc(var(--d,0)*.18s)}
+.steps.in li::after{transform:none}
+html:not(.js) .steps li::after{transform:none}
+.steps li::before{content:counter(s);display:block;font-family:var(--display);font-weight:500;font-size:clamp(44px,5vw,72px);line-height:1}
+.steps h3{margin-top:12px;font-size:17px;font-weight:900;line-height:1.5}
+.steps p{margin-top:6px;font-size:14.5px;color:var(--mute)}
+.dark .steps li{border-color:var(--night-line)}
+.dark .steps li::after{background:var(--klein-soft)}
+.dark .steps p{color:var(--night-mute)}
+@media(max-width:860px){.steps{grid-template-columns:1fr 1fr}}
+@media(max-width:520px){.steps{grid-template-columns:1fr}}
+
+/* よくある質問（開閉） */
+.faq{border-top:1px solid var(--ink);max-width:960px}
+.faq details{border-bottom:1px solid var(--line)}
+.faq summary{list-style:none;display:flex;justify-content:space-between;align-items:center;gap:20px;padding:22px 0;cursor:pointer;font-size:clamp(17px,2vw,22px);font-weight:900;line-height:1.5}
+.faq summary::-webkit-details-marker{display:none}
+.faq summary i{flex:none;position:relative;width:18px;height:18px}
+.faq summary i::before,.faq summary i::after{content:"";position:absolute;left:0;right:0;top:50%;height:2px;margin-top:-1px;background:currentColor;transition:transform .45s var(--ease)}
+.faq summary i::after{transform:rotate(90deg)}
+.faq details[open] summary i::after{transform:rotate(0)}
+.faq summary:hover{color:var(--klein)}
+.faq .a{padding:0 0 24px;max-width:40em;color:var(--mute);font-size:15.5px}
+.faq details[open] .a{animation:faq-in .5s var(--ease)}
+@keyframes faq-in{from{opacity:0;transform:translateY(-8px)}}
+
+/* 見本サイトを、そのまま額に入れて見せる */
+.shot{display:flex;flex-direction:column;text-decoration:none}
+.shot .frame{--vw:1280;position:relative;overflow:hidden;aspect-ratio:4/5;background:var(--bone);border:1px solid var(--ink)}
+.shot .frame iframe{position:absolute;left:0;top:0;width:calc(var(--vw)*1px);height:calc(var(--vw)*1.25px);border:0;transform-origin:0 0;transform:scale(var(--s,.3));pointer-events:none;transition:translate 1.6s var(--ease)}
+.shot:hover .frame iframe{translate:0 -6%}
+.shot .cap{display:flex;justify-content:space-between;gap:12px;align-items:baseline;padding-top:14px}
+.shot .cap b{font-size:clamp(16px,1.6vw,20px);font-weight:900;line-height:1.4}
+.shot .cap span{font-size:13px;color:var(--mute);white-space:nowrap}
+.shot:hover .cap b{color:var(--klein)}
+.shots{display:grid;grid-template-columns:repeat(3,1fr);gap:clamp(28px,3.4vw,56px) clamp(14px,2vw,28px)}
+.shots .shot:nth-child(3n+2){margin-top:clamp(0px,5vw,72px)}
+@media(max-width:860px){
+  .shot .frame{--vw:430}
+  .shots{grid-template-columns:1fr 1fr}
+  .shots .shot:nth-child(3n+2){margin-top:0}
+  .shots .shot:nth-child(even){margin-top:36px}
+}
+@media(max-width:520px){.shots{grid-template-columns:1fr}.shots .shot:nth-child(even){margin-top:0}}
+
+/* 行のリスト（できること・つくったもの） */
+.rows{list-style:none;border-top:1px solid var(--ink)}
+.rows a{position:relative;display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1.3fr) auto;gap:20px;align-items:center;padding:clamp(18px,2.4vw,30px) 0;border-bottom:1px solid var(--line);text-decoration:none;isolation:isolate;transition:color .35s,padding .5s var(--ease)}
+.rows a::before{content:"";position:absolute;inset:0 calc(var(--gutter)*-1);z-index:-1;background:var(--ink);transform:scaleY(0);transform-origin:bottom;transition:transform .5s var(--ease)}
+.rows b{font-size:clamp(22px,3.6vw,52px);font-weight:900;letter-spacing:-.02em;line-height:1.3}
+.rows b.en{font-weight:800;letter-spacing:-.03em}
+.rows span{color:var(--mute);font-size:14.5px;transition:color .35s}
+.rows i{font-style:normal;font-size:13.5px;font-weight:700;white-space:nowrap;display:flex;align-items:center;gap:10px}
+.rows i svg{width:16px;height:16px;transition:transform .5s var(--ease)}
+@media(hover:hover){
+  .rows a:hover{color:var(--night-text);padding-left:clamp(8px,1.4vw,20px)}
+  .rows a:hover::before{transform:none}
+  .rows a:hover span{color:var(--night-mute)}
+  .rows a:hover i svg{transform:translate(4px,-4px)}
+}
+.dark .rows{border-color:var(--night-line)}
+.dark .rows a{border-color:var(--night-line)}
+.dark .rows span{color:var(--night-mute)}
+@media(max-width:760px){.rows a{grid-template-columns:1fr auto;row-gap:2px}.rows span{grid-column:1 / -1;grid-row:2}}
+
+/* 締めの呼びかけ */
+.closing{background:var(--klein);color:#fff;padding:clamp(64px,9vw,140px) var(--gutter);text-align:left}
+.closing h2{font-size:clamp(32px,6.6vw,104px);font-weight:900;line-height:1.2;letter-spacing:-.03em}
+.closing p{margin-top:18px;max-width:34em;font-size:clamp(15px,1.6vw,17.5px);color:#DADCFF}
+.closing .ctas{margin-top:32px}
+.closing .btn{border-color:#fff;color:#fff}
+.closing .btn.solid{background:#fff;color:var(--klein)}
+.closing .btn::before{background:var(--ink)}
+.closing .btn:hover{border-color:var(--ink);color:#fff}
+
+/* ---------- フッター（お問い合わせ） ---------- */
+.foot{background:var(--ink);color:var(--night-text);padding:clamp(56px,8vw,120px) var(--gutter) 36px}
+.foot .ask{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;font-size:clamp(17px,2.1vw,24px);font-weight:700}
+.foot .ask span:last-child{font-size:13.5px;font-weight:500;color:var(--night-mute);font-variant-numeric:tabular-nums}
+.foot .mail{display:block;margin-top:16px;text-decoration:none;font-family:var(--display);font-weight:800;letter-spacing:-.04em;line-height:1.05;font-size:clamp(25px,6.3vw,100px);overflow-wrap:anywhere;transition:color .3s}
+.foot .mail:hover{color:var(--klein-soft)}
+.foot .ctas{margin-top:26px}
+.foot .legal{margin-top:clamp(40px,6vw,80px);padding-top:20px;border-top:1px solid var(--night-line);display:flex;flex-wrap:wrap;justify-content:space-between;gap:12px;font-size:13px;color:var(--night-mute)}
+.foot .legal nav{display:flex;flex-wrap:wrap;gap:18px}
+.foot .legal a{text-decoration:none}
+.foot .legal a:hover{text-decoration:underline}
+
+/* ---------- 動きを減らす設定の人には、止めて見せる ---------- */
+@media (prefers-reduced-motion:reduce){
+  html{scroll-behavior:auto}
+  .curtain,.intro{display:none!important}
+  .marquee .track,.marquee .set img{animation:none}
+  .js .ln>span,.js [data-fade]{transform:none!important;opacity:1!important;transition:none}
+  .steps li::after{transform:none;transition:none}
+  .shot .frame iframe{transition:none}
+  .cursor{display:none!important}
+}
+
+/* 冒頭の出現は、幕が上がってから始める */
+.js .hero .ln>span,.js .phero .ln>span{transition-delay:calc(var(--t0) + .15s + var(--d,0)*.09s)}
+.js .hero [data-fade],.js .phero [data-fade]{transition-delay:calc(var(--t0) + .35s + var(--d,0)*.08s)}
