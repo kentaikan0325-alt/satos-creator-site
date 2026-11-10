@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>韓国語翻訳アプリ（開発中）｜ニュアンスまで訳す韓国語翻訳 — Sato's creator</title>
+<meta name="description" content="直訳のその先、ニュアンスまで訳す韓国語翻訳アプリを開発中。まず一瞬で訳し、その下にニュアンス訳と注釈を添える2段翻訳。調べた言葉は、全部残る。">
+<meta property="og:title" content="Papagoで、伝わらなかった言葉がある。">
+<meta property="og:description" content="ニュアンスまで訳す韓国語翻訳アプリ（開発中）。調べた言葉は、全部残る。">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://satoscreator.com/translate/">
+<link rel="stylesheet" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<link rel="stylesheet" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-jp-dynamic-subset.min.css">
+<style>
+:root{
+  --cream:#F6F3E8;
+  --paper:#FFFDF4;
+  --ink:#141310;
+  --ink-soft:#5B594F;
+  --line:rgba(20,19,16,.18);
+  --black:#0D0D0C;
+  --black-2:#171716;
+  --cream-on-black:#F6F3E8;
+  --muted-on-black:#A9A69A;
+  --line-on-black:rgba(246,243,232,.18);
+  --yellow:#FFD400;
+  --font:"Pretendard Variable","Pretendard JP Variable","Pretendard","Hiragino Kaku Gothic ProN","Hiragino Sans","Noto Sans JP",sans-serif;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+body{
+  font-family:var(--font);
+  background:var(--cream);
+  color:var(--ink);
+  line-height:1.75;
+  -webkit-font-smoothing:antialiased;
+  text-rendering:optimizeLegibility;
+}
+::selection{background:var(--ink);color:var(--cream);}
+a{color:inherit;}
+.wrap{max-width:1080px;margin:0 auto;padding:0 24px;}
+section{padding:104px 0;}
+.sec-label{
+  display:flex;align-items:center;gap:12px;
+  font-size:12px;font-weight:600;letter-spacing:.22em;text-transform:uppercase;
+  margin-bottom:28px;
+}
+.sec-label::before{content:"";width:10px;height:10px;background:currentColor;flex:none;}
+.sec-dark .sec-label{color:var(--muted-on-black);}
+h2{
+  font-size:clamp(28px,5.4vw,46px);
+  font-weight:800;line-height:1.35;letter-spacing:-.01em;
+  margin-bottom:24px;
+}
+.lede{font-size:clamp(15px,2.2vw,17px);color:var(--ink-soft);max-width:640px;}
+.sec-dark .lede{color:var(--muted-on-black);}
+.reveal{opacity:1;}
+.js .reveal{opacity:0;transform:translateY(14px);transition:opacity .7s ease,transform .7s ease;}
+.js .reveal.is-in{opacity:1;transform:none;}
+
+/* ---------- header ---------- */
+header{
+  position:sticky;top:0;z-index:50;
+  background:rgba(246,243,232,.92);backdrop-filter:blur(8px);
+  border-bottom:1px solid var(--line);
+}
+.header-in{display:flex;align-items:center;justify-content:space-between;height:58px;}
+.brand{font-weight:800;letter-spacing:.02em;font-size:15px;text-decoration:none;}
+.brand small{display:block;font-size:10px;font-weight:600;letter-spacing:.24em;color:var(--ink-soft);line-height:1.2;}
+.header-note{font-size:12px;font-weight:600;letter-spacing:.14em;color:var(--ink-soft);border:1px solid var(--line);padding:5px 12px;border-radius:999px;}
+
+/* ---------- hero ---------- */
+.hero{padding:88px 0 96px;border-bottom:1px solid var(--line);}
+.hero-eyebrow{
+  display:inline-block;font-size:12px;font-weight:700;letter-spacing:.2em;
+  border:1.5px solid var(--ink);padding:6px 14px;border-radius:999px;margin-bottom:34px;
+}
+.hero h1{
+  font-size:clamp(38px,8.2vw,76px);
+  font-weight:800;line-height:1.22;letter-spacing:-.015em;
+  margin-bottom:28px;
+}
+.hero h1 .u{box-shadow:inset 0 -0.32em 0 var(--yellow);}
+.hero-sub{font-size:clamp(16px,2.6vw,20px);font-weight:500;color:var(--ink-soft);max-width:620px;margin-bottom:56px;}
+.hero-sub strong{color:var(--ink);}
+
+/* ---------- demo ---------- */
+.demo{
+  background:var(--paper);
+  border:1.5px solid var(--ink);
+  box-shadow:10px 10px 0 rgba(20,19,16,.9);
+  padding:34px 34px 30px;
+  max-width:760px;
+}
+.demo-head{display:flex;align-items:baseline;justify-content:space-between;gap:16px;border-bottom:1px solid var(--line);padding-bottom:16px;margin-bottom:22px;}
+.demo-title{font-size:12px;font-weight:700;letter-spacing:.22em;}
+.demo-hint{font-size:12px;color:var(--ink-soft);}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:28px;}
+.ex-chip{
+  font-family:var(--font);font-size:15px;font-weight:600;
+  background:var(--cream);color:var(--ink);
+  border:1.5px solid var(--ink);border-radius:999px;
+  padding:7px 16px;cursor:pointer;
+  transition:background .15s ease,transform .1s ease;
+}
+.ex-chip:hover{background:#EFEAD9;}
+.ex-chip:active{transform:scale(.97);}
+.ex-chip.is-active{background:var(--yellow);}
+.demo-ko{
+  font-size:clamp(26px,5vw,38px);font-weight:800;line-height:1.3;letter-spacing:-.01em;
+  padding-bottom:22px;border-bottom:1px solid var(--line);margin-bottom:22px;
+}
+.stage{padding:4px 0 2px;}
+.stage + .stage{margin-top:20px;border-top:1px dashed var(--line);padding-top:20px;}
+.stage-tag{
+  display:inline-block;font-size:11px;font-weight:700;letter-spacing:.2em;
+  border:1px solid var(--ink);padding:3px 10px;border-radius:2px;margin-bottom:10px;
+}
+.stage-tag.nuance{background:var(--ink);color:var(--cream);}
+.demo-fast{font-size:clamp(24px,4.6vw,34px);font-weight:800;line-height:1.4;}
+.demo-nuance{font-size:clamp(16px,2.6vw,19px);font-weight:700;line-height:1.65;}
+.demo-note{font-size:13.5px;color:var(--ink-soft);margin-top:8px;line-height:1.8;}
+.stage{opacity:1;}
+.js .stage{transition:opacity .45s ease,transform .45s ease;}
+.js .stage.waiting{opacity:0;transform:translateY(8px);}
+.demo-foot{margin-top:24px;border-top:1px solid var(--line);padding-top:14px;font-size:12.5px;color:var(--ink-soft);display:flex;gap:8px;align-items:center;}
+.demo-foot .dot{width:7px;height:7px;border-radius:50%;background:var(--ink);flex:none;}
+@media (max-width:640px){
+  .demo{padding:24px 20px 22px;box-shadow:6px 6px 0 rgba(20,19,16,.9);}
+  section{padding:72px 0;}
+  .hero{padding:64px 0 72px;}
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap header-in">
+    <a class="brand" href="https://satoscreator.com/">Sato's creator<small>TRANSLATION APP — IN DEVELOPMENT</small></a>
+    <span class="header-note">韓国語翻訳アプリ（開発中）</span>
+  </div>
+</header>
+
+<main>
+<!-- ================= HERO ================= -->
+<div class="hero">
+  <div class="wrap">
+    <span class="hero-eyebrow">한국어 번역, 다시 생각하다</span>
+    <h1>Papagoで、<br>伝わらなかった<br><span class="u">言葉</span>がある。</h1>
+    <p class="hero-sub">直訳のその先、<strong>ニュアンスまで訳す</strong>韓国語翻訳。<br>調べた言葉は、全部残る。</p>
+
+    <div class="demo" aria-label="2段翻訳の実演デモ">
+      <div class="demo-head">
+        <span class="demo-title">DEMO — 2段翻訳</span>
+        <span class="demo-hint">例文を選ぶと、その場で訳します</span>
+      </div>
+      <div class="chips">
+        <button type="button" class="ex-chip is-active" data-key="sugo">수고하셨습니다</button>
+        <button type="button" class="ex-chip" data-key="bab">밥 한번 먹자</button>
+        <button type="button" class="ex-chip" data-key="yeollak">연락 기다릴게요</button>
+        <button type="button" class="ex-chip" data-key="maeum">마음에 들어요</button>
+      </div>
+      <p class="demo-ko" id="demo-ko">수고하셨습니다</p>
+      <div class="stage" id="stage-fast">
+        <span class="stage-tag">STEP 1 — 一瞬翻訳</span>
+        <p class="demo-fast" id="demo-fast">お疲れ様でした</p>
+      </div>
+      <div class="stage" id="stage-nuance">
+        <span class="stage-tag nuance">STEP 2 — ニュアンス訳</span>
+        <p class="demo-nuance" id="demo-nuance">相手への労い全般。「お世話になりました」にもなる万能の一言。</p>
+        <p class="demo-note" id="demo-note">丁寧さの段階：目上にも使える丁寧な表現。仕事終わり、店を出るとき、別れ際の挨拶まで幅広く使われます。</p>
+      </div>
+      <p class="demo-foot"><span class="dot"></span>調べた言葉は、そのまま下の単語帳に残っていきます。</p>
+    </div>
+  </div>
+</div>
+
+<style>
+/* ---------- problem (dark) ---------- */
+.sec-dark{background:var(--black);color:var(--cream-on-black);}
+.sec-dark h2{color:var(--cream-on-black);}
+.problem-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:0;border:1px solid var(--line-on-black);margin-top:52px;}
+.problem-cell{padding:30px 28px 34px;}
+.problem-cell + .problem-cell{border-left:1px solid var(--line-on-black);}
+.problem-num{font-size:13px;font-weight:700;letter-spacing:.24em;color:var(--muted-on-black);margin-bottom:16px;}
+.problem-cell h3{font-size:20px;font-weight:800;margin-bottom:12px;}
+.problem-cell p{font-size:14px;color:var(--muted-on-black);line-height:1.85;}
+@media (max-width:760px){
+  .problem-grid{grid-template-columns:1fr;}
+  .problem-cell + .problem-cell{border-left:none;border-top:1px solid var(--line-on-black);}
+}
+
+/* ---------- how (2-step) ---------- */
+.steps{display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-top:52px;}
+.step-card{border:1.5px solid var(--ink);background:var(--paper);padding:30px 30px 28px;}
+.step-card.dark{background:var(--ink);color:var(--cream);}
+.step-num{font-size:12px;font-weight:700;letter-spacing:.24em;margin-bottom:14px;opacity:.65;}
+.step-card h3{font-size:22px;font-weight:800;margin-bottom:12px;}
+.step-card p{font-size:14.5px;line-height:1.9;}
+.step-card:not(.dark) p{color:var(--ink-soft);}
+.step-card.dark p{color:#CFCBBB;}
+.step-sample{margin-top:18px;border-top:1px dashed var(--line);padding-top:14px;font-size:14px;}
+.step-card.dark .step-sample{border-top-color:var(--line-on-black);}
+.step-sample .ko{font-weight:800;}
+@media (max-width:760px){.steps{grid-template-columns:1fr;}}
+
+/* ---------- compare ---------- */
+.compare{margin-top:52px;border-top:2px solid var(--ink);}
+.cmp-row{display:grid;grid-template-columns:200px 1fr 1.2fr;gap:24px;padding:22px 4px;border-bottom:1px solid var(--line);align-items:baseline;}
+.cmp-ko{font-size:19px;font-weight:800;}
+.cmp-head{font-size:11px;font-weight:700;letter-spacing:.2em;color:var(--ink-soft);padding:12px 4px;}
+.cmp-plain{color:var(--ink-soft);font-size:15px;}
+.cmp-ours{font-weight:700;font-size:15.5px;}
+.cmp-ours::before{content:"— ";}
+@media (max-width:760px){
+  .cmp-row{grid-template-columns:1fr;gap:6px;padding:20px 4px;}
+  .cmp-head{display:none;}
+}
+
+/* ---------- wordbook (dark) ---------- */
+.wb-list{margin-top:52px;border:1px solid var(--line-on-black);}
+.wb-row{display:grid;grid-template-columns:1fr auto;gap:8px 24px;padding:20px 26px;align-items:baseline;}
+.wb-row + .wb-row{border-top:1px solid var(--line-on-black);}
+.wb-ko{font-size:20px;font-weight:800;}
+.wb-ja{color:var(--muted-on-black);font-size:14px;}
+.wb-date{font-size:12px;letter-spacing:.14em;color:var(--muted-on-black);white-space:nowrap;}
+.wb-tag{display:inline-block;font-size:11px;font-weight:700;border:1px solid var(--line-on-black);border-radius:999px;padding:2px 10px;margin-left:10px;color:var(--cream-on-black);vertical-align:2px;}
+
+/* ---------- cta ---------- */
+.cta{padding:110px 0;text-align:left;}
+.cta h2{font-size:clamp(30px,6vw,52px);margin-bottom:20px;}
+.cta p{color:var(--ink-soft);max-width:560px;margin-bottom:36px;font-size:16px;}
+.x-btn{
+  display:inline-flex;align-items:center;gap:12px;
+  background:var(--ink);color:var(--cream);
+  font-weight:700;font-size:16px;text-decoration:none;
+  padding:16px 30px;border-radius:999px;
+  transition:transform .12s ease,opacity .15s ease;
+}
+.x-btn:hover{opacity:.88;}
+.x-btn:active{transform:scale(.98);}
+.x-btn .x-mark{font-weight:800;font-size:18px;line-height:1;}
+.cta-note{margin-top:20px;font-size:12.5px;color:var(--ink-soft);}
+
+/* ---------- footer ---------- */
+footer{background:var(--black);color:var(--muted-on-black);padding:44px 0;}
+.footer-in{display:flex;flex-wrap:wrap;gap:12px 32px;align-items:baseline;justify-content:space-between;}
+.footer-brand{color:var(--cream-on-black);font-weight:800;}
+footer p{font-size:12.5px;letter-spacing:.06em;}
+</style>
+
+<!-- ================= PROBLEM ================= -->
+<section class="sec-dark">
+  <div class="wrap">
+    <p class="sec-label reveal">01 — Problem</p>
+    <h2 class="reveal">意味は合っているのに、<br>伝わらない。</h2>
+    <p class="lede reveal">韓国語は、丁寧さ・距離感・言い回しひとつで意味が動く言語。辞書的な正しさだけでは、会話の空気までは運べません。</p>
+    <div class="problem-grid reveal">
+      <div class="problem-cell">
+        <p class="problem-num">A</p>
+        <h3>丁寧さ</h3>
+        <p>敬語の段階ひとつで、相手との関係まで一緒に伝わってしまう。丁寧すぎても、砕けすぎても、どこか違う。</p>
+      </div>
+      <div class="problem-cell">
+        <p class="problem-num">B</p>
+        <h3>距離感</h3>
+        <p>「今度ご飯を食べよう」は、本気の誘いか社交辞令か。文面だけでは決まらない行間を、どう訳すか。</p>
+      </div>
+      <div class="problem-cell">
+        <p class="problem-num">C</p>
+        <h3>言い回し</h3>
+        <p>「心に入る」が「気に入る」になる言語。言葉をひとつずつ置き換える直訳が、いちばん遠回りになることがあります。</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= HOW ================= -->
+<section>
+  <div class="wrap">
+    <p class="sec-label reveal">02 — How it works</p>
+    <h2 class="reveal">まず一瞬で。<br>その下に、ニュアンスを。</h2>
+    <p class="lede reveal">速さと深さは、どちらかを選ぶものじゃない。最初に意味を渡して、そのすぐ下で「なぜそう訳すのか」まで添える2段構えにしました。</p>
+    <div class="steps reveal">
+      <div class="step-card">
+        <p class="step-num">STEP 1</p>
+        <h3>一瞬翻訳</h3>
+        <p>入力したら、まず待たせない速さで訳文を出す。会話の途中でも流れを止めないための、最初の段。</p>
+        <p class="step-sample"><span class="ko">연락 기다릴게요</span> → 連絡を待ちます</p>
+      </div>
+      <div class="step-card dark">
+        <p class="step-num">STEP 2</p>
+        <h3>ニュアンス訳</h3>
+        <p>その下に、ニュアンス訳と注釈が続く。敬語の段階、相手との距離感、言い回しの背景まで含めて「使える訳」に変える段。</p>
+        <p class="step-sample"><span class="ko">연락 기다릴게요</span> → 「楽しみに待っています」の柔らかい言い方</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= COMPARE ================= -->
+<section style="padding-top:0;">
+  <div class="wrap">
+    <p class="sec-label reveal">03 — Compare</p>
+    <h2 class="reveal">直訳と、このアプリの訳。</h2>
+    <div class="compare reveal">
+      <div class="cmp-row cmp-head"><span>KOREAN</span><span>直訳</span><span>このアプリ</span></div>
+      <div class="cmp-row">
+        <span class="cmp-ko">수고하셨습니다</span>
+        <span class="cmp-plain">お疲れ様でした</span>
+        <span class="cmp-ours">相手への労い全般。「お世話になりました」にもなる万能の一言</span>
+      </div>
+      <div class="cmp-row">
+        <span class="cmp-ko">밥 한번 먹자</span>
+        <span class="cmp-plain">今度ご飯を食べよう</span>
+        <span class="cmp-ours">社交辞令のことも多い、日本語の「今度ご飯行こう」に近い誘い</span>
+      </div>
+      <div class="cmp-row">
+        <span class="cmp-ko">연락 기다릴게요</span>
+        <span class="cmp-plain">連絡を待ちます</span>
+        <span class="cmp-ours">「楽しみに待っています」の柔らかい言い方</span>
+      </div>
+      <div class="cmp-row">
+        <span class="cmp-ko">마음에 들어요</span>
+        <span class="cmp-plain">気に入りました</span>
+        <span class="cmp-ours">「心に入る」＝好みに合う、の感覚的な表現</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= WORDBOOK ================= -->
+<section class="sec-dark">
+  <div class="wrap">
+    <p class="sec-label reveal">04 — Your words</p>
+    <h2 class="reveal">調べた言葉は、全部残る。</h2>
+    <p class="lede reveal">これは学習アプリではありません。翻訳するたびに、調べた言葉がそのまま自分の単語帳になっていく。あとから見返せば、それは自分だけの韓国語の記録です。</p>
+    <div class="wb-list reveal">
+      <div class="wb-row">
+        <div><span class="wb-ko">수고하셨습니다</span><span class="wb-tag">労い</span><br><span class="wb-ja">お疲れ様でした／お世話になりました</span></div>
+        <span class="wb-date">SAVED — 11.08</span>
+      </div>
+      <div class="wb-row">
+        <div><span class="wb-ko">마음에 들어요</span><span class="wb-tag">言い回し</span><br><span class="wb-ja">気に入りました（心に入る）</span></div>
+        <span class="wb-date">SAVED — 11.08</span>
+      </div>
+      <div class="wb-row">
+        <div><span class="wb-ko">밥 한번 먹자</span><span class="wb-tag">距離感</span><br><span class="wb-ja">今度ご飯を食べよう（社交辞令のことも）</span></div>
+        <span class="wb-date">SAVED — 11.07</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= CTA ================= -->
+<section class="cta">
+  <div class="wrap">
+    <p class="sec-label reveal">05 — Coming soon</p>
+    <h2 class="reveal">公開したら、<br>Xでお知らせします。</h2>
+    <p class="reveal">韓国語翻訳アプリは現在開発中です。リリースの告知や開発の進捗は X でお知らせします。フォローしてお待ちください。</p>
+    <a class="x-btn reveal" href="https://x.com/yumedeaetaraina" target="_blank" rel="noopener"><span class="x-mark">𝕏</span>Xでフォローする</a>
+    <p class="cta-note reveal">※ メールでの事前登録は準備中です。</p>
+  </div>
+</section>
+</main>
+
+<footer>
+  <div class="wrap footer-in">
+    <span class="footer-brand">Sato's creator</span>
+    <p>韓国語翻訳アプリ（開発中） — © 2026 Sato's creator</p>
+  </div>
+</footer>
+
+<script>
+(function () {
+  document.documentElement.classList.add('js');
+
+  var EXAMPLES = {
+    sugo: {
+      ko: '수고하셨습니다',
+      fast: 'お疲れ様でした',
+      nuance: '相手への労い全般。「お世話になりました」にもなる万能の一言。',
+      note: '丁寧さの段階：目上にも使える丁寧な表現。仕事終わり、店を出るとき、別れ際の挨拶まで幅広く使われます。'
+    },
+    bab: {
+      ko: '밥 한번 먹자',
+      fast: '今度ご飯を食べよう',
+      nuance: '社交辞令のことも多い。日本語の「今度ご飯行こう」に近い誘い。',
+      note: '距離感：本気の誘いとは限らず、関係をつなぐ挨拶として交わされることも多い表現です。'
+    },
+    yeollak: {
+      ko: '연락 기다릴게요',
+      fast: '連絡を待ちます',
+      nuance: '「楽しみに待っています」の柔らかい言い方。',
+      note: '言い回し：語尾の -ㄹ게요 は「〜しますね」と約束や意志を柔らかく伝える形。事務的な「待ちます」より温度があります。'
+    },
+    maeum: {
+      ko: '마음에 들어요',
+      fast: '気に入りました',
+      nuance: '「心に入る」＝好みに合う、の感覚的な表現。',
+      note: '言い回し：直訳すると不自然になるタイプ。気持ちの動きごと訳すと自然な日本語になります。'
+    }
+  };
+
+  var chips = document.querySelectorAll('.ex-chip');
+  var elKo = document.getElementById('demo-ko');
+  var elFast = document.getElementById('demo-fast');
+  var elNuance = document.getElementById('demo-nuance');
+  var elNote = document.getElementById('demo-note');
+  var stageFast = document.getElementById('stage-fast');
+  var stageNuance = document.getElementById('stage-nuance');
+  var timer = null;
+
+  function show(key) {
+    var ex = EXAMPLES[key];
+    if (!ex) return;
+    for (var i = 0; i < chips.length; i++) {
+      if (chips[i].getAttribute('data-key') === key) {
+        chips[i].classList.add('is-active');
+      } else {
+        chips[i].classList.remove('is-active');
+      }
+    }
+    elKo.textContent = ex.ko;
+    elFast.textContent = ex.fast;
+    stageFast.classList.remove('waiting');
+    stageNuance.classList.add('waiting');
+    if (timer !== null) clearTimeout(timer);
+    timer = setTimeout(function () {
+      elNuance.textContent = ex.nuance;
+      elNote.textContent = ex.note;
+      stageNuance.classList.remove('waiting');
+    }, 650);
+  }
+
+  for (var i = 0; i < chips.length; i++) {
+    (function (chip) {
+      chip.addEventListener('click', function () {
+        show(chip.getAttribute('data-key'));
+      });
+    })(chips[i]);
+  }
+
+  show('sugo');
+
+  if ('IntersectionObserver' in window) {
+    var io = new IntersectionObserver(function (entries) {
+      entries.forEach(function (e) {
+        if (e.isIntersecting) {
+          e.target.classList.add('is-in');
+          io.unobserve(e.target);
+        }
+      });
+    }, { threshold: 0.12 });
+    var targets = document.querySelectorAll('.reveal');
+    for (var j = 0; j < targets.length; j++) io.observe(targets[j]);
+  }
+})();
+</script>
+</body>
+</html>
