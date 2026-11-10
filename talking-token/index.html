@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Talking Token｜すべてのAI利用を、一つに。</title>
+<meta name="description" content="ChatGPT、Claude、Claude Code。バラバラだったAIの使用量・費用・契約プランを、ひとつの画面で管理する「Talking Token」開発中のお知らせページです。">
+<meta property="og:title" content="Talking Token｜すべてのAI利用を、一つに。">
+<meta property="og:description" content="AIとの会話から生まれるトークンを、まとめて管理する。Sato's creator の新規事業、開発中。">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://satoscreator.com/talking-token/">
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3051617391058492" crossorigin="anonymous"></script>
+<style>
+  :root{
+    --paper:#E4E3DF; --bone:#F5F4F1; --ink:#111110; --mute:#5E5D59;
+    --klein:#1F2BD6; --line:#C9C8C2;
+    --panel:#131316; --panel2:#1C1C20; --on-dark:#F2F1EE; --on-mute:#9B9A94;
+    --good:#3ECF6F; --warn:#FFB224;
+    --jp:"Zen Kaku Gothic New","Hiragino Sans","Noto Sans CJK JP",sans-serif;
+    --mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{background:var(--paper);color:var(--ink);font:400 16px/1.85 var(--jp);-webkit-font-smoothing:antialiased}
+  ::selection{background:var(--klein);color:#fff}
+  .wrap{max-width:1080px;margin:0 auto;padding:0 20px}
+  header{position:sticky;top:0;z-index:10;background:rgba(228,227,223,.92);backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
+  .bar{display:flex;align-items:center;justify-content:space-between;height:60px}
+  .brand{font-weight:900;letter-spacing:.02em;font-size:17px}
+  .brand span{color:var(--klein)}
+  .badge{font:700 11px var(--mono);border:1px solid var(--ink);border-radius:999px;padding:3px 10px;letter-spacing:.08em}
+  .hero{padding:84px 0 30px;text-align:left}
+  .eyebrow{font:700 12px var(--mono);letter-spacing:.22em;color:var(--klein);margin-bottom:18px}
+  h1{font-size:clamp(44px,9vw,92px);font-weight:900;line-height:1.04;letter-spacing:-.01em}
+  h1 .tk{color:var(--klein)}
+  .catch{font-size:clamp(22px,4.4vw,34px);font-weight:700;margin-top:26px;line-height:1.5}
+  .sub{color:var(--mute);max-width:640px;margin-top:16px;font-size:16px}
+  .note{font-size:13px;color:var(--mute);margin-top:10px}
+  /* dashboard mock */
+  .mock{background:var(--panel);color:var(--on-dark);border-radius:16px;padding:26px 26px 22px;margin:44px 0 0;box-shadow:0 24px 60px rgba(17,17,16,.25)}
+  .mock-head{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+  .mock-title{font:700 13px var(--mono);letter-spacing:.14em;color:var(--on-mute)}
+  .sample{font:700 11px var(--mono);color:#111;background:var(--warn);border-radius:4px;padding:2px 8px;letter-spacing:.06em}
+  .cards{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:20px}
+  .card{background:var(--panel2);border:1px solid #2A2A30;border-radius:10px;padding:16px}
+  .card .k{font-size:12px;color:var(--on-mute);letter-spacing:.06em}
+  .card .v{font:700 30px/1.3 var(--mono);margin-top:4px;font-variant-numeric:tabular-nums}
+  .card .v small{font-size:14px;color:var(--on-mute)}
+  .card .d{font-size:12px;margin-top:2px}
+  .up{color:var(--warn)} .down{color:var(--good)}
+  .chart-box{background:var(--panel2);border:1px solid #2A2A30;border-radius:10px;padding:18px;margin-top:14px}
+  .tabs{display:flex;gap:8px;margin-bottom:16px}
+  .chart-tab{font:700 13px var(--jp);background:transparent;color:var(--on-mute);border:1px solid #34343A;border-radius:999px;padding:6px 14px;cursor:pointer}
+  .chart-tab.active{background:var(--on-dark);color:#111;border-color:var(--on-dark)}
+  .bar-row{display:grid;grid-template-columns:110px 1fr 92px;align-items:center;gap:12px;margin:10px 0;font-size:13px}
+  .bar-row .nm{color:var(--on-dark);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .bar-track{background:#2A2A30;border-radius:4px;height:14px;overflow:hidden}
+  .bar-fill{height:100%;background:var(--klein);border-radius:4px}
+  .bar-fill.est{background:#6E6E76}
+  .bar-row .vl{font:700 13px var(--mono);text-align:right;font-variant-numeric:tabular-nums}
+  .legend{display:flex;gap:18px;font-size:12px;color:var(--on-mute);margin-top:12px;flex-wrap:wrap}
+  .dot{display:inline-block;width:9px;height:9px;border-radius:2px;margin-right:6px;vertical-align:baseline}
+  /* plans */
+  .plans{margin-top:14px;background:var(--panel2);border:1px solid #2A2A30;border-radius:10px;padding:18px}
+  .plans h3{font-size:14px;letter-spacing:.06em;margin-bottom:6px}
+  .plans p{font-size:12.5px;color:var(--on-mute)}
+  .plan-list{display:grid;grid-template-columns:1fr 1fr;gap:8px 20px;margin-top:12px}
+  .plan-item{display:flex;align-items:center;gap:10px;font-size:14px;cursor:pointer;padding:6px 0}
+  .plan-item input{width:17px;height:17px;accent-color:var(--klein)}
+  .plan-item .pr{margin-left:auto;font:700 14px var(--mono);font-variant-numeric:tabular-nums}
+  .plan-total{display:flex;justify-content:space-between;align-items:baseline;border-top:1px solid #34343A;margin-top:12px;padding-top:12px}
+  .plan-total .k{font-size:13px;color:var(--on-mute)}
+  .plan-total .v{font:900 26px var(--mono);font-variant-numeric:tabular-nums}
+  .mock-foot{font-size:12px;color:var(--on-mute);margin-top:14px}
+  /* sections */
+  section{padding:72px 0 8px}
+  .sec-eyebrow{font:700 12px var(--mono);letter-spacing:.22em;color:var(--klein);margin-bottom:12px}
+  h2{font-size:clamp(26px,4.6vw,38px);font-weight:900;line-height:1.4}
+  .feats{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-top:30px}
+  .feat{background:var(--bone);border:1px solid var(--line);border-radius:12px;padding:24px}
+  .feat .no{font:700 12px var(--mono);color:var(--klein);letter-spacing:.14em}
+  .feat h3{font-size:19px;font-weight:900;margin:8px 0 6px}
+  .feat p{font-size:14.5px;color:var(--mute)}
+  .privacy{background:var(--ink);color:var(--on-dark);border-radius:12px;padding:28px;margin-top:34px}
+  .privacy h3{font-size:19px;font-weight:900;margin-bottom:8px}
+  .privacy p{font-size:14.5px;color:#CFCFC9;max-width:680px}
+  .cta{text-align:center;padding:84px 0 90px}
+  .cta h2{margin-bottom:14px}
+  .cta p{color:var(--mute);max-width:560px;margin:0 auto 28px}
+  .btn{display:inline-block;background:var(--ink);color:var(--bone);text-decoration:none;font-weight:700;padding:15px 34px;border-radius:999px;font-size:16px}
+  .btn:hover{background:var(--klein)}
+  .cta .soon{display:block;margin-top:16px;font-size:13px;color:var(--mute)}
+  footer{border-top:1px solid var(--line);padding:26px 0 34px;font-size:13px;color:var(--mute)}
+  footer .wrap{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
+  @media(max-width:760px){
+    .cards{grid-template-columns:1fr}
+    .feats{grid-template-columns:1fr}
+    .plan-list{grid-template-columns:1fr}
+    .bar-row{grid-template-columns:86px 1fr 76px}
+    .hero{padding:56px 0 10px}
+    .mock{padding:20px 16px}
+  }
+</style>
+</head>
+<body>
+<header><div class="wrap bar">
+  <div class="brand">Talking<span>Token</span></div>
+  <div class="badge">開発中</div>
+</div></header>
+
+<main>
+  <div class="wrap">
+    <div class="hero">
+      <p class="eyebrow">SATO'S CREATOR — NEW PROJECT</p>
+      <h1>Talking <span class="tk">Token</span></h1>
+      <p class="catch">すべてのAI利用を、一つに。</p>
+      <p class="sub">ChatGPTも、Claudeも、Claude Codeも。バラバラだった使用量・費用・契約プランを、ひとつの画面で管理する。AIとの会話から生まれるトークンを、まとめて見える化します。</p>
+      <p class="note">※ 登録不要・ブラウザで完結する設計です。会話本文をサーバーに送ることはありません。</p>
+    </div>
+
+    <div class="mock" aria-label="ダッシュボードの画面イメージ">
+      <div class="mock-head">
+        <div class="mock-title">DASHBOARD — 今月のAI利用</div>
+        <div class="sample">サンプルデータ</div>
+      </div>
+      <div class="cards">
+        <div class="card"><div class="k">今月のAPI換算費用</div><div class="v">$486</div><div class="d up">先月比 +12%</div></div>
+        <div class="card"><div class="k">今月のトークン合計</div><div class="v">251<small> M</small></div><div class="d">実測 150M ／ 推定 101M</div></div>
+        <div class="card"><div class="k">契約プランの月額合計</div><div class="v">¥21,000</div><div class="d down">見直し候補：1件</div></div>
+      </div>
+      <div class="chart-box">
+        <div class="tabs">
+          <button class="chart-tab active" data-key="service" type="button">サービス別</button>
+          <button class="chart-tab" data-key="daily" type="button">日別</button>
+        </div>
+        <div id="chart"></div>
+        <div class="legend">
+          <span><span class="dot" style="background:var(--klein)"></span>実測（開発ログ・API）</span>
+          <span><span class="dot" style="background:#6E6E76"></span>推定（チャット履歴）</span>
+          <span>実測と推定は混ぜずに表示します</span>
+        </div>
+      </div>
+      <div class="plans">
+        <h3>契約プラン管理（試せます）</h3>
+        <p>使っているプランにチェックを入れると、月額合計がその場で計算されます。更新日の管理もここで。</p>
+        <div class="plan-list">
+          <label class="plan-item"><input type="checkbox" class="plan-check" data-price="15000" checked>Claude Max 5x<span class="pr">¥15,000</span></label>
+          <label class="plan-item"><input type="checkbox" class="plan-check" data-price="3000" checked>ChatGPT Plus<span class="pr">¥3,000</span></label>
+          <label class="plan-item"><input type="checkbox" class="plan-check" data-price="3000" checked>Cursor Pro<span class="pr">¥3,000</span></label>
+          <label class="plan-item"><input type="checkbox" class="plan-check" data-price="3000">Claude Pro<span class="pr">¥3,000</span></label>
+          <label class="plan-item"><input type="checkbox" class="plan-check" data-price="1500">GitHub Copilot<span class="pr">¥1,500</span></label>
+          <label class="plan-item"><input type="checkbox" class="plan-check" data-price="2980">その他サブスク例<span class="pr">¥2,980</span></label>
+        </div>
+        <div class="plan-total"><span class="k">月額合計（目安）</span><span class="v" id="plan-total">¥21,000</span></div>
+      </div>
+      <p class="mock-foot">これは開発中の画面イメージです。金額・プラン名は表示例で、為替により変動します。</p>
+    </div>
+
+    <section>
+      <p class="sec-eyebrow">FEATURES</p>
+      <h2>できること（予定）</h2>
+      <div class="feats">
+        <div class="feat"><p class="no">01</p><h3>一元管理ダッシュボード</h3><p>AI別・日別の使用量と費用を1画面に。実測と推定を分けて表示するので、数字の根拠が分かります。</p></div>
+        <div class="feat"><p class="no">02</p><h3>ログ・履歴のインポート</h3><p>Claude Codeのログと、ChatGPTの公式エクスポートを読み込みます。処理はすべてブラウザ内です。</p></div>
+        <div class="feat"><p class="no">03</p><h3>契約プラン管理</h3><p>契約中のプラン・月額・更新日を一覧に。合計額と、更新が近いプランがすぐ分かります。</p></div>
+        <div class="feat"><p class="no">04</p><h3>適正チェック</h3><p>「定額の方が得か、従量の方が得か」「上限に当たる理由は何か」を、管理データから提示します。</p></div>
+      </div>
+      <div class="privacy">
+        <h3>プライバシー設計</h3>
+        <p>会話履歴には、仕事の内容や個人情報が含まれます。Talking Tokenはブラウザ内処理を原則とし、会話本文をサーバーへ送信しません。データはあなたの端末の中だけに保存されます。</p>
+      </div>
+    </section>
+
+    <div class="cta">
+      <h2>開発中です。</h2>
+      <p>最初の利用者として「何を一つに管理したいか」の声を集めています。開発の進捗はXで発信します。</p>
+      <a class="btn" href="https://x.com/yumedeaetaraina" target="_blank" rel="noopener">Xで開発状況をフォロー</a>
+      <span class="soon">メールでの先行登録は準備中です</span>
+    </div>
+  </div>
+</main>
+
+<footer><div class="wrap">
+  <span>© 2026 Sato's creator</span>
+  <span>Talking Token は開発中のサービスです</span>
+</div></footer>
+
+<script>
+var DATA = {
+  service: [
+    { label: 'Claude Code', val: 128, est: false },
+    { label: 'ChatGPT', val: 64, est: true },
+    { label: 'Claude Chat', val: 41, est: true },
+    { label: 'API', val: 18, est: false }
+  ],
+  daily: [
+    { label: '11/5', val: 12, est: false },
+    { label: '11/6', val: 18, est: false },
+    { label: '11/7', val: 9, est: false },
+    { label: '11/8', val: 22, est: false },
+    { label: '11/9', val: 15, est: false },
+    { label: '11/10', val: 6, est: false },
+    { label: '11/11', val: 14, est: false }
+  ]
+};
+function renderChart(key) {
+  var box = document.getElementById('chart');
+  box.innerHTML = '';
+  var rows = DATA[key];
+  var max = 0;
+  rows.forEach(function (r) { if (r.val > max) max = r.val; });
+  rows.forEach(function (r) {
+    var row = document.createElement('div');
+    row.className = 'bar-row';
+    var nm = document.createElement('span');
+    nm.className = 'nm';
+    nm.textContent = r.label;
+    var track = document.createElement('div');
+    track.className = 'bar-track';
+    var fill = document.createElement('div');
+    fill.className = 'bar-fill' + (r.est ? ' est' : '');
+    fill.style.width = Math.round((r.val / max) * 100) + '%';
+    track.appendChild(fill);
+    var vl = document.createElement('span');
+    vl.className = 'vl';
+    vl.textContent = r.val + 'M';
+    row.appendChild(nm);
+    row.appendChild(track);
+    row.appendChild(vl);
+    box.appendChild(row);
+  });
+}
+var tabs = document.querySelectorAll('.chart-tab');
+tabs.forEach(function (t) {
+  t.addEventListener('click', function () {
+    tabs.forEach(function (x) { x.classList.remove('active'); });
+    t.classList.add('active');
+    renderChart(t.getAttribute('data-key'));
+  });
+});
+renderChart('service');
+
+var planChecks = document.querySelectorAll('.plan-check');
+function updateTotal() {
+  var total = 0;
+  planChecks.forEach(function (p) {
+    if (p.checked) total += Number(p.getAttribute('data-price'));
+  });
+  document.getElementById('plan-total').textContent = '¥' + total.toLocaleString('ja-JP');
+}
+planChecks.forEach(function (p) { p.addEventListener('change', updateTotal); });
+updateTotal();
+</script>
+</body>
+</html>
