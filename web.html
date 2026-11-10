@@ -44,6 +44,12 @@
   footer{border-top:1px solid rgba(255,255,255,.1);padding:56px 24px 64px;text-align:center;color:var(--sub);font-size:13px}
   footer .brand{color:var(--text);font-size:15px;font-weight:600;margin-bottom:10px}
   footer a{color:var(--accent);text-decoration:none}
+  .cta-row{display:flex;gap:14px;flex-wrap:wrap;margin-top:36px}
+  .btn{display:inline-block;padding:15px 30px;border-radius:999px;font-size:15px;font-weight:600;text-decoration:none;transition:opacity .2s}
+  .btn.primary{background:var(--accent);color:#fff}
+  .btn.ghost{background:var(--glass);color:var(--text);border:1px solid var(--glass-border)}
+  .btn:hover{opacity:.85}
+  footer .btn{color:#fff}
 </style>
 <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3051617391058492" crossorigin="anonymous"></script>
 </head>
@@ -55,7 +61,7 @@
     <a href="efficiency.html">業務アプリ</a>
     <a href="web.html" class="active">Web制作</a>
     <a href="games.html">ゲーム制作</a>
-    <a href="index.html#contact">お問合せ</a>
+    <a href="mailto:satoscreator@outlook.jp">お問合せ</a>
   </div>
 </nav>
 
@@ -64,7 +70,19 @@
     <div class="kicker">Web制作</div>
     <h1>お店の“顔”を、<br>Webに。</h1>
     <p class="lead">店舗や個人事業のための、ホームページ制作。打ち合わせはメールとチャットで完結します。どんなサイトになるかは、見本でそのまま確認できます。</p>
+    <div class="cta-row">
+      <a class="btn primary" href="mailto:satoscreator@outlook.jp">メールで問い合わせる</a>
+      <a class="btn ghost" href="#pricing">料金を見る</a>
+    </div>
   </div>
+
+  <section style="padding:20px 0 0">
+    <div class="card">
+      <div class="name">YouTuberの方へ</div>
+      <p class="desc">チャンネル紹介や案件・コラボの窓口をまとめた、YouTuber専用のページも作れます。</p>
+      <p class="desc" style="margin-top:14px"><a href="youtuber.html">YouTuber向けページを見る →</a></p>
+    </div>
+  </section>
 
   <section>
     <h2>こんな方に。</h2>
@@ -150,11 +168,42 @@
       <div class="step"><div class="num">STEP 4</div><div class="name">お支払い・公開</div><p class="desc">ご確認とお支払いの後に、ドメインで正式に公開します。</p></div>
     </div>
   </section>
+
+  <section id="faq">
+    <h2>よくある質問。</h2>
+    <div class="grid two">
+      <div class="card">
+        <div class="name">支払いのタイミングは？</div>
+        <p class="desc">完成したサイトをプレビューでご確認いただいた後です。ご確認とお支払いの後に、正式に公開します。着手金はありません。</p>
+      </div>
+      <div class="card">
+        <div class="name">打ち合わせはどう進めますか？</div>
+        <p class="desc">メールとチャットで完結します。面談は不要です。最初に、簡単な質問シートにお答えいただきます。</p>
+      </div>
+      <div class="card">
+        <div class="name">原稿や写真はどうすればいいですか？</div>
+        <p class="desc">原稿と写真は、ご用意いただく形です。何をどれだけ用意すればよいかは、質問シートでご案内します。</p>
+      </div>
+      <div class="card">
+        <div class="name">納期はどれくらいですか？</div>
+        <p class="desc">サイトの規模により異なるため、お見積もりの際にあわせてご提示します。</p>
+      </div>
+      <div class="card">
+        <div class="name">ドメインやサーバーの費用は？</div>
+        <p class="desc">ドメイン・サーバー費用は実費です。取得や契約の進め方は、ご案内します。</p>
+      </div>
+      <div class="card">
+        <div class="name">公開後の修正はできますか？</div>
+        <p class="desc">保守プラン（月 ¥10,000〜・任意）で、小さな修正や運用のご相談に対応します。なお、制作時の修正は2回まで含まれます。</p>
+      </div>
+    </div>
+  </section>
 </main>
 
 <footer>
   <div class="brand">Sato's creator</div>
-  <p>お問い合わせは<a href="index.html#contact">トップページ</a>から。メール：<a href="mailto:satoscreator@outlook.jp">satoscreator@outlook.jp</a></p>
+  <p style="margin-bottom:20px"><a class="btn primary" href="mailto:satoscreator@outlook.jp">メールで問い合わせる</a></p>
+  <p>メール：<a href="mailto:satoscreator@outlook.jp">satoscreator@outlook.jp</a></p>
   <p style="margin-top:14px"><a href="terms.html">利用規約</a>　／　<a href="privacy.html">プライバシーポリシー</a>　／　<a href="tokushoho.html">特定商取引法に基づく表記</a></p>
   <p style="margin-top:18px">© 2026 Sato's creator</p>
 </footer>

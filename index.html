@@ -6,7 +6,7 @@
 <title>Sato's creator</title>
 <link rel="icon" type="image/png" href="logo.png">
 <link rel="apple-touch-icon" href="logo.png">
-<meta name="description" content="Sato's creator — 小さなアプリを、ひとつずつ。iPhoneアプリとWebサイトの制作。">
+<meta name="description" content="Sato's creator — 面談なし・確認してから支払う、¥50,000からのホームページ制作。店舗・個人事業・YouTuber向け。iPhoneアプリも制作しています。">
 <style>
   :root{
     --bg:#000;
@@ -109,6 +109,15 @@
   .services .card{margin-top:0}
   @media(max-width:680px){.services{grid-template-columns:1fr}}
 
+  /* ---------- CTAボタン ---------- */
+  .cta-row{display:flex;gap:14px;flex-wrap:wrap;justify-content:center;margin-top:44px}
+  .btn{display:inline-block;padding:15px 30px;border-radius:999px;font-size:15px;font-weight:600;text-decoration:none;transition:opacity .2s}
+  .btn.primary{background:var(--accent);color:#fff}
+  .btn.ghost{background:var(--glass);color:var(--text);border:1px solid var(--glass-border)}
+  .btn:hover{opacity:.85}
+  .group-head{padding:100px 0 0}
+  .group-head h2{font-size:clamp(32px,5.6vw,58px);font-weight:700;letter-spacing:-.02em;line-height:1.25}
+
   /* ---------- フッター ---------- */
   footer{
     border-top:1px solid rgba(255,255,255,.1);
@@ -137,11 +146,46 @@
 <header>
   <img class="mark" src="logo.png" alt="Sato's creator ロゴ">
   <h1>Sato's creator</h1>
-  <p>小さなアプリを、ひとつずつ。</p>
+  <p>面談なし・確認してから支払う、<br>¥50,000からのホームページ制作。</p>
+  <div class="cta-row">
+    <a class="btn primary" href="web.html">Web制作について見る</a>
+    <a class="btn ghost" href="mailto:satoscreator@outlook.jp">メールで問い合わせる</a>
+  </div>
   <div class="scroll">SCROLL</div>
 </header>
 
 <main>
+
+  <section id="web" class="reveal">
+    <div class="kicker">Web制作</div>
+    <h2>面談なしで、<br>ホームページを。</h2>
+    <p class="lead">店舗・個人事業のためのホームページ制作です。打ち合わせはメールとチャットで完結。完成したサイトをプレビューで確認し、お支払いの後に公開します。</p>
+    <div class="card">
+      <div class="name">店舗・個人事業のホームページ</div>
+      <p class="desc">料金や営業時間、問い合わせの窓口を1〜3ページにまとめます。どんなサイトになるかは、見本でそのまま確認できます。¥50,000〜（買い切り）。</p>
+      <a href="web.html">くわしく見る →</a>
+    </div>
+    <div class="card">
+      <div class="name">YouTuber向けページ</div>
+      <p class="desc">チャンネルの紹介、案件・コラボの問い合わせ窓口、メンバーシップへの誘導、SNSリンクを、ひとつのページにまとめます。</p>
+      <a href="youtuber.html">YouTuber向けページ →</a>
+    </div>
+  </section>
+
+  <section id="about" class="reveal">
+    <div class="kicker">作っている人</div>
+    <h2>個人の開発者が、<br>全部作っています。</h2>
+    <p class="lead">Sato's creator は、個人開発者が運営する制作の窓口です。大きな会社に頼むほどではないけれど、ちゃんとしたものが欲しい。そんな規模の仕事を、企画から公開までひとりで担当します。</p>
+    <div class="card">
+      <div class="name">公開中・開発中のプロダクト</div>
+      <p class="desc">フリマ在庫管理アプリ「RESELL NOTE」、写真をPDFにする「パッとPDF」、診断シリーズ「ミエルカード」、3D物理パズル「STACK LAND」。受託だけでなく、自分のプロダクトも企画から開発まで手がけています。</p>
+    </div>
+  </section>
+
+  <div class="group-head reveal">
+    <div class="kicker">つくったもの</div>
+    <h2>公開中のプロダクト。</h2>
+  </div>
 
   <section id="efficiency" class="reveal">
     <div class="kicker">業務アプリ</div>
@@ -217,7 +261,9 @@
 
 <footer id="contact">
   <div class="brand">Sato's creator</div>
-  <p>お問い合わせはメールにて承ります。<a href="mailto:satoscreator@outlook.jp">satoscreator@outlook.jp</a></p>
+  <p>お問い合わせはメールにて承ります。</p>
+  <p style="margin-top:20px"><a class="btn primary" href="mailto:satoscreator@outlook.jp">メールで問い合わせる</a></p>
+  <p style="margin-top:16px"><a href="mailto:satoscreator@outlook.jp">satoscreator@outlook.jp</a></p>
   <p style="margin-top:14px"><a href="terms.html" style="color:#2997ff;text-decoration:none">利用規約</a>　／　<a href="privacy.html" style="color:#2997ff;text-decoration:none">プライバシーポリシー</a>　／　<a href="tokushoho.html" style="color:#2997ff;text-decoration:none">特定商取引法に基づく表記</a></p>
   <p style="margin-top:18px">© 2026 Sato's creator</p>
 </footer>
