@@ -273,3 +273,14 @@ html:not(.js) .steps li::after{transform:none}
 /* 冒頭の出現は、幕が上がってから始める */
 .js .hero .ln>span,.js .phero .ln>span{transition-delay:calc(var(--t0) + .15s + var(--d,0)*.09s)}
 .js .hero [data-fade],.js .phero [data-fade]{transition-delay:calc(var(--t0) + .35s + var(--d,0)*.08s)}
+
+/* App Storeダウンロードカード（Made here） */
+.appdl{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--line);border:1px solid var(--ink);margin-bottom:clamp(30px,4vw,52px)}
+.appcard{background:var(--bone);padding:clamp(20px,2.6vw,32px);text-decoration:none;color:var(--ink);display:flex;flex-direction:column;gap:12px;transition:background .35s}
+.appcard img{width:76px;height:76px;border-radius:18px;border:1px solid var(--line)}
+.appcard b{font-size:clamp(20px,2vw,26px);font-weight:800;letter-spacing:-.02em;line-height:1.25}
+.appcard span{color:var(--mute);font-size:14px;line-height:1.75;flex:1}
+.appcard i{font-style:normal;font-size:13.5px;font-weight:700;display:flex;align-items:center;gap:10px;color:var(--klein)}
+.appcard i svg{width:16px;height:16px;transition:transform .5s var(--ease)}
+@media (hover:hover) and (pointer:fine){.appcard:hover{background:var(--paper)}.appcard:hover i svg{transform:translate(3px,-3px)}}
+@media(max-width:860px){.appdl{grid-template-columns:1fr}}
